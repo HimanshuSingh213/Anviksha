@@ -1,26 +1,167 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Base surfaces */
+  --background: #0a0a0b;
+  --surface: #141417;
+  --surface-elevated: #1b1b1f;
+
+  /* Borders */
+  --border: #26262b;
+  --border-strong: #34343b;
+
+  /* Text */
+  --foreground: #f2efea;
+  --foreground-secondary: #a39e96;
+  --foreground-muted: #63605a;
+
+  /* Gold — secondary/tertiary brand accent only.
+     Use for: highlighted box-grid state, CTAs, "you" series in a
+     chart, personal-best badges. Never for grade/status meaning. */
+  --gold: #c9a961;
+  --gold-bright: #e4c67c;
+  --gold-dim: #7a6434;
+  --gold-surface: rgba(201, 169, 97, 0.08);
+  --gold-border: rgba(201, 169, 97, 0.35);
+
+  /* Grade scale — semantic, maps GGSIPU's 8 letter grades to 5 tiers.
+     O, A+ -> excellent | A, B+ -> good | B, C -> average | P -> pass | F -> fail */
+  --grade-excellent: #34b37a;
+  --grade-excellent-surface: rgba(52, 179, 122, 0.12);
+  --grade-excellent-border: rgba(52, 179, 122, 0.35);
+
+  --grade-good: #8fbf4d;
+  --grade-good-surface: rgba(143, 191, 77, 0.12);
+  --grade-good-border: rgba(143, 191, 77, 0.35);
+
+  --grade-average: #e0a639;
+  --grade-average-surface: rgba(224, 166, 57, 0.12);
+  --grade-average-border: rgba(224, 166, 57, 0.35);
+
+  --grade-pass: #e07b39;
+  --grade-pass-surface: rgba(224, 123, 57, 0.12);
+  --grade-pass-border: rgba(224, 123, 57, 0.35);
+
+  --grade-fail: #e1504b;
+  --grade-fail-surface: rgba(225, 80, 75, 0.12);
+  --grade-fail-border: rgba(225, 80, 75, 0.35);
+
+  /* Category colors — multi-series charts & tags/badges (course type,
+     elective vs core, etc). Kept away from gold and the grade hues on
+     purpose so nothing gets misread as a grade. */
+  --cat-blue: #4c8dda;
+  --cat-blue-surface: rgba(76, 141, 218, 0.12);
+  --cat-blue-border: rgba(76, 141, 218, 0.35);
+
+  --cat-violet: #8b7cdb;
+  --cat-violet-surface: rgba(139, 124, 219, 0.12);
+  --cat-violet-border: rgba(139, 124, 219, 0.35);
+
+  --cat-teal: #45b8c7;
+  --cat-teal-surface: rgba(69, 184, 199, 0.12);
+  --cat-teal-border: rgba(69, 184, 199, 0.35);
+
+  --cat-pink: #d96fa6;
+  --cat-pink-surface: rgba(217, 111, 166, 0.12);
+  --cat-pink-border: rgba(217, 111, 166, 0.35);
+
+  --cat-slate: #7c8591;
+  --cat-slate-surface: rgba(124, 133, 145, 0.12);
+  --cat-slate-border: rgba(124, 133, 145, 0.35);
+
+  /* Status aliases — trend arrows, deltas, inline messaging */
+  --positive: var(--grade-excellent);
+  --negative: var(--grade-fail);
+  --info: var(--cat-blue);
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
   --color-foreground: var(--foreground);
+  --color-foreground-secondary: var(--foreground-secondary);
+  --color-foreground-muted: var(--foreground-muted);
+
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-gold-dim: var(--gold-dim);
+  --color-gold-surface: var(--gold-surface);
+  --color-gold-border: var(--gold-border);
+
+  --color-grade-excellent: var(--grade-excellent);
+  --color-grade-excellent-surface: var(--grade-excellent-surface);
+  --color-grade-excellent-border: var(--grade-excellent-border);
+
+  --color-grade-good: var(--grade-good);
+  --color-grade-good-surface: var(--grade-good-surface);
+  --color-grade-good-border: var(--grade-good-border);
+
+  --color-grade-average: var(--grade-average);
+  --color-grade-average-surface: var(--grade-average-surface);
+  --color-grade-average-border: var(--grade-average-border);
+
+  --color-grade-pass: var(--grade-pass);
+  --color-grade-pass-surface: var(--grade-pass-surface);
+  --color-grade-pass-border: var(--grade-pass-border);
+
+  --color-grade-fail: var(--grade-fail);
+  --color-grade-fail-surface: var(--grade-fail-surface);
+  --color-grade-fail-border: var(--grade-fail-border);
+
+  --color-cat-blue: var(--cat-blue);
+  --color-cat-blue-surface: var(--cat-blue-surface);
+  --color-cat-blue-border: var(--cat-blue-border);
+
+  --color-cat-violet: var(--cat-violet);
+  --color-cat-violet-surface: var(--cat-violet-surface);
+  --color-cat-violet-border: var(--cat-violet-border);
+
+  --color-cat-teal: var(--cat-teal);
+  --color-cat-teal-surface: var(--cat-teal-surface);
+  --color-cat-teal-border: var(--cat-teal-border);
+
+  --color-cat-pink: var(--cat-pink);
+  --color-cat-pink-surface: var(--cat-pink-surface);
+  --color-cat-pink-border: var(--cat-pink-border);
+
+  --color-cat-slate: var(--cat-slate);
+  --color-cat-slate-surface: var(--cat-slate-surface);
+  --color-cat-slate-border: var(--cat-slate-border);
+
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
+  --color-info: var(--info);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Custom theme scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-dim);
+}
+
