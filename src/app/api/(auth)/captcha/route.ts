@@ -17,7 +17,6 @@ export const GET = async () => {
       validateStatus: () => true,
     });
 
-    // Check for 4xx or 5xx HTTP errors from GGSIPU server
     if (res.status < 200 || res.status >= 300) {
       return NextResponse.json(
         { error: `GGSIPU server returned error status ${res.status}` },
@@ -45,7 +44,7 @@ export const GET = async () => {
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
         maxAge: 300,
-        path: "/",
+        path: "/api",
       });
     }
 

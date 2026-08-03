@@ -36,7 +36,8 @@ export const LoginForm = () => {
     const handleRefreshCaptcha = () => {
         setIsRefreshing(true);
         setTimeout(() => setIsRefreshing(false), 600);
-
+        setCaptchaLoading(true);
+        setCaptchaError(false);
         setCaptchaSrc(`/api/captcha?t=${Date.now()}`);
     }
 
@@ -127,19 +128,20 @@ export const LoginForm = () => {
                     {/* Error State */}
                     {captchaError ? (
                         <div className="flex items-center justify-center w-full h-full">
-                            <p className="text-sm text-grade-fail font-mono">Failed to Load Captcha!</p>
+                            <p className="text-xs text-grade-fail font-mono">Failed to Load Captcha!</p>
                         </div>
                     ) : (
                         <>
                             {/* Loading Spinner */}
                             {captchaLoading && (
-                                <div className="flex items-center justify-center w-full h-full absolute inset-0 bg-background">
+                                <div className="absolute inset-0 flex items-center justify-center bg-background z-10">
                                     <Loader2 className="animate-spin text-foreground-secondary" size={18} />
                                 </div>
                             )}
 
                             {/* CAPTCHA Image */}
                             <div className="w-full h-full flex items-center justify-center">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                     // src={captchaSrc}
                                     alt="CAPTCHA Code"
@@ -148,8 +150,7 @@ export const LoginForm = () => {
                                         setCaptchaLoading(false);
                                         setCaptchaError(true);
                                     }}
-                                    className={`h-full w-auto max-w-full object-contain mx-auto transition-opacity duration-200 ${captchaLoading ? "opacity-0" : "opacity-100"
-                                        }`}
+                                    className={`h-full w-auto max-w-full object-contain mx-auto transition-opacity duration-200 ${captchaLoading ? "opacity-0" : "opacity-100"}`}
                                 />
                             </div>
                         </>
