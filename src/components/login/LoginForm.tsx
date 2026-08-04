@@ -14,8 +14,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoginSchema, LoginInput } from "@/validations/login.validation";
+import axios from "axios";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export const LoginForm = () => {
+    const router = useRouter();
     // react hook form items
     const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginInput>({
         resolver: zodResolver(LoginSchema),
@@ -41,9 +45,22 @@ export const LoginForm = () => {
         setCaptchaSrc(`/api/captcha?t=${Date.now()}`);
     }
 
-    const onSubmit = (data: LoginInput) => {
+    const onSubmit = async (data: LoginInput) => {
         console.log("Validated Form Data:", data);
         // space for Login API
+        try {
+            const res = await axios.post(`/api/login`, data);
+
+            if(res.data.success){
+                toast.success("Logged In Successfully!");
+                router.push("/dashboard");
+            }
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || "Login failed. Please try again.");
+
+            // if login failed, refreshing the captcha 
+            handleRefreshCaptcha();
+        }
     }
 
 
@@ -143,7 +160,7 @@ export const LoginForm = () => {
                             <div className="w-full h-full flex items-center justify-center">
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
-                                    // src={captchaSrc}
+                                    src={captchaSrc}
                                     alt="CAPTCHA Code"
                                     onLoad={() => setCaptchaLoading(false)}
                                     onError={() => {

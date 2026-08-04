@@ -37,7 +37,7 @@ export const POST = async (req: NextRequest) => {
     );
 
     const res = await axios.post(
-      `${BASE_URL}/web/login`,
+      `${BASE_URL}/web/Login`,
       new URLSearchParams({
         username: validationResult.data.enrollment,
         passwd: hashedPass,
