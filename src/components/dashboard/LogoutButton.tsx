@@ -5,17 +5,20 @@ import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
+import useResultStore from "@/store/result-store";
+
 export function LogoutButton() {
     const router = useRouter();
+    const clearResult = useResultStore((state) => state.clearResult);
 
     const handleLogout = async () => {
         try {
             await axios.post("/api/logout");
             toast.success("Logged out successfully");
-            router.push("/login");
         } catch {
             toast.error("Failed to log out");
         } finally {
+            clearResult();
             router.push("/login");
         }
     };

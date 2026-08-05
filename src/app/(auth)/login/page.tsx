@@ -125,6 +125,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setShowHelper(!showHelper)}
+              suppressHydrationWarning
               className="flex w-full items-center justify-between px-4 py-3 text-xs font-semibold text-foreground-secondary hover:text-foreground transition"
             >
               <span className="flex items-center gap-2">

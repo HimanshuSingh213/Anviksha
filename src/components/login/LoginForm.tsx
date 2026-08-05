@@ -65,7 +65,7 @@ export const LoginForm = () => {
 
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" suppressHydrationWarning>
 
             {/* Enrollment Number (Username) */}
             <div className="flex flex-col gap-1.5">
@@ -84,6 +84,7 @@ export const LoginForm = () => {
                         {...register("enrollment")}
                         type="text"
                         placeholder="09414802721"
+                        suppressHydrationWarning
                         className="w-full rounded-lg border border-border-strong bg-background py-2.5 pl-10 pr-3 font-mono text-sm text-foreground outline-none transition focus:border-gold focus:ring-1 focus:ring-gold"
                     />
                 </div>
@@ -109,11 +110,13 @@ export const LoginForm = () => {
                         {...register("password")}
                         type={showPass ? "text" : "password"}
                         placeholder="••••••••"
+                        suppressHydrationWarning
                         className="w-full rounded-lg border border-border-strong bg-background py-2.5 pl-10 pr-10 font-mono text-sm text-foreground outline-none transition focus:border-gold focus:ring-1 focus:ring-gold"
                     />
                     <button
                         type="button"
                         onClick={() => setShowPass(!showPass)}
+                        suppressHydrationWarning
                         className="absolute right-3 text-foreground-muted hover:text-foreground"
                     >
                         {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -133,6 +136,7 @@ export const LoginForm = () => {
                     </label>
                     <button
                         type="button"
+                        suppressHydrationWarning
                         className="flex items-center gap-1 text-xs text-foreground-muted hover:text-gold transition duration-200 ease-in-out"
                         onClick={handleRefreshCaptcha}
                     >
@@ -180,6 +184,7 @@ export const LoginForm = () => {
                     {...register("captcha")}
                     type="text"
                     placeholder="Enter CAPTCHA"
+                    suppressHydrationWarning
                     className="w-full rounded-lg border border-border-strong bg-background py-2.5 px-3 font-mono text-sm tracking-wider text-foreground outline-none transition focus:border-gold focus:ring-1 focus:ring-gold"
                 />
                 {errors.captcha && (
@@ -191,6 +196,7 @@ export const LoginForm = () => {
             <button
                 type="submit"
                 disabled={isSubmitting}
+                suppressHydrationWarning
                 className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-gold-border bg-gold-surface py-3 text-sm font-semibold text-gold transition hover:bg-gold-border active:scale-[0.99] disabled:opacity-50"
             >
                 {isSubmitting ? (

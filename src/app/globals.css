@@ -1,14 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  /* Base surfaces */
-  --background: #0a0a0b;
-  --surface: #141417;
-  --surface-elevated: #1b1b1f;
+  /* Base surfaces — deep obsidian scale */
+  --background: #060608;
+  --surface: #0d0d10;
+  --surface-elevated: #141418;
+  --surface-deep: #020204;
 
   /* Borders */
-  --border: #26262b;
-  --border-strong: #34343b;
+  --border: #1e1e24;
+  --border-strong: #2a2a32;
 
   /* Text */
   --foreground: #f2efea;
@@ -79,6 +80,7 @@
   --color-background: var(--background);
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
+  --color-surface-deep: var(--surface-deep);
 
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);

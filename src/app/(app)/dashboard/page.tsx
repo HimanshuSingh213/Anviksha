@@ -3,60 +3,98 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { Loader2, User, GraduationCap, Building2, Calendar, Award } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Loader2, AlertTriangle, CheckCircle2, Percent, BarChart2, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import Skeleton from "@/components/dashboard/Skeleton";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
-
-interface StudentProfile {
-    nrollno: string;
-    stname: string;
-    byoa: number;
-    yoa: number;
-    prgcode: string;
-    prgname: string;
-    icode: string;
-    iname: string;
-}
-
-interface ResultData {
-    report?: string;
-    stprofile?: StudentProfile;
-    header?: string[];
-    stresult?: any[][];
-}
+import useResultStore from "@/store/result-store";
+import { ResultData } from "@/types/result";
+import { getDefaultCredit, getGradeAndPoints, getGradeThemeClasses } from "@/helpers/grade-system";
 
 const SEMESTERS = [
-    { label: "All Semesters", value: "100" },
-    { label: "Sem 1", value: "1" },
-    { label: "Sem 2", value: "2" },
-    { label: "Sem 3", value: "3" },
-    { label: "Sem 4", value: "4" },
-    { label: "Sem 5", value: "5" },
-    { label: "Sem 6", value: "6" },
-    { label: "Sem 7", value: "7" },
-    { label: "Sem 8", value: "8" },
+    { label: "All", value: "100" },
+    { label: "I", value: "1" },
+    { label: "II", value: "2" },
+    { label: "III", value: "3" },
+    { label: "IV", value: "4" },
+    { label: "V", value: "5" },
+    { label: "VI", value: "6" },
+    { label: "VII", value: "7" },
+    { label: "VIII", value: "8" },
 ];
+
+function PixelAvatar({ name }: { name: string }) {
+    const seed = name.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    const size = 5;
+    const cells = Array.from({ length: size * size }, (_, i) => {
+        const col = i % size;
+        const mirrorCol = Math.min(col, size - 1 - col);
+        const row = Math.floor(i / size);
+        return ((seed * (row * 3 + mirrorCol + 1) * 2654435761) >>> 0) % 3 !== 0;
+    });
+
+    const colors = [
+        "rgba(139,124,219,0.9)",
+        "rgba(76,141,218,0.85)",
+        "rgba(69,184,199,0.8)",
+    ];
+    const accentColor = colors[seed % colors.length];
+
+    return (
+        <div
+            className="w-12 h-12 rounded-md p-1.5 flex-shrink-0"
+            style={{
+                background: "#08080c",
+                boxShadow: `0 0 0 1px rgba(139,124,219,0.2), 0 0 12px rgba(139,124,219,0.06)`,
+            }}
+        >
+            <div
+                className="w-full h-full"
+                style={{
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${size}, 1fr)`,
+                    gap: "1.5px",
+                }}
+            >
+                {cells.map((lit, i) => (
+                    <motion.div
+                        key={i}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: lit ? 1 : 0 }}
+                        transition={{ delay: i * 0.012, duration: 0.3 }}
+                        style={{
+                            borderRadius: "1px",
+                            background: lit ? accentColor : "rgba(255,255,255,0.03)",
+                        }}
+                    />
+                ))}
+            </div>
+        </div>
+    );
+}
 
 export default function DashboardPage() {
     const router = useRouter();
 
-    const [data, setData] = useState<ResultData | null>(null);
     const [activeSem, setActiveSem] = useState("100");
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("")
+    const [error, setError] = useState("");
 
-    const fetchResults = async (euno: string) => {
+    const setFullResult = useResultStore((state) => state.setResult);
+    const fullResult = useResultStore((state) => state.result);
+    const customCredit = useResultStore((state) => state.customCredits);
+    const setCustomCredit = useResultStore((state) => state.setCustomCredit);
+
+    const fetchResults = async () => {
         setLoading(true);
-        setError('');
-
+        setError("");
         try {
-            const res = await axios.get(`/api/result?euno=${euno}`);
-            setData(res.data);
+            const res = await axios.get<ResultData>(`/api/result?euno=100`);
+            setFullResult(res.data);
         } catch (err: any) {
             const status = err.response?.status;
             const expired = err.response?.data?.expired;
-
             if (status === 401 || expired) {
                 toast.error("Session expired. Please sign in again.");
                 router.push("/login");
@@ -71,160 +109,417 @@ export default function DashboardPage() {
     };
 
     useEffect(() => {
-        fetchResults(activeSem);
-    }, [activeSem]);
+        fetchResults();
+    }, []);
 
-    // Skeleton Loader State
-    if (loading && !data) {
-        return (
-            <Skeleton />
-        );
+    const filteredResults = fullResult?.stresult?.filter(
+        (result) => activeSem === "100" || result[0] === Number(activeSem)
+    );
+
+    const allResults = fullResult?.stresult ?? [];
+
+    function computeStats(rows: any[][]) {
+        let weightedPoints = 0;
+        let totalCredits = 0;
+        let earnedCredits = 0;
+        let backlogs = 0;
+
+        rows.forEach((row) => {
+            const total = Number(row[5]);
+            const paperCode = row[1];
+            const subjectTitle = row[2];
+            const credit = customCredit[paperCode] ?? getDefaultCredit(subjectTitle);
+            const { points, pass } = getGradeAndPoints(total);
+
+            weightedPoints += credit * points;
+            totalCredits += credit;
+            if (pass) earnedCredits += credit;
+            else backlogs += 1;
+        });
+
+        const gpa = totalCredits > 0 ? weightedPoints / totalCredits : 0;
+        return { gpa, totalCredits, earnedCredits, backlogs };
     }
 
+    const semStats = computeStats(filteredResults ?? []);
+    const overallStats = computeStats(allResults);
+
+    const sgpa = semStats.gpa.toFixed(2);
+    const cgpa = overallStats.gpa.toFixed(2);
+    const percentage = (overallStats.gpa * 9.5).toFixed(2);
+
+    if (loading && !fullResult) return <Skeleton />;
+
+    const profile = fullResult?.stprofile;
+
     return (
-        <div className="min-h-screen bg-background text-foreground p-6">
-            <div className="max-w-5xl mx-auto space-y-6">
-                {/* Top Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-5">
-                    <div>
-                        <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-                            <GraduationCap className="text-gold" size={28} />
-                            Academic Dashboard
-                        </h1>
-                        <p className="text-foreground-muted text-xs font-mono mt-1">
-                            GGSIPU Examination Results & Grade Breakdown
-                        </p>
+        <div className="min-h-screen bg-background text-foreground">
+
+            {/* Navigation */}
+            <motion.header
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="sticky top-0 z-20 border-b border-border bg-surface-deep/90 backdrop-blur-md"
+            >
+                <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <span className="text-gold font-mono font-bold text-sm tracking-widest uppercase">Anviksha</span>
+                        <span className="text-border-strong text-xs">·</span>
+                        <span className="text-foreground-muted text-xs font-mono">Academic Results</span>
                     </div>
-                    <LogoutButton />
+                    <div className="flex items-center gap-4">
+                        {profile && (
+                            <span className="text-foreground-muted text-xs font-mono hidden sm:block truncate max-w-48">
+                                {profile.stname}
+                            </span>
+                        )}
+                        <LogoutButton />
+                    </div>
                 </div>
+            </motion.header>
 
-                {/* Error State */}
-                {error && (
-                    <div className="p-4 bg-grade-fail-surface border border-grade-fail-border rounded-xl text-grade-fail text-xs font-mono">
-                        {error}
-                    </div>
-                )}
+            <main className="max-w-7xl mx-auto px-6 py-8 space-y-6">
 
-                {/* Student Profile Card */}
-                {data?.stprofile && (
-                    <div className="bg-surface border border-border-strong rounded-2xl p-6 shadow-lg backdrop-blur-md">
-                        <div className="flex items-center gap-2 mb-1">
-                            <User size={18} className="text-gold" />
-                            <h2 className="text-xl font-bold text-foreground">
-                                {data.stprofile.stname}
-                            </h2>
-                        </div>
-                        <p className="text-foreground-secondary text-xs mb-5 font-mono">
-                            {data.stprofile.prgname}
-                        </p>
-
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs font-mono">
-                            <div className="bg-background p-3.5 rounded-xl border border-border-strong">
-                                <div className="text-foreground-muted text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
-                                    <Award size={12} className="text-gold" /> Enrollment
-                                </div>
-                                <div className="font-bold text-gold">{data.stprofile.nrollno}</div>
-                            </div>
-
-                            <div className="bg-background p-3.5 rounded-xl border border-border-strong">
-                                <div className="text-foreground-muted text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
-                                    <Building2 size={12} className="text-foreground-secondary" /> Institute
-                                </div>
-                                <div className="text-foreground truncate">{data.stprofile.iname}</div>
-                            </div>
-
-                            <div className="bg-background p-3.5 rounded-xl border border-border-strong">
-                                <div className="text-foreground-muted text-[10px] uppercase tracking-wider mb-1 flex items-center gap-1">
-                                    <Calendar size={12} className="text-foreground-secondary" /> Admission Batch
-                                </div>
-                                <div className="text-foreground">{data.stprofile.byoa}</div>
-                            </div>
-
-                            <div className="bg-background p-3.5 rounded-xl border border-border-strong">
-                                <div className="text-foreground-muted text-[10px] uppercase tracking-wider mb-1">
-                                    Program Code
-                                </div>
-                                <div className="text-foreground-secondary font-bold">{data.stprofile.prgcode}</div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {/* Semester Selection Tabs */}
-                <div className="flex flex-wrap gap-2">
-                    {SEMESTERS.map((sem) => (
-                        <button
-                            key={sem.value}
-                            onClick={() => setActiveSem(sem.value)}
-                            disabled={loading}
-                            className={`px-3.5 py-2 rounded-xl text-xs font-mono font-medium transition duration-200 ${activeSem === sem.value
-                                ? "bg-gold text-background font-bold shadow-md"
-                                : "bg-surface text-foreground-secondary hover:bg-surface-elevated hover:text-foreground border border-border"
-                                } disabled:opacity-50`}
+                {/* Error Banner */}
+                <AnimatePresence>
+                    {error && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="flex items-center gap-3 p-4 bg-grade-fail-surface border border-grade-fail-border rounded-md text-grade-fail text-xs font-mono"
                         >
-                            {sem.label}
-                        </button>
-                    ))}
-                </div>
+                            <AlertTriangle size={14} />
+                            {error}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Profile & Overview Stats */}
+                {profile && (
+                    <motion.section
+                        initial="hidden"
+                        animate="show"
+                        variants={{
+                            hidden: {},
+                            show: { transition: { staggerChildren: 0.07 } },
+                        }}
+                        className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+                    >
+                        {/* Profile Card */}
+                        <motion.div
+                            variants={{
+                                hidden: { opacity: 0, y: 20 },
+                                show: { opacity: 1, y: 0 },
+                            }}
+                            className="lg:col-span-1 bg-surface border border-border-strong rounded-lg p-6 flex flex-col justify-between gap-5"
+                        >
+                            <div>
+                                <div className="flex items-start gap-3 mb-4">
+                                    <PixelAvatar name={profile.stname ?? "?"} />
+                                    <div className="min-w-0">
+                                        <h1 className="text-sm font-bold text-foreground leading-snug">{profile.stname}</h1>
+                                        <p className="text-foreground-muted text-[11px] font-mono mt-1 leading-relaxed">{profile.prgname}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="rounded-md overflow-hidden border border-border text-xs font-mono">
+                                {[
+                                    { label: "Enrollment", value: profile.nrollno, color: "text-cat-teal" },
+                                    { label: "Batch", value: profile.byoa, color: "text-foreground-secondary" },
+                                    { label: "Program", value: profile.prgcode, color: "text-foreground-secondary" },
+                                    { label: "Institute", value: profile.iname, color: "text-foreground-secondary", truncate: true },
+                                ].map((item, i, arr) => (
+                                    <div
+                                        key={item.label}
+                                        className={`flex justify-between items-center px-3 py-2.5 bg-surface-deep ${i < arr.length - 1 ? "border-b border-border" : ""}`}
+                                    >
+                                        <span className="text-foreground-muted text-[10px] uppercase tracking-wider">{item.label}</span>
+                                        <span className={`${item.color} font-semibold ${item.truncate ? "max-w-36 truncate text-right" : ""}`} title={item.truncate ? item.value : undefined}>
+                                            {item.value}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+
+                        {/* Stat Cards Grid */}
+                        <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+                            {[
+                                {
+                                    label: "Overall CGPA",
+                                    value: cgpa,
+                                    sub: "out of 10.00",
+                                    color: "text-cat-violet",
+                                    icon: <BarChart2 size={13} className="text-cat-violet opacity-50" />,
+                                },
+                                {
+                                    label: "Equivalent %",
+                                    value: `${percentage}%`,
+                                    sub: "CGPA × 9.5",
+                                    color: "text-cat-blue",
+                                    icon: <Percent size={13} className="text-cat-blue opacity-50" />,
+                                },
+                                {
+                                    label: "Credits Earned",
+                                    value: `${overallStats.earnedCredits}`,
+                                    valueSuffix: ` / ${overallStats.totalCredits}`,
+                                    sub: "overall",
+                                    color: "text-cat-teal",
+                                    icon: <BookOpen size={13} className="text-cat-teal opacity-50" />,
+                                },
+                                {
+                                    label: "Status",
+                                    value: overallStats.backlogs > 0 ? String(overallStats.backlogs) : "✓",
+                                    sub: overallStats.backlogs > 0 ? `backlog${overallStats.backlogs > 1 ? "s" : ""}` : "all cleared",
+                                    color: overallStats.backlogs > 0 ? "text-grade-fail" : "text-grade-excellent",
+                                    icon: overallStats.backlogs > 0
+                                        ? <AlertTriangle size={13} className="text-grade-fail opacity-60" />
+                                        : <CheckCircle2 size={13} className="text-grade-excellent opacity-60" />,
+                                    bgClass: overallStats.backlogs > 0
+                                        ? "bg-grade-fail-surface border-grade-fail-border"
+                                        : "bg-grade-excellent-surface border-grade-excellent-border",
+                                },
+                            ].map((card) => (
+                                <motion.div
+                                    key={card.label}
+                                    variants={{
+                                        hidden: { opacity: 0, y: 20 },
+                                        show: { opacity: 1, y: 0 },
+                                    }}
+                                    whileHover={{ scale: 1.015, transition: { duration: 0.15 } }}
+                                    className={`bg-surface border border-border-strong rounded-lg p-5 flex flex-col justify-between cursor-default ${card.bgClass ?? ""}`}
+                                >
+                                    <div className="flex items-center justify-between mb-4">
+                                        <span className="text-[10px] font-mono uppercase tracking-widest text-foreground-muted">{card.label}</span>
+                                        {card.icon}
+                                    </div>
+                                    <div>
+                                        <div className={`text-4xl font-bold font-mono ${card.color}`}>
+                                            {card.value}
+                                            {card.valueSuffix && (
+                                                <span className="text-xl text-foreground-muted">{card.valueSuffix}</span>
+                                            )}
+                                        </div>
+                                        <div className="text-[10px] text-foreground-muted font-mono mt-2">{card.sub}</div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </motion.section>
+                )}
+
+                {/* Semester Tabs */}
+                <motion.section
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                >
+                    <div className="inline-flex items-center gap-0.5 bg-surface-deep border border-border rounded-md p-1 flex-wrap">
+                        {SEMESTERS.map((sem) => (
+                            <button
+                                key={sem.value}
+                                onClick={() => setActiveSem(sem.value)}
+                                disabled={loading}
+                                className={`relative px-3.5 py-1.5 text-xs font-mono font-medium transition-colors duration-100 disabled:opacity-40 rounded-sm ${
+                                    activeSem === sem.value
+                                        ? "text-background font-bold"
+                                        : "text-foreground-muted hover:text-foreground"
+                                }`}
+                            >
+                                {activeSem === sem.value && (
+                                    <motion.span
+                                        layoutId="tab-bg"
+                                        className="absolute inset-0 bg-gold rounded-sm"
+                                        transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                                    />
+                                )}
+                                <span className="relative z-10">{sem.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                </motion.section>
 
                 {/* Results Table */}
-                <div className="bg-surface border border-border-strong rounded-2xl overflow-hidden shadow-md">
-                    {loading && data ? (
-                        <div className="p-8 text-center text-foreground-muted text-xs font-mono flex items-center justify-center gap-2">
-                            <Loader2 className="animate-spin text-gold" size={16} />
-                            Fetching semester data...
+                <motion.section
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                >
+                    <div className="flex items-center justify-between mb-2.5">
+                        <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-muted">
+                            {activeSem === "100" ? "All Semesters" : `Semester ${activeSem}`}
+                            <span className="mx-2 text-border-strong">·</span>
+                            {filteredResults?.length ?? 0} subjects
                         </div>
-                    ) : data?.stresult && data.stresult.length > 0 ? (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-xs font-mono">
-                                <thead>
-                                    <tr className="bg-background border-b border-border text-foreground-secondary text-left">
-                                        <th className="p-3.5 font-semibold">Sem</th>
-                                        <th className="p-3.5 font-semibold">Paper Code</th>
-                                        <th className="p-3.5 font-semibold">Subject Title</th>
-                                        <th className="p-3.5 font-semibold text-center">Internal</th>
-                                        <th className="p-3.5 font-semibold text-center">External</th>
-                                        <th className="p-3.5 font-semibold text-center">Total</th>
-                                        <th className="p-3.5 font-semibold">Session</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border/50">
-                                    {data.stresult.map((row, idx) => (
-                                        <tr
-                                            key={idx}
-                                            className="hover:bg-background/60 transition duration-150"
-                                        >
-                                            <td className="p-3.5 text-foreground-muted">{row[0]}</td>
-                                            <td className="p-3.5 text-gold font-semibold">{row[1]}</td>
-                                            <td className="p-3.5 text-foreground font-sans">{row[2]}</td>
-                                            <td className="p-3.5 text-center text-foreground-secondary">{row[3]}</td>
-                                            <td className="p-3.5 text-center text-foreground-secondary">{row[4]}</td>
-                                            <td className="p-3.5 text-center font-bold text-positive">
-                                                {row[5]}
-                                            </td>
-                                            <td className="p-3.5 text-foreground-muted text-[11px]">{row[7]}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    ) : (
-                        <div className="p-8 text-center text-foreground-muted text-xs font-mono">
-                            No results found for this semester selection.
-                        </div>
-                    )}
-                </div>
+                        {loading && fullResult && (
+                            <div className="flex items-center gap-1.5 text-[10px] text-foreground-muted font-mono">
+                                <Loader2 size={11} className="animate-spin text-cat-teal" />
+                                Loading...
+                            </div>
+                        )}
+                    </div>
 
-                {/* Raw JSON Debug Viewer */}
-                <details className="bg-surface border border-border-strong rounded-2xl p-4">
-                    <summary className="text-xs text-foreground-muted font-mono cursor-pointer hover:text-foreground">
-                        Show Raw JSON Response (Debug)
+                    <div className="bg-surface border border-border-strong rounded-lg overflow-hidden">
+                        <AnimatePresence mode="wait">
+                            {filteredResults && filteredResults.length > 0 ? (
+                                <motion.div
+                                    key={activeSem}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-x-auto"
+                                >
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="bg-surface-deep border-b border-border-strong">
+                                                {["Sem", "Code", "Subject", "Int.", "Ext.", "Total", "Credits", "Grade", "Status"].map((h) => (
+                                                    <th
+                                                        key={h}
+                                                        className={`px-4 py-3 text-[10px] font-mono uppercase tracking-widest text-foreground-muted ${["Int.", "Ext.", "Total", "Credits", "Grade", "Status"].includes(h) ? "text-center" : "text-left"}`}
+                                                    >
+                                                        {h}
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {filteredResults.map((row, idx) => {
+                                                const total = Number(row[5]);
+                                                const gradeInfo = getGradeAndPoints(total);
+                                                const themeClasses = getGradeThemeClasses(gradeInfo.grade);
+                                                const paperCode = row[1];
+                                                const subjectTitle = row[2];
+                                                const currentCredit = customCredit[paperCode] ?? getDefaultCredit(subjectTitle);
+
+                                                return (
+                                                    <motion.tr
+                                                        key={idx}
+                                                        initial={{ opacity: 0, x: -6 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ delay: idx * 0.025, duration: 0.25 }}
+                                                        className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/50 transition-colors duration-75"
+                                                    >
+                                                        <td className="px-4 py-3.5 text-xs font-mono text-foreground-muted">{row[0]}</td>
+                                                        <td className="px-4 py-3.5 text-xs font-mono font-semibold text-cat-blue">{paperCode}</td>
+                                                        <td className="px-4 py-3.5 text-sm text-foreground">{subjectTitle}</td>
+                                                        <td className="px-4 py-3.5 text-xs font-mono text-center text-foreground-secondary">{row[3]}</td>
+                                                        <td className="px-4 py-3.5 text-xs font-mono text-center text-foreground-secondary">{row[4]}</td>
+                                                        <td className="px-4 py-3.5 text-xs font-mono text-center font-bold text-foreground">{row[5]}</td>
+                                                        <td className="px-4 py-3.5 text-center">
+                                                            <input
+                                                                type="number"
+                                                                min={0}
+                                                                max={10}
+                                                                value={currentCredit}
+                                                                onChange={(e) => setCustomCredit(paperCode, Number(e.target.value))}
+                                                                className="w-10 text-center bg-surface-deep border border-border rounded-sm py-0.5 font-mono text-xs text-foreground outline-none focus:border-cat-violet transition-colors"
+                                                            />
+                                                        </td>
+                                                        <td className="px-4 py-3.5 text-center">
+                                                            <span className={`inline-flex items-center justify-center w-9 h-6 rounded-sm border font-mono text-[11px] font-bold ${themeClasses}`}>
+                                                                {gradeInfo.grade}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3.5 text-center">
+                                                            <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${gradeInfo.pass ? "text-grade-excellent" : "text-grade-fail"}`}>
+                                                                {gradeInfo.pass ? "Pass" : "Back"}
+                                                            </span>
+                                                        </td>
+                                                    </motion.tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="empty"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="p-12 text-center text-foreground-muted text-xs font-mono"
+                                >
+                                    No results found for this selection.
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </motion.section>
+
+                {/* Summary Bar */}
+                <AnimatePresence>
+                    {filteredResults && filteredResults.length > 0 && (
+                        <motion.section
+                            key="summary"
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 12 }}
+                            transition={{ duration: 0.3 }}
+                            className="bg-surface border border-border-strong rounded-lg overflow-hidden"
+                        >
+                            <div className="bg-surface-deep border-b border-border px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div>
+                                    <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-muted mb-1">
+                                        {activeSem === "100" ? "Overall Summary" : `Semester ${activeSem} Summary`}
+                                    </div>
+                                    {semStats.backlogs > 0 ? (
+                                        <div className="flex items-center gap-1.5 text-grade-fail text-xs font-mono">
+                                            <AlertTriangle size={11} />
+                                            {semStats.backlogs} backlog subject{semStats.backlogs > 1 ? "s" : ""}
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-1.5 text-grade-excellent text-xs font-mono">
+                                            <CheckCircle2 size={11} />
+                                            All subjects cleared
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                    {[
+                                        { label: activeSem === "100" ? "CGPA" : "SGPA", value: sgpa, bg: "bg-cat-violet-surface border-cat-violet-border", text: "text-cat-violet", subtext: "text-cat-violet/70" },
+                                        { label: "Credits", value: `${semStats.earnedCredits}/${semStats.totalCredits}`, bg: "bg-cat-teal-surface border-cat-teal-border", text: "text-cat-teal", subtext: "text-cat-teal/70" },
+                                        { label: "Equiv.", value: `${percentage}%`, bg: "bg-cat-blue-surface border-cat-blue-border", text: "text-cat-blue", subtext: "text-cat-blue/70" },
+                                    ].map((pill) => (
+                                        <div key={pill.label} className={`flex items-center gap-2 border rounded-sm px-3 py-1.5 ${pill.bg}`}>
+                                            <span className={`text-[10px] font-mono uppercase tracking-wider ${pill.subtext}`}>{pill.label}</span>
+                                            <span className={`text-sm font-bold font-mono ${pill.text}`}>{pill.value}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {semStats.backlogs > 0 && (
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="px-5 py-4 flex flex-wrap gap-2"
+                                >
+                                    {filteredResults
+                                        .filter((row) => !getGradeAndPoints(Number(row[5])).pass)
+                                        .map((row, i) => (
+                                            <span key={i} className="text-[11px] font-mono px-2.5 py-1 rounded-sm bg-surface-deep border border-grade-fail-border text-grade-fail">
+                                                {row[1]} · {row[2]}
+                                            </span>
+                                        ))}
+                                </motion.div>
+                            )}
+                        </motion.section>
+                    )}
+                </AnimatePresence>
+
+                {/* Debug JSON */}
+                <details className="border border-border rounded-md overflow-hidden">
+                    <summary className="px-4 py-2.5 bg-surface-deep text-[10px] text-foreground-muted font-mono cursor-pointer hover:text-foreground uppercase tracking-wider">
+                        Debug · Raw JSON Response
                     </summary>
-                    <pre className="mt-3 text-[11px] font-mono text-foreground-secondary bg-background p-3 rounded-xl overflow-auto max-h-96 border border-border">
-                        {JSON.stringify(data, null, 2)}
+                    <pre className="text-[10px] font-mono text-foreground-secondary bg-background p-4 overflow-auto max-h-96">
+                        {JSON.stringify(fullResult, null, 2)}
                     </pre>
                 </details>
-            </div>
+
+            </main>
         </div>
     );
 }
