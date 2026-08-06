@@ -70,8 +70,22 @@ export const POST = async (req: NextRequest) => {
     const success = res.status === 302 && location.includes("studenthome");
 
     if (!success) {
+      const rawHtml = typeof res.data === "string" ? res.data : "";
+      const lower = rawHtml.toLowerCase();
+
+      let errorMessage = "Invalid credentials or CAPTCHA";
+      if (lower.includes("account locked") || lower.includes("account is locked")) {
+        errorMessage = "Your account is locked due to multiple failed login attempts. Please try again later.";
+      } else if (lower.includes("invalid captcha") || lower.includes("wrong captcha")) {
+        errorMessage = "Invalid CAPTCHA code. Please try again.";
+      } else if (lower.includes("disabled")) {
+        errorMessage = "Your account has been disabled on GGSIPU portal.";
+      } else if (lower.includes("password") || lower.includes("username")) {
+        errorMessage = "Invalid Enrollment Number or Password.";
+      }
+
       return NextResponse.json(
-        { error: "Invalid credentials or CAPTCHA", expired: true },
+        { error: errorMessage, expired: true },
         { status: 401 }
       );
     }

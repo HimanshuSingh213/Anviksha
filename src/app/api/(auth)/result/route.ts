@@ -2,13 +2,22 @@ import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 import { BASE_URL } from "../captcha/route";
 
+function extractHtmlText(html: string): string {
+  return html
+    .replace(/<script\b[^<]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style\b[^<]*>[\s\S]*?<\/style>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export const GET = async (req: NextRequest) => {
   try {
     const sessionId = req.cookies.get("JSESSIONID")?.value;
 
     if (!sessionId) {
       return NextResponse.json(
-        { error: "Unauthorized. Please log in.", expired: true },
+        { error: "Session expired. Please log in.", expired: true },
         { status: 401 }
       );
     }
@@ -34,10 +43,16 @@ export const GET = async (req: NextRequest) => {
       const data = JSON.parse(raw);
       return NextResponse.json(data);
     } catch {
+      const lower = raw.toLowerCase();
+
+      // Check for session expiry in GGSIPU HTML
       if (
         res.status === 401 ||
-        raw.toLowerCase().includes("login") ||
-        raw.toLowerCase().includes("no session")
+        lower.includes("login") ||
+        lower.includes("no session") ||
+        lower.includes("session expired") ||
+        lower.includes("session timeout") ||
+        lower.includes("please relogin")
       ) {
         const response = NextResponse.json(
           { error: "Session expired. Please log in again.", expired: true },
@@ -51,10 +66,26 @@ export const GET = async (req: NextRequest) => {
         return response;
       }
 
-      return NextResponse.json(
-        { error: "Invalid response from upstream", preview: raw.slice(0, 500) },
-        { status: 502 }
+      // Check for Account Locked / Disabled in GGSIPU HTML
+      if (lower.includes("account locked") || lower.includes("account is locked") || lower.includes("disabled")) {
+        return NextResponse.json(
+          { error: "Your account is locked or disabled on GGSIPU portal. Please try again later.", locked: true },
+          { status: 403 }
+        );
+      }
+
+      // Clean HTML text extraction for any other GGSIPU error
+      const cleanedError = extractHtmlText(raw);
+      const userFriendlyMessage = cleanedError.length > 0 && cleanedError.length < 200
+        ? cleanedError
+        : "Session expired. Please log in again.";
+
+      const response = NextResponse.json(
+        { error: userFriendlyMessage, expired: true },
+        { status: 401 }
       );
+      response.cookies.set("JSESSIONID", "", { maxAge: 0, path: "/api" });
+      return response;
     }
   } catch (err) {
     console.error("Results route error:", err);

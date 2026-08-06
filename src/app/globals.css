@@ -16,17 +16,14 @@
   --foreground-secondary: #a39e96;
   --foreground-muted: #63605a;
 
-  /* Gold — secondary/tertiary brand accent only.
-     Use for: highlighted box-grid state, CTAs, "you" series in a
-     chart, personal-best badges. Never for grade/status meaning. */
+  /* Gold — secondary/tertiary brand accent only */
   --gold: #c9a961;
   --gold-bright: #e4c67c;
   --gold-dim: #7a6434;
   --gold-surface: rgba(201, 169, 97, 0.08);
   --gold-border: rgba(201, 169, 97, 0.35);
 
-  /* Grade scale — semantic, maps GGSIPU's 8 letter grades to 5 tiers.
-     O, A+ -> excellent | A, B+ -> good | B, C -> average | P -> pass | F -> fail */
+  /* Grade scale — semantic */
   --grade-excellent: #34b37a;
   --grade-excellent-surface: rgba(52, 179, 122, 0.12);
   --grade-excellent-border: rgba(52, 179, 122, 0.35);
@@ -47,9 +44,7 @@
   --grade-fail-surface: rgba(225, 80, 75, 0.12);
   --grade-fail-border: rgba(225, 80, 75, 0.35);
 
-  /* Category colors — multi-series charts & tags/badges (course type,
-     elective vs core, etc). Kept away from gold and the grade hues on
-     purpose so nothing gets misread as a grade. */
+  /* Category colors */
   --cat-blue: #4c8dda;
   --cat-blue-surface: rgba(76, 141, 218, 0.12);
   --cat-blue-border: rgba(76, 141, 218, 0.35);
@@ -70,7 +65,14 @@
   --cat-slate-surface: rgba(124, 133, 145, 0.12);
   --cat-slate-border: rgba(124, 133, 145, 0.35);
 
-  /* Status aliases — trend arrows, deltas, inline messaging */
+  /* Chart palette tokens */
+  --chart-cyan: #38bdf8;
+  --chart-purple: #c084fc;
+  --chart-amber: #fb923c;
+  --chart-emerald: #34d399;
+  --chart-rose: #f87171;
+
+  /* Status aliases */
   --positive: var(--grade-excellent);
   --negative: var(--grade-fail);
   --info: var(--cat-blue);
@@ -135,6 +137,12 @@
   --color-cat-slate-surface: var(--cat-slate-surface);
   --color-cat-slate-border: var(--cat-slate-border);
 
+  --color-chart-cyan: var(--chart-cyan);
+  --color-chart-purple: var(--chart-purple);
+  --color-chart-amber: var(--chart-amber);
+  --color-chart-emerald: var(--chart-emerald);
+  --color-chart-rose: var(--chart-rose);
+
   --color-positive: var(--positive);
   --color-negative: var(--negative);
   --color-info: var(--info);
@@ -150,20 +158,36 @@ body {
 
 /* Custom theme scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--background);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-strong);
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--gold-dim);
+  background: #3f3f46;
 }
 
+/* Custom horizontal scrollbar helper — no Y scrollbar */
+.custom-h-scrollbar {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* Remove spin buttons from number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

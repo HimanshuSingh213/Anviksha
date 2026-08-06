@@ -40,7 +40,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         {children}
-        <Toaster theme="dark" position="top-right" richColors />
+        <Toaster theme="dark" position="bottom-right" richColors />
       </body>
     </html>
   );

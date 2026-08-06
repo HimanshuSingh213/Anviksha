@@ -1,0 +1,125 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { Award, BookOpen, Percent, FileText, AlertTriangle, CheckCircle2 } from "lucide-react";
+
+interface Props {
+    gpa: string;
+    gpaLabel: string;
+    earnedCredits: number;
+    totalCredits: number;
+    obtainedMarks: number;
+    totalMaxMarks: number;
+    percentage: string;
+    backlogsCount: number;
+}
+
+const cards = (props: Props) => [
+    {
+        label: props.gpaLabel,
+        value: props.gpa,
+        sub: "out of 10.0 scale",
+        icon: Award,
+        accent: "text-purple-300",
+        border: "border-purple-500/30",
+        bg: "bg-purple-500/10",
+    },
+    {
+        label: "Credits Earned",
+        value: `${props.earnedCredits}/${props.totalCredits}`,
+        sub: `${props.totalCredits - props.earnedCredits} credits pending`,
+        icon: BookOpen,
+        accent: "text-teal-300",
+        border: "border-teal-500/30",
+        bg: "bg-teal-500/10",
+    },
+    {
+        label: "Marks Obtained",
+        value: `${props.obtainedMarks}/${props.totalMaxMarks}`,
+        sub: props.totalMaxMarks > 0
+            ? `${((props.obtainedMarks / props.totalMaxMarks) * 100).toFixed(1)}% raw score`
+            : "—",
+        icon: FileText,
+        accent: "text-pink-300",
+        border: "border-pink-500/30",
+        bg: "bg-pink-500/10",
+    },
+    {
+        label: "Percentage",
+        value: `${props.percentage}%`,
+        sub: "CGPA × 9.5 formula",
+        icon: Percent,
+        accent: "text-sky-300",
+        border: "border-sky-500/30",
+        bg: "bg-sky-500/10",
+    },
+];
+
+export default function AnalyticsOverview(props: Props) {
+    const metricCards = cards(props);
+
+    return (
+        <div className="space-y-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {metricCards.map((card, i) => {
+                    const Icon = card.icon;
+                    return (
+                        <motion.div
+                            key={card.label}
+                            initial={{ opacity: 0, y: 12 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.05, duration: 0.25 }}
+                            className="p-4 bg-surface border border-border-strong rounded-md space-y-3 shadow-xs"
+                        >
+                            <div className={`w-7 h-7 rounded-sm flex items-center justify-center border ${card.bg} ${card.border} ${card.accent}`}>
+                                <Icon size={13} />
+                            </div>
+
+                            <div>
+                                <div className="text-2xl font-bold font-mono tracking-tight text-white leading-none">
+                                    {card.value}
+                                </div>
+                                <div className="text-[11px] font-mono text-neutral-400 mt-1">
+                                    {card.sub}
+                                </div>
+                            </div>
+
+                            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-neutral-300 border-t border-border pt-2">
+                                {card.label}
+                            </div>
+                        </motion.div>
+                    );
+                })}
+            </div>
+
+            {props.backlogsCount > 0 ? (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center gap-3 p-3.5 rounded-md bg-surface border border-rose-500/40 text-white"
+                >
+                    <div className="p-1.5 rounded-sm bg-rose-500/15 border border-rose-500/40 text-rose-400 shrink-0">
+                        <AlertTriangle size={14} />
+                    </div>
+                    <div>
+                        <div className="text-xs font-mono font-bold text-rose-300">
+                            {props.backlogsCount} Backlog{props.backlogsCount > 1 ? "s" : ""} Active
+                        </div>
+                        <div className="text-[11px] font-mono text-neutral-300 mt-0.5">
+                            Backlog subjects carry 0 grade points — clear them in re-appear exams to raise GPA.
+                        </div>
+                    </div>
+                </motion.div>
+            ) : (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center gap-2.5 p-3 rounded-md bg-surface border border-emerald-500/30 text-emerald-300 text-xs font-mono font-bold"
+                >
+                    <CheckCircle2 size={14} className="shrink-0 text-emerald-400" />
+                    <span>Clean academic standing — 0 backlogs in this view!</span>
+                </motion.div>
+            )}
+        </div>
+    );
+}

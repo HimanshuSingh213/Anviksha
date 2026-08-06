@@ -6,7 +6,7 @@ export function getGradeAndPoints(total: number) {
     if (total >= 50) return { grade: "B", points: 6, pass: true };
     if (total >= 45) return { grade: "C", points: 5, pass: true };
     if (total >= 40) return { grade: "P", points: 4, pass: true };
-    return { grade: "F", points: 0, pass: false }; // Backlog
+    return { grade: "F", points: 0, pass: false };
 }
 
 export function getGradeThemeClasses(grade: string) {
@@ -22,7 +22,7 @@ export function getGradeThemeClasses(grade: string) {
             return "bg-grade-average-surface text-grade-average border-grade-average-border";
         case "P":
             return "bg-grade-pass-surface text-grade-pass border-grade-pass-border";
-        default: // "F" / Backlog
+        default:
             return "bg-grade-fail-surface text-grade-fail border-grade-fail-border";
     }
 }
@@ -30,5 +30,5 @@ export function getGradeThemeClasses(grade: string) {
 export function getDefaultCredit(subjectTitle: string): number {
     const title = (subjectTitle || "").toUpperCase();
     if (title.includes("LAB") || title.includes("PRACTICAL")) return 1;
-    return 3; // Default Theory Credits
+    return 3;
 }
