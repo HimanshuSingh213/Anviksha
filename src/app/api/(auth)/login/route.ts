@@ -1,12 +1,15 @@
 import { LoginSchema } from "@/validations/login.validation";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { NextRequest, NextResponse } from "next/server";
 import { createHash } from "node:crypto";
 import { BASE_URL } from "../captcha/route";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/types/ApiResponse";
 
 const hashPassword = (password: string, captcha: string): string => {
   return createHash("sha256").update(password + captcha).digest("base64");
 };
+
+const REQUEST_TIMEOUT = 10000;
 
 export const POST = async (req: NextRequest) => {
   try {
@@ -14,21 +17,23 @@ export const POST = async (req: NextRequest) => {
     const validationResult = LoginSchema.safeParse(body);
 
     if (!validationResult.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: validationResult.error.issues[0]?.message || "Invalid input format",
-        },
-        { status: 400 }
-      );
+      const errPayload: ApiErrorResponse = {
+        success: false,
+        error: validationResult.error.issues[0]?.message || "Invalid input format",
+        code: "VALIDATION_ERROR",
+      };
+      return NextResponse.json(errPayload, { status: 400 });
     }
 
     const sessionId = req.cookies.get("JSESSIONID")?.value;
     if (!sessionId) {
-      return NextResponse.json(
-        { error: "Session expired. Please refresh the CAPTCHA.", expired: true },
-        { status: 401 }
-      );
+      const errPayload: ApiErrorResponse = {
+        success: false,
+        error: "Session expired. Please refresh the CAPTCHA.",
+        expired: true,
+        code: "SESSION_EXPIRED",
+      };
+      return NextResponse.json(errPayload, { status: 401 });
     }
 
     const hashedPass = hashPassword(
@@ -52,6 +57,7 @@ export const POST = async (req: NextRequest) => {
           Referer: `${BASE_URL}/web/Login`,
           Origin: BASE_URL,
         },
+        timeout: REQUEST_TIMEOUT,
         maxRedirects: 0,
         validateStatus: (status) => status === 302 || status === 200,
       }
@@ -74,28 +80,48 @@ export const POST = async (req: NextRequest) => {
       const lower = rawHtml.toLowerCase();
 
       let errorMessage = "Invalid credentials or CAPTCHA";
+      let code: 'INVALID_CREDENTIALS' | 'SESSION_EXPIRED' = 'INVALID_CREDENTIALS';
+      let expired = true;
+
       if (lower.includes("account locked") || lower.includes("account is locked")) {
-        errorMessage = "Your account is locked due to multiple failed login attempts. Please try again later.";
+        const errPayload: ApiErrorResponse = {
+          success: false,
+          error: "Account locked due to multiple failed attempts. Try again after some time.",
+          code: "RATE_LIMITED",
+          locked: true,
+        };
+        return NextResponse.json(errPayload, { status: 403 });
       } else if (lower.includes("invalid captcha") || lower.includes("wrong captcha")) {
-        errorMessage = "Invalid CAPTCHA code. Please try again.";
+        errorMessage = "Invalid CAPTCHA. Please try again.";
       } else if (lower.includes("disabled")) {
-        errorMessage = "Your account has been disabled on GGSIPU portal.";
+        errorMessage = "Account disabled on GGSIPU portal.";
       } else if (lower.includes("password") || lower.includes("username")) {
         errorMessage = "Invalid Enrollment Number or Password.";
+      } else if (lower.includes("session") || lower.includes("expired") ||
+        res.status === 302 && !location.includes("studenthome")) {
+        errorMessage = "Session expired. Please refresh CAPTCHA.";
+        code = "SESSION_EXPIRED";
       }
 
-      return NextResponse.json(
-        { error: errorMessage, expired: true },
-        { status: 401 }
-      );
+      const errPayload: ApiErrorResponse = {
+        success: false,
+        error: errorMessage,
+        code,
+        expired,
+      };
+
+      return NextResponse.json(errPayload, { status: 401 });
     }
 
-    const response = NextResponse.json({
+    const payload: ApiSuccessResponse<{ message: string }> = {
       success: true,
-      message: "Authenticated successfully",
-    });
+      data: { message: "Authenticated successfully" },
+    };
+
+    const response = NextResponse.json(payload);
 
     const activeSessionId = newSessionId || sessionId;
+
     response.cookies.set("JSESSIONID", activeSessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -104,12 +130,42 @@ export const POST = async (req: NextRequest) => {
       path: "/api",
     });
 
+    response.cookies.set("auth_session", "active", {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 3600,
+      path: "/",
+    });
+
     return response;
   } catch (err) {
-    console.error("Login proxy error:", err);
-    return NextResponse.json(
-      { error: "Upstream login failed" },
-      { status: 502 }
-    );
+    const axiosErr = err as AxiosError;
+
+    if (axiosErr.code === "ECONNABORTED" || axiosErr.code === "ETIMEDOUT") {
+      const errPayload: ApiErrorResponse = {
+        success: false,
+        error: "GGSIPU login timed out. Please retry.",
+        code: "NETWORK_ERROR",
+      };
+      return NextResponse.json(errPayload, { status: 504 });
+    }
+
+    if (axiosErr.response?.status && axiosErr.response.status >= 500) {
+      const errPayload: ApiErrorResponse = {
+        success: false,
+        error: "GGSIPU portal is down. Please try later.",
+        code: "UPSTREAM_ERROR",
+      };
+      return NextResponse.json(errPayload, { status: 502 });
+    }
+
+    console.error("Login proxy error:", axiosErr.message);
+    const errPayload: ApiErrorResponse = {
+      success: false,
+      error: "Internal server error",
+      code: "UNKNOWN",
+    };
+    return NextResponse.json(errPayload, { status: 500 });
   }
 };

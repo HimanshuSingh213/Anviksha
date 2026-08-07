@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, Award, BarChart3 } from "lucide-react";
 import {
@@ -29,74 +29,80 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
         setMounted(true);
     }, []);
 
-    // Group rows by semester for SGPA trend
-    const semMap: Record<number, any[]> = {};
-    allResults.forEach((row) => {
-        const sem = Number(row[0]);
-        if (sem >= 1 && sem <= 8) {
-            if (!semMap[sem]) semMap[sem] = [];
-            semMap[sem].push(row);
-        }
-    });
-
-    const semKeys = Object.keys(semMap).map(Number).sort((a, b) => a - b);
-
-    const semData = semKeys.map((semNum) => {
-        let weighted = 0;
-        let credits = 0;
-        let backlogs = 0;
-
-        semMap[semNum].forEach((row) => {
-            const total = isNaN(Number(row[5])) ? 0 : Number(row[5]);
-            const credit = customCredit[row[1]] ?? getDefaultCredit(row[2]);
-            const { points, pass } = getGradeAndPoints(total);
-
-            weighted += credit * (pass ? points : 0);
-            credits += credit;
-            if (!pass) backlogs += 1;
+    // Memoize SGPA semester curve calculation
+    const { semData, bestSem } = useMemo(() => {
+        const semMap: Record<number, any[]> = {};
+        allResults.forEach((row) => {
+            const sem = Number(row[0]);
+            if (sem >= 1 && sem <= 8) {
+                if (!semMap[sem]) semMap[sem] = [];
+                semMap[sem].push(row);
+            }
         });
 
-        const sgpa = credits > 0 ? Number((weighted / credits).toFixed(2)) : 0;
+        const semKeys = Object.keys(semMap).map(Number).sort((a, b) => a - b);
 
-        return {
-            semLabel: `Sem ${semNum}`,
-            sem: semNum,
-            sgpa,
-            backlogs,
-            subjects: semMap[semNum].length,
-            totalCredits: credits,
-        };
-    });
+        const data = semKeys.map((semNum) => {
+            let weighted = 0;
+            let credits = 0;
+            let backlogs = 0;
 
-    // Subject-wise Internal vs External data
-    const subjectMarksData = filteredResults.map((row) => {
-        const paperCode = String(row[1] || "").trim();
-        const subjectTitle = String(row[2] || "").trim();
-        const internal = isNaN(Number(row[3])) ? 0 : Number(row[3]);
-        const external = isNaN(Number(row[4])) ? 0 : Number(row[4]);
-        const total = isNaN(Number(row[5])) ? 0 : Number(row[5]);
+            semMap[semNum].forEach((row) => {
+                const total = isNaN(Number(row[5])) ? 0 : Number(row[5]);
+                const credit = customCredit[row[1]] ?? getDefaultCredit(row[2]);
+                const { points, pass } = getGradeAndPoints(total);
 
-        const label = paperCode.length > 0 ? paperCode : subjectTitle.slice(0, 8);
+                weighted += credit * (pass ? points : 0);
+                credits += credit;
+                if (!pass) backlogs += 1;
+            });
 
-        return {
-            label,
-            paperCode,
-            subjectTitle,
-            internal,
-            external,
-            total,
-        };
-    });
+            const sgpa = credits > 0 ? Number((weighted / credits).toFixed(2)) : 0;
 
-    // Calculate minimum chart width to prevent bar crushing and enable horizontal scroll
-    const minBarChartWidth = Math.max(100, subjectMarksData.length * 64);
+            return {
+                semLabel: `Sem ${semNum}`,
+                sem: semNum,
+                sgpa,
+                backlogs,
+                subjects: semMap[semNum].length,
+                totalCredits: credits,
+            };
+        });
 
-    let bestSem: typeof semData[0] | null = null;
-    semData.forEach((s) => {
-        if (!bestSem || s.sgpa > bestSem.sgpa) {
-            bestSem = s;
-        }
-    });
+        let best: typeof data[0] | null = null;
+        data.forEach((s) => {
+            if (!best || s.sgpa > best.sgpa) {
+                best = s;
+            }
+        });
+
+        return { semData: data, bestSem: best };
+    }, [allResults, customCredit]);
+
+    // Memoize subject-wise internal vs external bar chart data
+    const { subjectMarksData, minBarChartWidth } = useMemo(() => {
+        const data = filteredResults.map((row) => {
+            const paperCode = String(row[1] || "").trim();
+            const subjectTitle = String(row[2] || "").trim();
+            const internal = isNaN(Number(row[3])) ? 0 : Number(row[3]);
+            const external = isNaN(Number(row[4])) ? 0 : Number(row[4]);
+            const total = isNaN(Number(row[5])) ? 0 : Number(row[5]);
+
+            const label = paperCode.length > 0 ? paperCode : subjectTitle.slice(0, 8);
+
+            return {
+                label,
+                paperCode,
+                subjectTitle,
+                internal,
+                external,
+                total,
+            };
+        });
+
+        const minWidth = Math.max(100, data.length * 64);
+        return { subjectMarksData: data, minBarChartWidth: minWidth };
+    }, [filteredResults]);
 
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -110,17 +116,15 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
             >
                 <div className="flex items-center justify-between gap-2">
                     <div>
-                        <h3 className="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <TrendingUp size={13} className="text-sky-400" />
+                        <h3 className="text-xs font-mono font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
                             Semester SGPA Trend
                         </h3>
-                        <p className="text-[11px] font-mono text-neutral-400 mt-0.5">
+                        <p className="text-[11px] font-mono text-foreground-secondary mt-0.5">
                             Grade-point progression across semesters
                         </p>
                     </div>
                     {bestSem && (
-                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-sm bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] font-mono font-bold shrink-0">
-                            <Award size={12} />
+                        <div className="flex items-center gap-1 px-2.5 py-1 rounded-sm bg-gold-surface border border-gold-border text-gold text-[11px] font-mono font-bold shrink-0">
                             <span>Best: Sem {(bestSem as any).sem} ({(bestSem as any).sgpa})</span>
                         </div>
                     )}
@@ -132,44 +136,44 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
                             <AreaChart data={semData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="cyanGradient" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.4} />
-                                        <stop offset="95%" stopColor="#38bdf8" stopOpacity={0.0} />
+                                        <stop offset="5%" stopColor="var(--chart-cyan)" stopOpacity={0.4} />
+                                        <stop offset="95%" stopColor="var(--chart-cyan)" stopOpacity={0.0} />
                                     </linearGradient>
                                 </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#2a2a32" vertical={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="var(--border-strong)" vertical={false} />
                                 <XAxis
                                     dataKey="semLabel"
-                                    stroke="#9ca3af"
+                                    stroke="var(--foreground-secondary)"
                                     fontSize={11}
                                     tickLine={false}
-                                    axisLine={{ stroke: "#2a2a32" }}
+                                    axisLine={{ stroke: "var(--border-strong)" }}
                                 />
                                 <YAxis
                                     domain={[0, 10]}
                                     ticks={[0, 2, 4, 6, 8, 10]}
-                                    stroke="#9ca3af"
+                                    stroke="var(--foreground-secondary)"
                                     fontSize={11}
                                     tickLine={false}
                                     axisLine={false}
                                 />
                                 
                                 <Tooltip
-                                    cursor={{ fill: "#141418" }}
+                                    cursor={{ fill: "var(--surface-elevated)" }}
                                     content={({ active, payload }) => {
                                         if (active && payload && payload.length) {
                                             const data = payload[0].payload;
                                             return (
-                                                <div className="bg-[#18181b] border border-[#3f3f46] px-3.5 py-2 rounded-sm text-xs font-mono shadow-xl">
-                                                    <div className="font-bold text-white mb-0.5">
+                                                <div className="bg-surface-elevated border border-border-strong px-3.5 py-2 rounded-sm text-xs font-mono shadow-xl">
+                                                    <div className="font-bold text-foreground mb-0.5">
                                                         Semester {data.sem} Performance
                                                     </div>
-                                                    <div className="text-sky-300 font-bold text-sm">
+                                                    <div className="text-chart-cyan font-bold text-sm">
                                                         SGPA: {data.sgpa} / 10.0
                                                     </div>
-                                                    <div className="text-neutral-300 text-[11px] mt-0.5">
+                                                    <div className="text-foreground-secondary text-[11px] mt-0.5">
                                                         {data.totalCredits} Credits · {data.subjects} Subjects
                                                         {data.backlogs > 0 && (
-                                                            <span className="text-rose-400 font-bold ml-1">
+                                                            <span className="text-grade-fail font-bold ml-1">
                                                                 ({data.backlogs} Backlog)
                                                             </span>
                                                         )}
@@ -184,31 +188,31 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
                                 <Area
                                     type="monotone"
                                     dataKey="sgpa"
-                                    stroke="#38bdf8"
+                                    stroke="var(--chart-cyan)"
                                     strokeWidth={2.5}
                                     fillOpacity={1}
                                     fill="url(#cyanGradient)"
-                                    activeDot={{ r: 6, fill: "#38bdf8", stroke: "#ffffff", strokeWidth: 2 }}
+                                    activeDot={{ r: 6, fill: "var(--chart-cyan)", stroke: "#ffffff", strokeWidth: 2 }}
                                 />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
                 ) : (
-                    <div className="h-56 rounded-sm bg-surface-deep border border-dashed border-border-strong flex items-center justify-center text-xs font-mono text-neutral-400">
+                    <div className="h-56 rounded-sm bg-surface-deep border border-dashed border-border-strong flex items-center justify-center text-xs font-mono text-foreground-muted">
                         No semester data available
                     </div>
                 )}
 
                 <div className="flex items-center justify-between text-[11px] font-mono border-t border-border-strong pt-2.5">
-                    <span className="flex items-center gap-1.5 text-neutral-300">
-                        <span className="w-2.5 h-0.5 bg-sky-400 inline-block" />
+                    <span className="flex items-center gap-1.5 text-foreground-secondary">
+                        <span className="w-2.5 h-0.5 bg-chart-cyan inline-block" />
                         SGPA Curve
                     </span>
-                    <span className="text-neutral-400">Scale: 0.0 - 10.0</span>
+                    <span className="text-foreground-muted">Scale: 0.0 - 10.0</span>
                 </div>
             </motion.div>
 
-            {/* Subject-wise internal vs external bar chart with custom horizontal scrollbar and no vertical scroll */}
+            {/* Subject-wise internal vs external bar chart */}
             <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -217,11 +221,11 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
             >
                 <div className="flex items-center justify-between gap-2">
                     <div>
-                        <h3 className="text-xs font-mono font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                            <BarChart3 size={13} className="text-purple-300" />
+                        <h3 className="text-xs font-mono font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                            <BarChart3 size={13} className="text-chart-purple" />
                             Subject-Wise Internal vs External Marks
                         </h3>
-                        <p className="text-[11px] font-mono text-neutral-400 mt-0.5">
+                        <p className="text-[11px] font-mono text-foreground-secondary mt-0.5">
                             Individual subject internal & external breakdown ({subjectMarksData.length} subjects)
                         </p>
                     </div>
@@ -232,42 +236,42 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
                         <div style={{ minWidth: `${minBarChartWidth}px`, width: "100%", height: "100%" }}>
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={subjectMarksData} margin={{ top: 10, right: 15, left: -20, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" stroke="#2a2a32" vertical={false} />
+                                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border-strong)" vertical={false} />
                                     <XAxis
                                         dataKey="label"
-                                        stroke="#9ca3af"
+                                        stroke="var(--foreground-secondary)"
                                         fontSize={10}
                                         tickLine={false}
-                                        axisLine={{ stroke: "#2a2a32" }}
+                                        axisLine={{ stroke: "var(--border-strong)" }}
                                     />
                                     <YAxis
                                         domain={[0, 75]}
-                                        stroke="#9ca3af"
+                                        stroke="var(--foreground-secondary)"
                                         fontSize={11}
                                         tickLine={false}
                                         axisLine={false}
                                     />
                                     
                                     <Tooltip
-                                        cursor={{ fill: "#141418" }}
+                                        cursor={{ fill: "var(--surface-elevated)" }}
                                         content={({ active, payload }) => {
                                             if (active && payload && payload.length) {
                                                 const data = payload[0].payload;
                                                 return (
-                                                    <div className="bg-[#18181b] border border-[#3f3f46] px-3.5 py-2 rounded-sm text-xs font-mono shadow-xl">
-                                                        <div className="font-bold text-white mb-1">
+                                                    <div className="bg-surface-elevated border border-border-strong px-3.5 py-2 rounded-sm text-xs font-mono shadow-xl">
+                                                        <div className="font-bold text-foreground mb-1">
                                                             {data.subjectTitle}
                                                         </div>
-                                                        <div className="text-[11px] text-neutral-400 mb-1">
+                                                        <div className="text-[11px] text-foreground-secondary mb-1">
                                                             Code: {data.paperCode}
                                                         </div>
-                                                        <div className="text-purple-300 font-bold">
+                                                        <div className="text-chart-purple font-bold">
                                                             Internal Marks: {data.internal}
                                                         </div>
-                                                        <div className="text-orange-300 font-bold">
+                                                        <div className="text-chart-amber font-bold">
                                                             External Marks: {data.external}
                                                         </div>
-                                                        <div className="text-white font-bold border-t border-border-strong mt-1 pt-1">
+                                                        <div className="text-foreground font-bold border-t border-border-strong mt-1 pt-1">
                                                             Total Score: {data.total} / 100
                                                         </div>
                                                     </div>
@@ -280,14 +284,14 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
                                     <Bar
                                         dataKey="internal"
                                         name="Internal"
-                                        fill="#c084fc"
+                                        fill="var(--chart-purple)"
                                         barSize={12}
                                         radius={[3, 3, 0, 0]}
                                     />
                                     <Bar
                                         dataKey="external"
                                         name="External"
-                                        fill="#fb923c"
+                                        fill="var(--chart-amber)"
                                         barSize={12}
                                         radius={[3, 3, 0, 0]}
                                     />
@@ -296,24 +300,24 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
                         </div>
                     </div>
                 ) : (
-                    <div className="h-56 rounded-sm bg-surface-deep border border-dashed border-border-strong flex items-center justify-center text-xs font-mono text-neutral-400">
+                    <div className="h-56 rounded-sm bg-surface-deep border border-dashed border-border-strong flex items-center justify-center text-xs font-mono text-foreground-muted">
                         No subject data available
                     </div>
                 )}
 
                 <div className="flex items-center justify-between text-[11px] font-mono border-t border-border-strong pt-2.5">
                     <div className="flex items-center gap-4">
-                        <span className="flex items-center gap-1.5 text-neutral-300">
-                            <span className="w-2.5 h-2.5 bg-purple-400 rounded-xs inline-block" />
+                        <span className="flex items-center gap-1.5 text-foreground-secondary">
+                            <span className="w-2.5 h-2.5 bg-chart-purple rounded-xs inline-block" />
                             Internal Marks
                         </span>
-                        <span className="flex items-center gap-1.5 text-neutral-300">
-                            <span className="w-2.5 h-2.5 bg-orange-400 rounded-xs inline-block" />
+                        <span className="flex items-center gap-1.5 text-foreground-secondary">
+                            <span className="w-2.5 h-2.5 bg-chart-amber rounded-xs inline-block" />
                             External Marks
                         </span>
                     </div>
                     {subjectMarksData.length > 8 && (
-                        <span className="text-neutral-400 text-[10px] uppercase">Scroll →</span>
+                        <span className="text-foreground-muted text-[10px] uppercase">Scroll →</span>
                     )}
                 </div>
             </motion.div>

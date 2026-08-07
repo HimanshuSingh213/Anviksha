@@ -1,6 +1,10 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { NextRequest, NextResponse } from "next/server";
 import { BASE_URL } from "../captcha/route";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/types/ApiResponse";
+import { ResultData } from "@/types/result";
+
+const REQUEST_TIMEOUT = 15000;
 
 function extractHtmlText(html: string): string {
   return html
@@ -8,7 +12,8 @@ function extractHtmlText(html: string): string {
     .replace(/<style\b[^<]*>[\s\S]*?<\/style>/gi, "")
     .replace(/<[^>]+>/g, " ")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim()
+    .slice(0, 200);
 }
 
 export const GET = async (req: NextRequest) => {
@@ -16,10 +21,15 @@ export const GET = async (req: NextRequest) => {
     const sessionId = req.cookies.get("JSESSIONID")?.value;
 
     if (!sessionId) {
-      return NextResponse.json(
-        { error: "Session expired. Please log in.", expired: true },
-        { status: 401 }
-      );
+      const errPayload: ApiErrorResponse = {
+        success: false,
+        error: "Session expired. Please log in.",
+        code: "SESSION_EXPIRED",
+        expired: true,
+      };
+      const response = NextResponse.json(errPayload, { status: 401 });
+      response.cookies.set("auth_session", "", { maxAge: 0, path: "/" });
+      return response;
     }
 
     const { searchParams } = new URL(req.url);
@@ -34,18 +44,28 @@ export const GET = async (req: NextRequest) => {
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         Referer: `${BASE_URL}/web/student/studenthome.jsp`,
       },
+      timeout: REQUEST_TIMEOUT,
       validateStatus: () => true,
     });
 
     const raw = typeof res.data === "string" ? res.data : JSON.stringify(res.data);
 
     try {
-      const data = JSON.parse(raw);
-      return NextResponse.json(data);
+      const data: ResultData = JSON.parse(raw);
+
+      if (!data.stprofile || !Array.isArray(data.stresult)) {
+        throw new Error("Invalid data structure");
+      }
+
+      const successPayload: ApiSuccessResponse<ResultData> = {
+        success: true,
+        data,
+      };
+
+      return NextResponse.json(successPayload);
     } catch {
       const lower = raw.toLowerCase();
 
-      // Check for session expiry in GGSIPU HTML
       if (
         res.status === 401 ||
         lower.includes("login") ||
@@ -54,44 +74,71 @@ export const GET = async (req: NextRequest) => {
         lower.includes("session timeout") ||
         lower.includes("please relogin")
       ) {
-        const response = NextResponse.json(
-          { error: "Session expired. Please log in again.", expired: true },
-          { status: 401 }
-        );
-
-        response.cookies.set("JSESSIONID", "", {
-          maxAge: 0,
-          path: "/api",
-        });
+        const errPayload: ApiErrorResponse = {
+          success: false,
+          error: "Session expired. Please log in again.",
+          code: "SESSION_EXPIRED",
+          expired: true,
+        };
+        const response = NextResponse.json(errPayload, { status: 401 });
+        response.cookies.set("JSESSIONID", "", { maxAge: 0, path: "/api" });
+        response.cookies.set("auth_session", "", { maxAge: 0, path: "/" });
         return response;
       }
 
-      // Check for Account Locked / Disabled in GGSIPU HTML
       if (lower.includes("account locked") || lower.includes("account is locked") || lower.includes("disabled")) {
-        return NextResponse.json(
-          { error: "Your account is locked or disabled on GGSIPU portal. Please try again later.", locked: true },
-          { status: 403 }
-        );
+        const errPayload: ApiErrorResponse = {
+          success: false,
+          error: "Account access restricted on GGSIPU.",
+          code: "RATE_LIMITED",
+          locked: true,
+        };
+        return NextResponse.json(errPayload, { status: 403 });
       }
 
-      // Clean HTML text extraction for any other GGSIPU error
       const cleanedError = extractHtmlText(raw);
       const userFriendlyMessage = cleanedError.length > 0 && cleanedError.length < 200
         ? cleanedError
-        : "Session expired. Please log in again.";
+        : "Unexpected response from GGSIPU. Please retry.";
 
-      const response = NextResponse.json(
-        { error: userFriendlyMessage, expired: true },
-        { status: 401 }
-      );
+      const errPayload: ApiErrorResponse = {
+        success: false,
+        error: userFriendlyMessage,
+        code: "UPSTREAM_ERROR",
+      };
+
+      const response = NextResponse.json(errPayload, { status: 502 });
       response.cookies.set("JSESSIONID", "", { maxAge: 0, path: "/api" });
+      response.cookies.set("auth_session", "", { maxAge: 0, path: "/" });
       return response;
     }
   } catch (err) {
-    console.error("Results route error:", err);
-    return NextResponse.json(
-      { error: "Failed to fetch results from GGSIPU server" },
-      { status: 502 }
-    );
+    const axiosErr = err as AxiosError;
+
+    if (axiosErr.code === "ECONNABORTED" || axiosErr.code === "ETIMEDOUT") {
+      const errPayload: ApiErrorResponse = {
+        success: false,
+        error: "Results request timed out. GGSIPU may be slow.",
+        code: "NETWORK_ERROR",
+      };
+      return NextResponse.json(errPayload, { status: 504 });
+    }
+
+    if (axiosErr.code === "ECONNREFUSED" || axiosErr.code === "ENOTFOUND") {
+      const errPayload: ApiErrorResponse = {
+        success: false,
+        error: "Cannot connect to GGSIPU. Check your connection.",
+        code: "NETWORK_ERROR",
+      };
+      return NextResponse.json(errPayload, { status: 503 });
+    }
+
+    console.error("Results route error:", axiosErr.message);
+    const errPayload: ApiErrorResponse = {
+      success: false,
+      error: "Failed to fetch results",
+      code: "UNKNOWN",
+    };
+    return NextResponse.json(errPayload, { status: 500 });
   }
 };

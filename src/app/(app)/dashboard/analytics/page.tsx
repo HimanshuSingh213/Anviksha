@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import useResultStore from "@/store/result-store";
 import { getDefaultCredit, getGradeAndPoints } from "@/helpers/grade-system";
 import Skeleton from "@/components/dashboard/Skeleton";
-import AnalyticsNavbar from "@/components/analytics/AnalyticsNavbar";
+import AppNavbar from "@/components/common/AppNavbar";
 import SemesterSelector from "@/components/analytics/SemesterSelector";
 import AnalyticsOverview from "@/components/analytics/AnalyticsOverview";
+import DivisionClassificationCard from "@/components/analytics/DivisionClassificationCard";
 import SemesterTrendChart from "@/components/analytics/SemesterTrendChart";
 import QuickStatsDistribution from "@/components/analytics/QuickStatsDistribution";
 
@@ -26,22 +27,24 @@ export default function AnalyticsPage() {
     const allResults = fullResult.stresult ?? [];
     const profile = fullResult.stprofile;
 
-    // Filter results by selected semester ("100" means show all semesters)
-    const filteredResults = allResults.filter((row: any[]) => {
-        return activeSem === "100" || row[0] === Number(activeSem);
-    });
+    // Available semester list
+    const availableSemesters = useMemo(() => {
+        const list: number[] = [];
+        allResults.forEach((row: any[]) => {
+            const semNum = Number(row[0]);
+            if (semNum >= 1 && semNum <= 8 && !list.includes(semNum)) {
+                list.push(semNum);
+            }
+        });
+        return list;
+    }, [allResults]);
 
-    // Find all semester numbers (1 to 8) that exist in the student's results
-    const availableSemesters: number[] = [];
-    allResults.forEach((row: any[]) => {
-        const semNum = Number(row[0]);
-        if (semNum >= 1 && semNum <= 8 && !availableSemesters.includes(semNum)) {
-            availableSemesters.push(semNum);
-        }
-    });
+    // Semester filtering and stats computation
+    const { filteredResults, stats, gpaLabel, gpa, percentage } = useMemo(() => {
+        const filtered = allResults.filter((row: any[]) => {
+            return activeSem === "100" || row[0] === Number(activeSem);
+        });
 
-    // Calculate total GPA, credits, marks, and backlogs
-    function computeStats(rows: any[][]) {
         let weightedPoints = 0;
         let totalCredits = 0;
         let earnedCredits = 0;
@@ -49,7 +52,7 @@ export default function AnalyticsPage() {
         let obtainedMarks = 0;
         let totalMaxMarks = 0;
 
-        rows.forEach((row) => {
+        filtered.forEach((row) => {
             const rawTotal = Number(row[5]);
             const total = isNaN(rawTotal) ? 0 : rawTotal;
             const paperCode = row[1];
@@ -57,7 +60,8 @@ export default function AnalyticsPage() {
             const credit = customCredit[paperCode] ?? getDefaultCredit(subjectTitle);
             const { points, pass } = getGradeAndPoints(total);
 
-            weightedPoints += credit * (pass ? points : 0);
+            const effectivePoints = pass ? points : 0;
+            weightedPoints += credit * effectivePoints;
             totalCredits += credit;
             obtainedMarks += pass ? total : 0;
             totalMaxMarks += 100;
@@ -69,19 +73,28 @@ export default function AnalyticsPage() {
             }
         });
 
-        const gpa = totalCredits > 0 ? weightedPoints / totalCredits : 0;
-        return { gpa, totalCredits, earnedCredits, backlogs, obtainedMarks, totalMaxMarks };
-    }
+        const computedGpa = totalCredits > 0 ? weightedPoints / totalCredits : 0;
+        const label = activeSem === "100" ? "Overall CGPA" : `Semester ${activeSem} SGPA`;
 
-    const stats = computeStats(filteredResults);
-    const gpaLabel = activeSem === "100" ? "Overall CGPA" : `Semester ${activeSem} SGPA`;
-    const gpa = stats.gpa.toFixed(2);
-    const percentage = (stats.gpa * 9.5).toFixed(2);
+        return {
+            filteredResults: filtered,
+            stats: {
+                gpa: computedGpa,
+                totalCredits,
+                earnedCredits,
+                backlogs,
+                obtainedMarks,
+                totalMaxMarks,
+            },
+            gpaLabel: label,
+            gpa: computedGpa.toFixed(2),
+            percentage: (computedGpa * 10).toFixed(2),
+        };
+    }, [activeSem, allResults, customCredit]);
 
     return (
         <div className="min-h-screen bg-background text-foreground">
-            {/* Header navbar */}
-            <AnalyticsNavbar profile={profile} />
+            <AppNavbar profile={profile} />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-7">
 
@@ -103,6 +116,13 @@ export default function AnalyticsPage() {
                     totalMaxMarks={stats.totalMaxMarks}
                     percentage={percentage}
                     backlogsCount={stats.backlogs}
+                />
+
+                {/* GGSIPU Ordinance 11 Division Classification */}
+                <DivisionClassificationCard
+                    cgpa={stats.gpa}
+                    backlogsCount={stats.backlogs}
+                    isOverall={activeSem === "100"}
                 />
 
                 {/* Quick stats (Left) & Recharts Donut Chart (Right) */}

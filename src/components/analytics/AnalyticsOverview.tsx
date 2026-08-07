@@ -20,18 +20,18 @@ const cards = (props: Props) => [
         value: props.gpa,
         sub: "out of 10.0 scale",
         icon: Award,
-        accent: "text-purple-300",
-        border: "border-purple-500/30",
-        bg: "bg-purple-500/10",
+        accent: "text-cat-violet",
+        border: "border-cat-violet-border",
+        bg: "bg-cat-violet-surface",
     },
     {
         label: "Credits Earned",
         value: `${props.earnedCredits}/${props.totalCredits}`,
         sub: `${props.totalCredits - props.earnedCredits} credits pending`,
         icon: BookOpen,
-        accent: "text-teal-300",
-        border: "border-teal-500/30",
-        bg: "bg-teal-500/10",
+        accent: "text-cat-teal",
+        border: "border-cat-teal-border",
+        bg: "bg-cat-teal-surface",
     },
     {
         label: "Marks Obtained",
@@ -40,18 +40,18 @@ const cards = (props: Props) => [
             ? `${((props.obtainedMarks / props.totalMaxMarks) * 100).toFixed(1)}% raw score`
             : "—",
         icon: FileText,
-        accent: "text-pink-300",
-        border: "border-pink-500/30",
-        bg: "bg-pink-500/10",
+        accent: "text-cat-pink",
+        border: "border-cat-pink-border",
+        bg: "bg-cat-pink-surface",
     },
     {
         label: "Percentage",
         value: `${props.percentage}%`,
-        sub: "CGPA × 9.5 formula",
+        sub: "CGPA × 10 (GGSIPU Ordinance 11)",
         icon: Percent,
-        accent: "text-sky-300",
-        border: "border-sky-500/30",
-        bg: "bg-sky-500/10",
+        accent: "text-cat-blue",
+        border: "border-cat-blue-border",
+        bg: "bg-cat-blue-surface",
     },
 ];
 
@@ -76,15 +76,15 @@ export default function AnalyticsOverview(props: Props) {
                             </div>
 
                             <div>
-                                <div className="text-2xl font-bold font-mono tracking-tight text-white leading-none">
+                                <div className="text-2xl font-bold font-mono tracking-tight text-foreground leading-none">
                                     {card.value}
                                 </div>
-                                <div className="text-[11px] font-mono text-neutral-400 mt-1">
+                                <div className="text-[11px] font-mono text-foreground-secondary mt-1">
                                     {card.sub}
                                 </div>
                             </div>
 
-                            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-neutral-300 border-t border-border pt-2">
+                            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-foreground-secondary border-t border-border pt-2">
                                 {card.label}
                             </div>
                         </motion.div>
@@ -96,16 +96,16 @@ export default function AnalyticsOverview(props: Props) {
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex items-center gap-3 p-3.5 rounded-md bg-surface border border-rose-500/40 text-white"
+                    className="flex items-center gap-3 p-3.5 rounded-md bg-surface border border-grade-fail-border text-foreground"
                 >
-                    <div className="p-1.5 rounded-sm bg-rose-500/15 border border-rose-500/40 text-rose-400 shrink-0">
+                    <div className="p-1.5 rounded-sm bg-grade-fail-surface border border-grade-fail-border text-grade-fail shrink-0">
                         <AlertTriangle size={14} />
                     </div>
                     <div>
-                        <div className="text-xs font-mono font-bold text-rose-300">
+                        <div className="text-xs font-mono font-bold text-grade-fail">
                             {props.backlogsCount} Backlog{props.backlogsCount > 1 ? "s" : ""} Active
                         </div>
-                        <div className="text-[11px] font-mono text-neutral-300 mt-0.5">
+                        <div className="text-[11px] font-mono text-foreground-secondary mt-0.5">
                             Backlog subjects carry 0 grade points — clear them in re-appear exams to raise GPA.
                         </div>
                     </div>
@@ -114,9 +114,9 @@ export default function AnalyticsOverview(props: Props) {
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex items-center gap-2.5 p-3 rounded-md bg-surface border border-emerald-500/30 text-emerald-300 text-xs font-mono font-bold"
+                    className="flex items-center gap-2.5 p-3 rounded-md bg-surface border border-grade-excellent-border text-grade-excellent text-xs font-mono font-bold"
                 >
-                    <CheckCircle2 size={14} className="shrink-0 text-emerald-400" />
+                    <CheckCircle2 size={14} className="shrink-0 text-grade-excellent" />
                     <span>Clean academic standing — 0 backlogs in this view!</span>
                 </motion.div>
             )}

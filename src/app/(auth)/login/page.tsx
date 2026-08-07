@@ -201,7 +201,7 @@ export default function LoginPage() {
                 <span className="text-foreground font-semibold">CGPA Formula:</span> Σ(Semester SGPA × Semester Credits) / Σ(Total Earned Credits)
               </div>
               <div className="rounded-lg border border-border-strong bg-background p-2.5 text-gold">
-                <span className="text-foreground font-semibold">Percentage (%):</span> CGPA × 9.0
+                <span className="text-foreground font-semibold">Percentage (%):</span> CGPA × 10 [Ordinance 11]
               </div>
             </div>
           </div>

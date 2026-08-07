@@ -1,7 +1,8 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { NextResponse } from "next/server";
 
 export const BASE_URL = "https://examweb.ggsipu.ac.in";
+const REQUEST_TIMEOUT = 8000; // 8 seconds
 
 export const GET = async () => {
   try {
@@ -17,11 +18,20 @@ export const GET = async () => {
       validateStatus: () => true,
     });
 
-    if (res.status < 200 || res.status >= 300) {
-      return NextResponse.json(
-        { error: `GGSIPU server returned error status ${res.status}` },
-        { status: res.status }
-      );
+    if (res.status >= 500) {
+      return NextResponse.json({
+        success: false,
+        error: "GGSIPU server is experiencing issues. Please try again later.",
+        code: "UPSTREAM_ERROR"
+      }, { status: 502 })
+    }
+
+    if (res.status >= 400) {
+      return NextResponse.json({
+        success: false,
+        error: "Failed to generate CAPTCHA. Please refresh.",
+        code: "UPSTREAM_ERROR"
+      }, { status: 502 })
     }
 
     const setCookie = res.headers["set-cookie"];
@@ -33,27 +43,53 @@ export const GET = async () => {
       if (match) sessionId = match[1];
     }
 
+    if (!sessionId) {
+      return NextResponse.json({
+        success: false,
+        error: "Session initialization failed. Please retry.",
+        code: "UPSTREAM_ERROR"
+      }, { status: 502 });
+    }
+
     const imageBuffer = Buffer.from(res.data);
     const response = new NextResponse(imageBuffer, {
-      headers: { "Content-Type": "image/png" },
+      headers: { "Content-Type": "image/png", "Cache-Control": "no-store" },
     });
 
-    if (sessionId) {
-      response.cookies.set("JSESSIONID", sessionId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-        maxAge: 300,
-        path: "/api",
-      });
-    }
+    response.cookies.set("JSESSIONID", sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 300,
+      path: "/api",
+    });
 
     return response;
   } catch (err) {
-    console.error("CAPTCHA proxy error:", err);
-    return NextResponse.json(
-      { error: "Failed to fetch captcha from GGSIPU server" },
-      { status: 500 }
-    );
+    const axiosErr = err as AxiosError;
+
+    if (axiosErr.code === "ECONNABORTED" || axiosErr.code === "ETIMEDOUT") {
+      return NextResponse.json({
+        success: false,
+        error: "Request timed out. GGSIPU may be slow.",
+        code: "NETWORK_ERROR"
+      }, { status: 504 });
+    }
+
+    if (axiosErr.code === "ECONNREFUSED" || axiosErr.code === "ENOTFOUND") {
+      return NextResponse.json({
+        success: false,
+        error: "Cannot reach GGSIPU servers. Check your connection.",
+        code: "NETWORK_ERROR"
+      }, { status: 503 });
+    }
+
+    console.error("CAPTCHA proxy error:", axiosErr.message);
+    
+    return NextResponse.json({
+      success: false,
+      error: "Internal server error",
+      code: "UNKNOWN"
+    }, { status: 500 });
   }
 };

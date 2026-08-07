@@ -1,6 +1,7 @@
 import axios from "axios";
 import { NextRequest, NextResponse } from "next/server";
 import { BASE_URL } from "../captcha/route";
+import { ApiSuccessResponse } from "@/types/ApiResponse";
 
 export const POST = async (req: NextRequest) => {
   try {
@@ -18,29 +19,27 @@ export const POST = async (req: NextRequest) => {
       });
     }
 
-    // Clear session cookie from browser
-    const response = NextResponse.json({
+    const payload: ApiSuccessResponse<{ message: string }> = {
       success: true,
-      message: "Logged out successfully",
-    });
+      data: { message: "Logged out successfully" },
+    };
 
-    response.cookies.set("JSESSIONID", "", {
-      maxAge: 0,
-      path: "/api",
-    });
+    const response = NextResponse.json(payload);
+    response.cookies.set("JSESSIONID", "", { maxAge: 0, path: "/api" });
+    response.cookies.set("auth_session", "", { maxAge: 0, path: "/" });
 
     return response;
   } catch (err) {
     console.error("Logout route error:", err);
-    // Still clear the cookie even if upstream failed
-    const response = NextResponse.json(
-      { success: true, message: "Session cleared locally" },
-      { status: 200 }
-    );
-    response.cookies.set("JSESSIONID", "", {
-      maxAge: 0,
-      path: "/api",
-    });
+
+    const payload: ApiSuccessResponse<{ message: string }> = {
+      success: true,
+      data: { message: "Session cleared locally" },
+    };
+
+    const response = NextResponse.json(payload, { status: 200 });
+    response.cookies.set("JSESSIONID", "", { maxAge: 0, path: "/api" });
+    response.cookies.set("auth_session", "", { maxAge: 0, path: "/" });
     return response;
   }
 };

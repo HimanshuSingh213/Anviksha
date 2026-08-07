@@ -4,7 +4,6 @@ import axios from "axios";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
 import useResultStore from "@/store/result-store";
 
 export function LogoutButton() {
@@ -26,9 +25,10 @@ export function LogoutButton() {
     return (
         <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 bg-surface hover:bg-grade-fail-surface hover:text-grade-fail border border-border-strong rounded-md text-xs font-semibold transition duration-200"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-mono font-medium text-foreground-secondary hover:text-grade-fail hover:bg-grade-fail-surface/40 transition-colors cursor-pointer"
         >
-            <LogOut size={14} /> Log Out
+            <LogOut size={13} />
+            <span>Logout</span>
         </button>
     );
 }

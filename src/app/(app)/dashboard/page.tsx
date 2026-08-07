@@ -2,16 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, AlertTriangle, CheckCircle2, Percent, BarChart2, BookOpen, Pencil, ArrowRight } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Percent, BarChart2, BookOpen, Pencil, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import Skeleton from "@/components/dashboard/Skeleton";
-import Navbar from "@/components/dashboard/Navbar";
+import AppNavbar from "@/components/common/AppNavbar";
 import useResultStore from "@/store/result-store";
 import { ResultData } from "@/types/result";
 import { getDefaultCredit, getGradeAndPoints, getGradeThemeClasses } from "@/helpers/grade-system";
 import PixelAvatar from "@/components/dashboard/PixelAvatar";
+import { ApiErrorResponse, ApiSuccessResponse } from "@/types/ApiResponse";
 
 const SEMESTERS = [
     { label: "All", value: "100" },
@@ -34,6 +35,7 @@ export default function DashboardPage() {
 
     const setFullResult = useResultStore((state) => state.setResult);
     const fullResult = useResultStore((state) => state.result);
+    const clearResult = useResultStore((state) => state.clearResult);
     const customCredit = useResultStore((state) => state.customCredits);
     const setCustomCredit = useResultStore((state) => state.setCustomCredit);
 
@@ -41,18 +43,39 @@ export default function DashboardPage() {
         setLoading(true);
         setError("");
         try {
-            const res = await axios.get<ResultData>(`/api/result?euno=100`);
-            setFullResult(res.data);
+            const res = await axios.get<ApiSuccessResponse<ResultData>>(`/api/result?euno=100`);
+            setFullResult(res.data.data);
         } catch (err: any) {
-            const status = err.response?.status;
-            const expired = err.response?.data?.expired;
-            if (status === 401 || expired) {
-                toast.error("Session expired. Please sign in again.");
-                router.push("/login");
-                return;
+            const error = err as AxiosError<ApiErrorResponse>;
+            const apiErr = error.response?.data;
+
+            if (apiErr && !apiErr.success) {
+                switch (apiErr.code) {
+                    case "SESSION_EXPIRED":
+                        clearResult();
+                        router.push("/login?expired=true");
+                        break;
+
+                    case "RATE_LIMITED":
+                        toast.error(apiErr.error || "Account access locked. Try again later.");
+                        break;
+
+                    case "VALIDATION_ERROR":
+                        toast.error(apiErr.error || "Validation failed.");
+                        break;
+
+                    case "UPSTREAM_ERROR":
+                    case "NETWORK_ERROR":
+                        toast.error(apiErr.error || "GGSIPU portal is unreachable.");
+                        break;
+
+                    default:
+                        toast.error(apiErr.error || "An unexpected error occurred.");
+                }
             } else {
-                toast.error(err.response?.data?.error || "Failed to load results");
+                toast.error("Network error. Please check your connection.");
             }
+
             setError("Failed to load results");
         } finally {
             setLoading(false);
@@ -60,8 +83,13 @@ export default function DashboardPage() {
     };
 
     useEffect(() => {
-        fetchResults();
-    }, []);
+        const hasAuthCookie = typeof document !== "undefined" && document.cookie.split("; ").some((c) => c.startsWith("auth_session="));
+        if (!fullResult && hasAuthCookie) {
+            fetchResults();
+        } else {
+            setLoading(false);
+        }
+    }, [fullResult]);
 
     const filteredResults = fullResult?.stresult?.filter(
         (result) => activeSem === "100" || result[0] === Number(activeSem)
@@ -105,9 +133,13 @@ export default function DashboardPage() {
     const semStats = computeStats(filteredResults ?? []);
     const overallStats = computeStats(allResults);
 
-    const sgpa = semStats.gpa.toFixed(2);
-    const cgpa = overallStats.gpa.toFixed(2);
-    const percentage = (overallStats.gpa * 9.5).toFixed(2);
+    const activeGpa = activeSem === "100" ? overallStats.gpa : semStats.gpa;
+    const gpaLabel = activeSem === "100" ? "Overall CGPA" : `Sem ${activeSem} SGPA`;
+    const percentLabel = activeSem === "100" ? "Equivalent %" : `Sem ${activeSem} Equivalent %`;
+    const formulaSub = activeSem === "100" ? "CGPA × 10 (Ordinance 11)" : "SGPA × 10 (Ordinance 11)";
+
+    const displayGpa = activeGpa.toFixed(2);
+    const displayPercentage = (activeGpa * 10).toFixed(2);
 
     if (loading && !fullResult) return <Skeleton />;
 
@@ -116,7 +148,7 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-background text-foreground">
 
-            <Navbar profile={profile} />
+            <AppNavbar profile={profile} />
 
             <main className="max-w-7xl mx-auto px-6 py-8 space-y-6">
 
@@ -127,7 +159,7 @@ export default function DashboardPage() {
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
-                            className="flex items-center gap-3 p-4 bg-grade-fail-surface border border-grade-fail-border rounded-md text-grade-fail text-xs font-mono"
+                            className="flex items-center gap-3 p-4 bg-grade-fail-surface border border-grade-fail-border rounded-md text-grade-fail text-xs font-mono font-bold"
                         >
                             <AlertTriangle size={14} />
                             {error}
@@ -159,23 +191,23 @@ export default function DashboardPage() {
                                     <PixelAvatar name={profile.stname ?? "?"} />
                                     <div className="min-w-0">
                                         <h1 className="text-sm font-bold text-foreground leading-snug">{profile.stname}</h1>
-                                        <p className="text-foreground-muted text-[11px] font-mono mt-1 leading-relaxed">{profile.prgname}</p>
+                                        <p className="text-foreground-secondary text-[11px] font-mono font-medium mt-1 leading-relaxed">{profile.prgname}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="rounded-md overflow-hidden border border-border text-xs font-mono">
+                            <div className="rounded-md overflow-hidden border border-border-strong text-xs font-mono">
                                 {[
                                     { label: "Enrollment", value: profile.nrollno, color: "text-cat-teal" },
-                                    { label: "Batch", value: profile.byoa, color: "text-foreground-secondary" },
-                                    { label: "Program", value: profile.prgcode, color: "text-foreground-secondary" },
-                                    { label: "Institute", value: profile.iname, color: "text-foreground-secondary", truncate: true },
+                                    { label: "Batch", value: profile.byoa, color: "text-foreground-secondary font-semibold" },
+                                    { label: "Program", value: profile.prgcode, color: "text-foreground-secondary font-semibold" },
+                                    { label: "Institute", value: profile.iname, color: "text-foreground-secondary font-semibold", truncate: true },
                                 ].map((item, i, arr) => (
                                     <div
                                         key={item.label}
-                                        className={`flex justify-between items-center px-3 py-2.5 bg-surface-deep ${i < arr.length - 1 ? "border-b border-border" : ""}`}
+                                        className={`flex justify-between items-center px-3 py-2.5 bg-surface-deep ${i < arr.length - 1 ? "border-b border-border-strong" : ""}`}
                                     >
-                                        <span className="text-foreground-muted text-[10px] uppercase tracking-wider">{item.label}</span>
+                                        <span className="text-foreground-secondary text-[10px] uppercase tracking-wider font-bold">{item.label}</span>
                                         <span className={`${item.color} font-semibold ${item.truncate ? "max-w-36 truncate text-right" : ""}`} title={item.truncate ? item.value : undefined}>
                                             {item.value}
                                         </span>
@@ -188,18 +220,18 @@ export default function DashboardPage() {
                         <div className="lg:col-span-2 grid grid-cols-2 gap-4">
                             {[
                                 {
-                                    label: "Overall CGPA",
-                                    value: cgpa,
+                                    label: gpaLabel,
+                                    value: displayGpa,
                                     sub: "out of 10.00",
                                     color: "text-cat-violet",
-                                    icon: <BarChart2 size={13} className="text-cat-violet opacity-50" />,
+                                    icon: <BarChart2 size={13} className="text-cat-violet opacity-70" />,
                                 },
                                 {
-                                    label: "Equivalent %",
-                                    value: `${percentage}%`,
-                                    sub: "CGPA × 9.5",
+                                    label: percentLabel,
+                                    value: `${displayPercentage}%`,
+                                    sub: formulaSub,
                                     color: "text-cat-blue",
-                                    icon: <Percent size={13} className="text-cat-blue opacity-50" />,
+                                    icon: <Percent size={13} className="text-cat-blue opacity-70" />,
                                 },
                                 {
                                     label: "Credits Earned",
@@ -207,7 +239,7 @@ export default function DashboardPage() {
                                     valueSuffix: ` / ${overallStats.totalCredits}`,
                                     sub: "overall",
                                     color: "text-cat-teal",
-                                    icon: <BookOpen size={13} className="text-cat-teal opacity-50" />,
+                                    icon: <BookOpen size={13} className="text-cat-teal opacity-70" />,
                                 },
                                 {
                                     label: "Status",
@@ -215,8 +247,8 @@ export default function DashboardPage() {
                                     sub: overallStats.backlogs > 0 ? `backlog${overallStats.backlogs > 1 ? "s" : ""}` : "all cleared",
                                     color: overallStats.backlogs > 0 ? "text-grade-fail" : "text-grade-excellent",
                                     icon: overallStats.backlogs > 0
-                                        ? <AlertTriangle size={13} className="text-grade-fail opacity-60" />
-                                        : <CheckCircle2 size={13} className="text-grade-excellent opacity-60" />,
+                                        ? <AlertTriangle size={13} className="text-grade-fail opacity-80" />
+                                        : <CheckCircle2 size={13} className="text-grade-excellent opacity-80" />,
                                     bgClass: overallStats.backlogs > 0
                                         ? "bg-grade-fail-surface border-grade-fail-border"
                                         : "bg-grade-excellent-surface border-grade-excellent-border",
@@ -232,17 +264,17 @@ export default function DashboardPage() {
                                     className={`bg-surface border border-border-strong rounded-lg p-5 flex flex-col justify-between cursor-default ${card.bgClass ?? ""}`}
                                 >
                                     <div className="flex items-center justify-between mb-4">
-                                        <span className="text-[10px] font-mono uppercase tracking-widest text-foreground-muted">{card.label}</span>
+                                        <span className="text-[10px] font-mono uppercase tracking-widest text-foreground-secondary font-bold">{card.label}</span>
                                         {card.icon}
                                     </div>
                                     <div>
                                         <div className={`text-4xl font-bold font-mono ${card.color}`}>
                                             {card.value}
                                             {card.valueSuffix && (
-                                                <span className="text-xl text-foreground-muted">{card.valueSuffix}</span>
+                                                <span className="text-xl text-foreground-secondary font-semibold">{card.valueSuffix}</span>
                                             )}
                                         </div>
-                                        <div className="text-[10px] text-foreground-muted font-mono mt-2">{card.sub}</div>
+                                        <div className="text-[10px] text-foreground-secondary font-mono font-medium mt-2">{card.sub}</div>
                                     </div>
                                 </motion.div>
                             ))}
@@ -255,15 +287,15 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                 >
-                    <div className="inline-flex items-center gap-0.5 bg-surface-deep border border-border rounded-md p-1 flex-wrap">
+                    <div className="inline-flex items-center gap-0.5 bg-surface-deep border border-border-strong rounded-md p-1 flex-wrap">
                         {SEMESTERS.map((sem) => (
                             <button
                                 key={sem.value}
                                 onClick={() => setActiveSem(sem.value)}
                                 disabled={loading}
-                                className={`relative px-3.5 py-1.5 text-xs font-mono font-medium transition-colors duration-100 disabled:opacity-40 rounded-sm ${activeSem === sem.value
-                                        ? "text-background font-bold"
-                                        : "text-foreground-muted hover:text-foreground"
+                                className={`relative px-3.5 py-1.5 text-xs font-mono font-semibold transition-colors duration-100 disabled:opacity-40 rounded-sm cursor-pointer ${activeSem === sem.value
+                                    ? "text-background font-bold"
+                                    : "text-foreground-secondary hover:text-foreground"
                                     }`}
                             >
                                 {activeSem === sem.value && (
@@ -289,7 +321,7 @@ export default function DashboardPage() {
                             <span className="px-2.5 py-1 rounded-md bg-surface-deep border border-border-strong text-xs font-mono font-bold text-foreground tracking-wider uppercase shadow-sm">
                                 {activeSem === "100" ? "All Semesters" : `Semester ${activeSem}`}
                             </span>
-                            <span className="px-2.5 py-1 rounded-md bg-cat-teal-surface border border-cat-teal-border text-xs font-mono font-semibold text-cat-teal shadow-sm">
+                            <span className="px-2.5 py-1 rounded-md bg-cat-teal-surface border border-cat-teal-border text-xs font-mono font-bold text-cat-teal shadow-sm">
                                 {filteredResults?.length ?? 0} subjects
                             </span>
                         </div>
@@ -316,7 +348,7 @@ export default function DashboardPage() {
                                                 {["Sem", "Code", "Subject", "Int.", "Ext.", "Total", "Credits", "Grade", "Status"].map((h) => (
                                                     <th
                                                         key={h}
-                                                        className={`px-4 py-3 text-[10px] font-mono uppercase tracking-widest ${h === "Credits" ? "text-gold" : "text-foreground-muted"} ${["Int.", "Ext.", "Total", "Credits", "Grade", "Status"].includes(h) ? "text-center" : "text-left"}`}
+                                                        className={`px-4 py-3 text-[10px] font-mono uppercase tracking-widest ${h === "Credits" ? "text-gold font-bold" : "text-foreground-secondary font-bold"} ${["Int.", "Ext.", "Total", "Credits", "Grade", "Status"].includes(h) ? "text-center" : "text-left"}`}
                                                     >
                                                         {h === "Credits" ? (
                                                             <span className="inline-flex items-center justify-center gap-1" title="Click input values in this column to adjust credits">
@@ -342,10 +374,10 @@ export default function DashboardPage() {
                                                         initial={{ opacity: 0, x: -6 }}
                                                         animate={{ opacity: 1, x: 0 }}
                                                         transition={{ delay: idx * 0.025, duration: 0.25 }}
-                                                        className="border-b border-border/40 last:border-0 hover:bg-surface-elevated/50 transition-colors duration-75"
+                                                        className="border-b border-border-strong/40 last:border-0 hover:bg-surface-elevated/50 transition-colors duration-75"
                                                     >
-                                                        <td className="px-4 py-3.5 text-xs font-mono text-foreground-muted">{row[0]}</td>
-                                                        <td className="px-4 py-3.5 text-xs font-mono font-semibold text-gold">{paperCode}</td>
+                                                        <td className="px-4 py-3.5 text-xs font-mono text-foreground-secondary font-medium">{row[0]}</td>
+                                                        <td className="px-4 py-3.5 text-xs font-mono font-bold text-gold">{paperCode}</td>
                                                         <td className="px-4 py-3.5 text-sm font-medium text-foreground flex items-center gap-2">
                                                             <span>{subjectTitle}</span>
                                                             {(subjectTitle.toUpperCase().includes("LAB") || subjectTitle.toUpperCase().includes("PRACTICAL")) && (
@@ -354,8 +386,8 @@ export default function DashboardPage() {
                                                                 </span>
                                                             )}
                                                         </td>
-                                                        <td className="px-4 py-3.5 text-xs font-mono text-center text-foreground-secondary">{row[3]}</td>
-                                                        <td className="px-4 py-3.5 text-xs font-mono text-center text-foreground-secondary">{row[4]}</td>
+                                                        <td className="px-4 py-3.5 text-xs font-mono text-center text-foreground-secondary font-medium">{row[3]}</td>
+                                                        <td className="px-4 py-3.5 text-xs font-mono text-center text-foreground-secondary font-medium">{row[4]}</td>
                                                         <td className="px-4 py-3.5 text-xs font-mono text-center font-bold text-foreground">{row[5]}</td>
                                                         <td className="px-4 py-3.5 text-center">
                                                             <input
@@ -365,10 +397,10 @@ export default function DashboardPage() {
                                                                 value={currentCredit}
                                                                 title="Click to edit credits for custom GPA calculation"
                                                                 onChange={(e) => setCustomCredit(paperCode, Number(e.target.value))}
-                                                                className="w-10 text-center bg-surface-deep border border-border-strong hover:border-gold/60 focus:border-gold focus:ring-1 focus:ring-gold/30 rounded-sm py-0.5 font-mono text-xs text-foreground outline-none transition-all cursor-pointer focus:cursor-text [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                className="w-10 text-center bg-surface-deep border border-border-strong hover:border-gold/60 focus:border-gold focus:ring-1 focus:ring-gold/30 rounded-sm py-0.5 font-mono text-xs font-bold text-foreground outline-none transition-all cursor-pointer focus:cursor-text [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                             />
                                                             {!gradeInfo.pass && (
-                                                                <div className="text-[9px] font-mono text-grade-fail mt-0.5" title="Backlog: 0 credits earned until cleared">
+                                                                <div className="text-[9px] font-mono text-grade-fail font-semibold mt-0.5" title="Backlog: 0 credits earned until cleared">
                                                                     0 earned
                                                                 </div>
                                                             )}
@@ -394,7 +426,7 @@ export default function DashboardPage() {
                                     key="empty"
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
-                                    className="p-12 text-center text-foreground-muted text-xs font-mono"
+                                    className="p-12 text-center text-foreground-secondary text-xs font-mono font-semibold"
                                 >
                                     No results found for this selection.
                                 </motion.div>
@@ -414,18 +446,18 @@ export default function DashboardPage() {
                             transition={{ duration: 0.3 }}
                             className="bg-surface border border-border-strong rounded-lg overflow-hidden"
                         >
-                            <div className="bg-surface-deep border-b border-border px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="bg-surface-deep border-b border-border-strong px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <div>
-                                    <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-muted mb-1">
+                                    <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-secondary font-bold mb-1">
                                         {activeSem === "100" ? "Overall Summary" : `Semester ${activeSem} Summary`}
                                     </div>
                                     {semStats.backlogs > 0 ? (
-                                        <div className="flex items-center gap-1.5 text-grade-fail text-xs font-mono">
+                                        <div className="flex items-center gap-1.5 text-grade-fail text-xs font-mono font-bold">
                                             <AlertTriangle size={11} />
                                             {semStats.backlogs} backlog subject{semStats.backlogs > 1 ? "s" : ""}
                                         </div>
                                     ) : (
-                                        <div className="flex items-center gap-1.5 text-grade-excellent text-xs font-mono">
+                                        <div className="flex items-center gap-1.5 text-grade-excellent text-xs font-mono font-bold">
                                             <CheckCircle2 size={11} />
                                             All subjects cleared
                                         </div>
@@ -436,7 +468,7 @@ export default function DashboardPage() {
                                     {[
                                         {
                                             label: activeSem === "100" ? "CGPA" : "SGPA",
-                                            value: sgpa,
+                                            value: displayGpa,
                                             containerClass: "bg-cat-violet-surface/50 border-cat-violet-border",
                                             labelClass: "text-cat-violet",
                                             valueClass: "text-foreground",
@@ -457,7 +489,7 @@ export default function DashboardPage() {
                                         },
                                         {
                                             label: "Equiv.",
-                                            value: `${percentage}%`,
+                                            value: `${displayPercentage}%`,
                                             containerClass: "bg-cat-blue-surface/50 border-cat-blue-border",
                                             labelClass: "text-cat-blue",
                                             valueClass: "text-foreground",
@@ -492,7 +524,7 @@ export default function DashboardPage() {
                                         {filteredResults
                                             .filter((row) => !getGradeAndPoints(Number(row[5])).pass)
                                             .map((row, i) => (
-                                                <span key={i} className="text-[11px] font-mono px-2.5 py-1 rounded-sm bg-surface border border-grade-fail-border text-grade-fail flex items-center gap-1.5 shadow-xs">
+                                                <span key={i} className="text-[11px] font-mono px-2.5 py-1 rounded-sm bg-surface border border-grade-fail-border text-grade-fail flex items-center gap-1.5 shadow-xs font-bold">
                                                     <span className="font-bold">{row[1]}</span> · {row[2]}
                                                     <span className="text-[9px] opacity-90 bg-grade-fail-surface px-1 py-0.5 rounded border border-grade-fail-border font-semibold">(0 pts)</span>
                                                 </span>
@@ -522,16 +554,6 @@ export default function DashboardPage() {
                         <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform duration-200" />
                     </motion.button>
                 </motion.div>
-
-                {/* Debug JSON */}
-                <details className="border border-border rounded-md overflow-hidden">
-                    <summary className="px-4 py-2.5 bg-surface-deep text-[10px] text-foreground-muted font-mono cursor-pointer hover:text-foreground uppercase tracking-wider">
-                        Debug · Raw JSON Response
-                    </summary>
-                    <pre className="text-[10px] font-mono text-foreground-secondary bg-background p-4 overflow-auto max-h-96">
-                        {JSON.stringify(fullResult, null, 2)}
-                    </pre>
-                </details>
 
             </main>
         </div>
