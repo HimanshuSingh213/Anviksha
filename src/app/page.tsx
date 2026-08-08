@@ -109,15 +109,6 @@ export default async function Home() {
           <nav className="hidden items-center gap-8 font-mono text-xs text-foreground-secondary sm:flex">
             <a href="#features" className="transition-colors hover:text-foreground">Features</a>
             <a href="#how-it-works" className="transition-colors hover:text-foreground">How it works</a>
-            <a
-              href="https://github.com/HimanshuSingh213/anviksha"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 transition-colors hover:text-foreground"
-            >
-              <GithubMark className="h-3.5 w-3.5" />
-              GitHub
-            </a>
           </nav>
 
           <Link
@@ -154,15 +145,6 @@ export default async function Home() {
                 {cta.label}
                 <ArrowRight size={14} />
               </Link>
-              <a
-                href="https://github.com/HimanshuSingh213/anviksha"
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-2 rounded-md border border-border-strong px-6 py-3 font-mono text-xs font-semibold text-foreground-secondary transition-colors hover:border-gold-border hover:text-foreground"
-              >
-                <GithubMark className="h-3.5 w-3.5" />
-                Source on GitHub
-              </a>
             </div>
 
             <p className="mt-5 flex items-center gap-2 font-mono text-xs text-foreground-muted">
@@ -288,15 +270,26 @@ export default async function Home() {
           <span className="text-xs text-foreground-muted">
             Anviksha · Unofficial, not affiliated with GGSIPU
           </span>
-          <a
-            href="https://github.com/HimanshuSingh213/anviksha"
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1.5 font-mono text-xs text-foreground-muted transition-colors hover:text-foreground"
-          >
-            <GithubMark className="h-3.5 w-3.5" />
-            HimanshuSingh213/anviksha
-          </a>
+          <div className="flex items-center gap-3 font-mono text-xs text-foreground-muted">
+            <a
+              href="https://himanshusinghdangi.vercel.app"
+              target="_blank"
+              rel="noreferrer"
+              className="transition-colors hover:text-foreground"
+            >
+              Built by Himanshu Singh
+            </a>
+            <span className="text-border-strong">·</span>
+            <a
+              href="https://github.com/HimanshuSingh213/anviksha"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 transition-colors hover:text-foreground"
+            >
+              <GithubMark className="h-3.5 w-3.5" />
+              GitHub
+            </a>
+          </div>
         </div>
       </footer>
     </div>

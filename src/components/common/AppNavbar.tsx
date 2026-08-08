@@ -40,7 +40,7 @@ export default function AppNavbar({ profile }: AppNavbarProps) {
                                     alt="Anviksha"
                                     width={160}
                                     height={44}
-                                    className="object-contain h-9 w-auto"
+                                    className="object-contain h-8 w-auto"
                                     priority
                                 />
                             </Link>
