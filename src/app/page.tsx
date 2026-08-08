@@ -1,314 +1,302 @@
-type Swatch = { name: string; hex: string; use: string };
+import Link from "next/link";
+import Image from "next/image";
+import { cookies } from "next/headers";
+import {
+  ArrowRight,
+  ShieldCheck,
+  Lock,
+  Timer,
+  Calculator,
+  TrendingUp,
+  Pencil,
+  PieChart,
+  Award,
+  FileDown,
+} from "lucide-react";
+import ResultPreviewCard from "@/components/home/ResultPreviewCard";
 
-const surfaces: Swatch[] = [
-  { name: "Background", hex: "#0A0A0B", use: "Page canvas" },
-  { name: "Surface", hex: "#141417", use: "Cards, panels" },
-  { name: "Surface Elevated", hex: "#1B1B1F", use: "Modals, popovers" },
+/* ---------------------------------- data ---------------------------------- */
+
+const TRUST_ITEMS = [
+  { icon: ShieldCheck, text: "Zero-database architecture" },
+  { icon: Lock, text: "Credentials go straight to GGSIPU, never stored" },
+  { icon: Timer, text: "Session clears the moment you log out" },
 ];
 
-const text: Swatch[] = [
-  { name: "Foreground", hex: "#F2EFEA", use: "Headings, body" },
-  { name: "Foreground Secondary", hex: "#A39E96", use: "Supporting text" },
-  { name: "Foreground Muted", hex: "#63605A", use: "Captions, disabled" },
+type Accent = "blue" | "violet" | "teal" | "pink" | "gold" | "green";
+
+const ACCENTS: Record<Accent, { icon: string; bg: string; border: string }> = {
+  blue: { icon: "text-cat-blue", bg: "bg-cat-blue-surface", border: "group-hover:border-cat-blue-border" },
+  violet: { icon: "text-cat-violet", bg: "bg-cat-violet-surface", border: "group-hover:border-cat-violet-border" },
+  teal: { icon: "text-cat-teal", bg: "bg-cat-teal-surface", border: "group-hover:border-cat-teal-border" },
+  pink: { icon: "text-cat-pink", bg: "bg-cat-pink-surface", border: "group-hover:border-cat-pink-border" },
+  gold: { icon: "text-gold", bg: "bg-gold-surface", border: "group-hover:border-gold-border" },
+  green: { icon: "text-grade-excellent", bg: "bg-grade-excellent-surface", border: "group-hover:border-grade-excellent-border" },
+};
+
+const FEATURES: { icon: typeof Calculator; accent: Accent; title: string; desc: string }[] = [
+  { icon: Calculator, accent: "blue", title: "Instant SGPA & CGPA", desc: "Calculated the moment your result loads, exactly per GGSIPU Ordinance 11." },
+  { icon: TrendingUp, accent: "violet", title: "Semester analytics", desc: "Track SGPA across all 8 semesters with sem-by-sem trend charts." },
+  { icon: Pencil, accent: "teal", title: "Editable credits", desc: "Lab and theory credits are auto-detected — edit inline if something's off." },
+  { icon: PieChart, accent: "pink", title: "Grade breakdown", desc: "See your O–F distribution and internal vs. external split for any semester." },
+  { icon: Award, accent: "gold", title: "Division & distinction", desc: "Auto-classified First Division with Distinction, First Division, or Second Division." },
+  { icon: FileDown, accent: "green", title: "Transcript PDF", desc: "Download an official-style marksheet or full transcript in one click." },
 ];
 
-const accent: Swatch[] = [
-  { name: "Gold", hex: "#C9A961", use: "Highlight, CTA, \"you\"" },
-  { name: "Gold Bright", hex: "#E4C67C", use: "Hover, glow" },
-  { name: "Gold Dim", hex: "#7A6434", use: "Borders, dividers" },
+const STEPS = [
+  { n: "01", title: "Sign in", desc: "Enter your enrollment number and password — the same ones you use on the GGSIPU portal." },
+  { n: "02", title: "We fetch, not store", desc: "Your session is proxied directly to GGSIPU's server. No credentials or marks touch a database." },
+  { n: "03", title: "See everything", desc: "Your dashboard, analytics, and transcript are ready instantly, recalculated live in your browser." },
 ];
 
-const grades: Swatch[] = [
-  { name: "Excellent", hex: "#34B37A", use: "O, A+" },
-  { name: "Good", hex: "#8FBF4D", use: "A, B+" },
-  { name: "Average", hex: "#E0A639", use: "B, C" },
-  { name: "Pass", hex: "#E07B39", use: "P" },
-  { name: "Fail", hex: "#E1504B", use: "F" },
+const GRADE_BADGES = [
+  { label: "O", points: 10, cls: "text-grade-excellent bg-grade-excellent-surface border-grade-excellent-border" },
+  { label: "A+", points: 9, cls: "text-grade-excellent bg-grade-excellent-surface border-grade-excellent-border" },
+  { label: "A", points: 8, cls: "text-grade-good bg-grade-good-surface border-grade-good-border" },
+  { label: "B+", points: 7, cls: "text-grade-good bg-grade-good-surface border-grade-good-border" },
+  { label: "B", points: 6, cls: "text-grade-average bg-grade-average-surface border-grade-average-border" },
+  { label: "C", points: 5, cls: "text-grade-average bg-grade-average-surface border-grade-average-border" },
+  { label: "P", points: 4, cls: "text-grade-pass bg-grade-pass-surface border-grade-pass-border" },
+  { label: "F", points: 0, cls: "text-grade-fail bg-grade-fail-surface border-grade-fail-border" },
 ];
 
-const category: Swatch[] = [
-  { name: "Cat Blue", hex: "#4C8DDA", use: "Series, tags" },
-  { name: "Cat Violet", hex: "#8B7CDB", use: "Series, tags" },
-  { name: "Cat Teal", hex: "#45B8C7", use: "Series, tags" },
-  { name: "Cat Pink", hex: "#D96FA6", use: "Series, tags" },
-  { name: "Cat Slate", hex: "#7C8591", use: "Baseline / other" },
-];
+/* --------------------------------- helpers --------------------------------- */
 
-const lines: Swatch[] = [
-  { name: "Border", hex: "#26262B", use: "Default hairline" },
-  { name: "Border Strong", hex: "#34343B", use: "Emphasis hairline" },
-];
-
-function SwatchCard({ swatch }: { swatch: Swatch }) {
+function GithubMark({ className }: { className?: string }) {
   return (
-    <div className="rounded-lg border border-border bg-surface overflow-hidden">
-      <div className="h-20 w-full" style={{ background: swatch.hex }} />
-      <div className="p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium text-foreground">{swatch.name}</p>
-          <p className="font-mono text-xs text-foreground-muted">{swatch.hex}</p>
-        </div>
-        <p className="mt-1 text-xs text-foreground-secondary">{swatch.use}</p>
-      </div>
-    </div>
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
+      <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.79-.25.79-.55 0-.27-.01-1.17-.02-2.12-3.2.7-3.87-1.36-3.87-1.36-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.16 1.18a10.9 10.9 0 0 1 5.75 0c2.2-1.49 3.15-1.18 3.15-1.18.63 1.58.24 2.75.12 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.7 5.38-5.27 5.67.42.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.66.8.55A10.53 10.53 0 0 0 23.5 12c0-6.35-5.15-11.5-11.5-11.5Z" />
+    </svg>
   );
 }
 
-function PaletteRow({ title, swatches }: { title: string; swatches: Swatch[] }) {
+const ctaClasses =
+  "inline-flex items-center gap-2.5 rounded-md border border-white bg-white px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider text-black shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:bg-neutral-200 active:scale-95";
+
+/* ----------------------------------- page ----------------------------------- */
+
+export default async function Home() {
+  const cookieStore = await cookies();
+  const isAuthenticated = Boolean(cookieStore.get("auth_session")?.value);
+
+  const cta = isAuthenticated
+    ? { label: "Go to Dashboard", href: "/dashboard" }
+    : { label: "View My Result", href: "/login" };
+
   return (
-    <div>
-      <h3 className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-foreground-muted">
-        {title}
-      </h3>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        {swatches.map((s) => (
-          <SwatchCard key={s.name} swatch={s} />
-        ))}
+    <div className="relative flex flex-1 flex-col overflow-hidden bg-background text-foreground">
+      {/* Ambient background */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle,var(--color-border-strong)_1.5px,transparent_1.5px)] bg-size-[28px_28px] mask-[radial-gradient(ellipse_80%_60%_at_50%_0%,black_20%,transparent_100%)]" />
+        <div className="absolute -top-32 -left-24 h-96 w-96 rounded-full bg-gold opacity-[0.08] blur-3xl" />
+        <div className="absolute top-1/4 -right-24 h-96 w-96 rounded-full bg-cat-violet opacity-[0.06] blur-3xl" />
       </div>
-    </div>
-  );
-}
 
-type Block = { title: string; desc: string; icon: React.ReactNode };
+      {/* Header */}
+      <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <Link href="/" className="flex items-center shrink-0">
+            <Image
+              src="/navbar-logo.png"
+              alt="Anviksha"
+              width={150}
+              height={40}
+              className="h-8 w-auto object-contain"
+              priority
+            />
+          </Link>
 
-const blocks: Block[] = [
-  {
-    title: "Query Index",
-    desc: "Every query parsed and indexed as it runs.",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5">
-        <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M16.5 16.5L13 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-  {
-    title: "Signal Trace",
-    desc: "Follow a value through every mutation.",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5">
-        <path
-          d="M2 15c2 0 2-4 4-4s2 6 4 6 2-9 4-9 2 5 4 5"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    ),
-  },
-  {
-    title: "Node Graph",
-    desc: "Map dependencies as a live, walkable graph.",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5">
-        <circle cx="5" cy="5" r="1.8" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="15" cy="6" r="1.8" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="9" cy="15" r="1.8" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M6.5 6L13.5 6.5M6 6.8L8 13.5M13.5 8L9.8 13.5" stroke="currentColor" strokeWidth="1.2" />
-      </svg>
-    ),
-  },
-  {
-    title: "Anomaly Log",
-    desc: "Flag anything that breaks the pattern.",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5">
-        <path d="M10 2.5l7.5 13H2.5l7.5-13z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-        <path d="M10 8.5v3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-        <circle cx="10" cy="14" r="0.8" fill="currentColor" />
-      </svg>
-    ),
-  },
-  {
-    title: "Cluster Map",
-    desc: "Group related events automatically.",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5">
-        <circle cx="7" cy="7" r="4" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="13" cy="13" r="4" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
-    ),
-  },
-  {
-    title: "Audit Trail",
-    desc: "Every change, timestamped and reversible.",
-    icon: (
-      <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5">
-        <path d="M4 3.5h9l3 3v10a.5.5 0 01-.5.5h-11.5a.5.5 0 01-.5-.5v-13a.5.5 0 01.5-.5z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-        <path d="M6.5 9h7M6.5 12h7M6.5 15h4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      </svg>
-    ),
-  },
-];
+          <nav className="hidden items-center gap-8 font-mono text-xs text-foreground-secondary sm:flex">
+            <a href="#features" className="transition-colors hover:text-foreground">Features</a>
+            <a href="#how-it-works" className="transition-colors hover:text-foreground">How it works</a>
+            <a
+              href="https://github.com/HimanshuSingh213/anviksha"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 transition-colors hover:text-foreground"
+            >
+              <GithubMark className="h-3.5 w-3.5" />
+              GitHub
+            </a>
+          </nav>
 
-type GradeBadge = { label: string; points: number; classes: string };
-
-const gradeBadges: GradeBadge[] = [
-  { label: "O", points: 10, classes: "bg-grade-excellent-surface border-grade-excellent-border text-grade-excellent" },
-  { label: "A+", points: 9, classes: "bg-grade-excellent-surface border-grade-excellent-border text-grade-excellent" },
-  { label: "A", points: 8, classes: "bg-grade-good-surface border-grade-good-border text-grade-good" },
-  { label: "B+", points: 7, classes: "bg-grade-good-surface border-grade-good-border text-grade-good" },
-  { label: "B", points: 6, classes: "bg-grade-average-surface border-grade-average-border text-grade-average" },
-  { label: "C", points: 5, classes: "bg-grade-average-surface border-grade-average-border text-grade-average" },
-  { label: "P", points: 4, classes: "bg-grade-pass-surface border-grade-pass-border text-grade-pass" },
-  { label: "F", points: 0, classes: "bg-grade-fail-surface border-grade-fail-border text-grade-fail" },
-];
-
-export default function Home() {
-  return (
-    <div className="flex flex-1 flex-col bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <span className="font-mono text-sm tracking-[0.3em] text-foreground">
-            ANVIKSHA
-          </span>
-          <div className="flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-            <span className="font-mono text-xs text-foreground-muted">
-              design tokens
-            </span>
-          </div>
+          <Link
+            href={isAuthenticated ? "/dashboard" : "/login"}
+            className="rounded-md border border-border-strong px-4 py-2 font-mono text-xs font-semibold text-foreground transition-colors hover:border-gold-border hover:text-gold"
+          >
+            {isAuthenticated ? "Dashboard" : "Sign in"}
+          </Link>
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
+      <main className="relative z-10 flex-1">
         {/* Hero */}
-        <section className="mb-20">
-          <h1 className="max-w-xl text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl">
-            A darker canvas,{" "}
-            <span className="text-gold">worth its weight in gold.</span>
-          </h1>
-          <p className="mt-4 max-w-lg text-base leading-7 text-foreground-secondary">
-            Near-black surfaces, warm off-white text, gold reserved for
-            highlights and "you" — plus a full grade and chart palette for
-            the results underneath.
-          </p>
-        </section>
-
-        {/* Palette */}
-        <section className="mb-24 space-y-10">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-lg font-medium text-foreground">Palette</h2>
-            <span className="font-mono text-xs text-foreground-muted">
-              26 tokens
+        <section className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 pb-20 pt-16 lg:grid-cols-2 lg:pb-28 lg:pt-24">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 font-mono text-xs text-foreground-muted">
+              <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+              Unofficial · GGSIPU Exam Portal
             </span>
-          </div>
-          <PaletteRow title="Surfaces" swatches={surfaces} />
-          <PaletteRow title="Text" swatches={text} />
-          <PaletteRow title="Accent — Gold" swatches={accent} />
-          <PaletteRow title="Grade scale" swatches={grades} />
-          <PaletteRow title="Category — charts & tags" swatches={category} />
-          <PaletteRow title="Borders" swatches={lines} />
-        </section>
 
-        {/* Grades */}
-        <section className="mb-24 space-y-6">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-lg font-medium text-foreground">Grade badges</h2>
-            <span className="font-mono text-xs text-foreground-muted">
-              O → F
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {gradeBadges.map((g) => (
-              <span
-                key={g.label}
-                className={`rounded-md border px-3 py-1.5 text-sm font-medium ${g.classes}`}
+            <h1 className="mt-5 max-w-lg text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl">
+              Your GGSIPU result,{" "}
+              <span className="text-gold">actually easy to read.</span>
+            </h1>
+
+            <p className="mt-5 max-w-md text-base leading-7 text-foreground-secondary">
+              Anviksha pulls your result straight from the GGSIPU portal and turns it
+              into a clean dashboard — SGPA, CGPA, semester trends, and a downloadable
+              transcript. Nothing is ever stored.
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link href={cta.href} className={ctaClasses}>
+                {cta.label}
+                <ArrowRight size={14} />
+              </Link>
+              <a
+                href="https://github.com/HimanshuSingh213/anviksha"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 rounded-md border border-border-strong px-6 py-3 font-mono text-xs font-semibold text-foreground-secondary transition-colors hover:border-gold-border hover:text-foreground"
               >
-                {g.label} · {g.points}
-              </span>
+                <GithubMark className="h-3.5 w-3.5" />
+                Source on GitHub
+              </a>
+            </div>
+
+            <p className="mt-5 flex items-center gap-2 font-mono text-xs text-foreground-muted">
+              <ShieldCheck size={14} className="text-positive" />
+              {isAuthenticated
+                ? "Welcome back — pick up right where you left off"
+                : "No signup · Takes less than 10 seconds"}
+            </p>
+          </div>
+
+          <ResultPreviewCard />
+        </section>
+
+        {/* Trust strip */}
+        <section className="border-y border-border bg-surface/60">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 px-6 py-5 sm:grid-cols-3">
+            {TRUST_ITEMS.map((item) => (
+              <div key={item.text} className="flex items-center gap-2.5 text-foreground-secondary">
+                <item.icon size={15} className="shrink-0 text-gold" />
+                <span className="text-xs">{item.text}</span>
+              </div>
             ))}
           </div>
         </section>
 
-        {/* Trend */}
-        <section className="mb-24 space-y-6">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-lg font-medium text-foreground">
-              Trend — you vs branch average
+        {/* Features */}
+        <section id="features" className="mx-auto max-w-6xl px-6 py-24">
+          <div className="max-w-lg">
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              Everything your result page should have
             </h2>
-            <span className="font-mono text-xs text-foreground-muted">
-              8 semesters
-            </span>
+            <p className="mt-3 text-sm leading-6 text-foreground-secondary">
+              The GGSIPU portal gives you numbers in a table. Anviksha gives you the
+              picture — built for how students actually check their result.
+            </p>
           </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="rounded-lg border border-border bg-surface p-4">
-              <p className="text-xs text-foreground-secondary">Current SGPA</p>
-              <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-2xl font-medium text-foreground">8.4</span>
-                <span className="text-sm text-positive">▲ 0.3</span>
-              </div>
-            </div>
-            <div className="rounded-lg border border-border bg-surface p-4">
-              <p className="text-xs text-foreground-secondary">Backlogs</p>
-              <div className="mt-1 flex items-baseline gap-2">
-                <span className="text-2xl font-medium text-foreground">0</span>
-                <span className="text-sm text-negative">▼ 1 cleared</span>
-              </div>
-            </div>
-          </div>
-          <div className="rounded-lg border border-border bg-surface p-5">
-            <svg viewBox="0 0 300 90" className="w-full">
-              <polyline
-                points="10,55 60,50 110,58 160,40 210,45 260,30"
-                fill="none"
-                stroke="#7C8591"
-                strokeWidth="2"
-              />
-              <polyline
-                points="10,45 60,38 110,42 160,25 210,20 260,10"
-                fill="none"
-                stroke="#C9A961"
-                strokeWidth="2.5"
-              />
-              <circle cx="260" cy="10" r="3.5" fill="#C9A961" />
-            </svg>
-            <div className="mt-2 flex gap-4">
-              <span className="text-xs text-gold">● You</span>
-              <span className="text-xs text-cat-slate">● Branch average</span>
-            </div>
-          </div>
-        </section>
 
-        {/* Box grid demo */}
-        <section className="space-y-6">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-lg font-medium text-foreground">
-              Box grid — hover to highlight
-            </h2>
-            <span className="font-mono text-xs text-foreground-muted">
-              6 blocks
-            </span>
-          </div>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {blocks.map((b) => (
-              <div
-                key={b.title}
-                tabIndex={0}
-                className="group rounded-lg border border-border bg-surface p-5 outline-none transition-all duration-300 hover:border-gold-border hover:bg-gold-surface focus-visible:border-gold-border focus-visible:bg-gold-surface"
-              >
-                <div className="text-foreground-secondary transition-colors duration-300 group-hover:text-gold group-focus-visible:text-gold">
-                  {b.icon}
+          <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURES.map((f) => {
+              const a = ACCENTS[f.accent];
+              return (
+                <div
+                  key={f.title}
+                  className={`group rounded-lg border border-border bg-surface p-5 transition-colors duration-300 ${a.border}`}
+                >
+                  <div className={`inline-flex rounded-md p-2 ${a.bg}`}>
+                    <f.icon size={18} className={a.icon} />
+                  </div>
+                  <h3 className="mt-4 text-sm font-medium text-foreground">{f.title}</h3>
+                  <p className="mt-1.5 text-sm leading-6 text-foreground-secondary">{f.desc}</p>
                 </div>
-                <h3 className="mt-4 text-sm font-medium text-foreground transition-colors duration-300 group-hover:text-gold-bright group-focus-visible:text-gold-bright">
-                  {b.title}
-                </h3>
-                <p className="mt-1.5 text-sm leading-6 text-foreground-secondary">
-                  {b.desc}
-                </p>
-              </div>
-            ))}
+              );
+            })}
+          </div>
+        </section>
+
+        {/* How it works */}
+        <section id="how-it-works" className="border-t border-border bg-surface/40">
+          <div className="mx-auto max-w-6xl px-6 py-24">
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              How it works
+            </h2>
+
+            <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6">
+              {STEPS.map((step) => (
+                <div key={step.n}>
+                  <span className="font-mono text-3xl font-semibold text-gold-dim">{step.n}</span>
+                  <h3 className="mt-3 text-sm font-medium text-foreground">{step.title}</h3>
+                  <p className="mt-1.5 text-sm leading-6 text-foreground-secondary">{step.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Grading scale */}
+        <section className="mx-auto max-w-6xl px-6 py-24">
+          <div className="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-center">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+                Built exactly to Ordinance 11
+              </h2>
+              <p className="mt-3 max-w-md text-sm leading-6 text-foreground-secondary">
+                Every grade, credit, and division follows GGSIPU&apos;s official
+                credit-based semester system — no approximations.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {GRADE_BADGES.map((g) => (
+                <span
+                  key={g.label}
+                  className={`rounded-md border px-3 py-1.5 font-mono text-sm font-medium ${g.cls}`}
+                >
+                  {g.label} · {g.points}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        <section className="mx-auto max-w-6xl px-6 pb-24">
+          <div className="relative overflow-hidden rounded-2xl border border-border-strong bg-surface px-8 py-16 text-center">
+            <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-gold opacity-[0.08] blur-3xl" />
+            <h2 className="relative text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              {isAuthenticated ? "Jump back into your dashboard" : "Ready to see where you stand?"}
+            </h2>
+            <p className="relative mt-3 text-sm text-foreground-secondary">
+              {isAuthenticated
+                ? "Your result, analytics, and transcript are right where you left them."
+                : "Sign in with your enrollment number — your dashboard loads instantly."}
+            </p>
+            <Link href={cta.href} className={`relative mt-7 ${ctaClasses}`}>
+              {cta.label}
+              <ArrowRight size={14} />
+            </Link>
           </div>
         </section>
       </main>
 
-      <footer className="border-t border-border">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <span className="text-xs text-foreground-muted">Anviksha</span>
-          <span className="font-mono text-xs text-foreground-muted">
-            bg-background · text-foreground · bg-gold
+      <footer className="relative z-10 border-t border-border">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-6 text-center sm:flex-row sm:text-left">
+          <span className="text-xs text-foreground-muted">
+            Anviksha · Unofficial, not affiliated with GGSIPU
           </span>
+          <a
+            href="https://github.com/HimanshuSingh213/anviksha"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-1.5 font-mono text-xs text-foreground-muted transition-colors hover:text-foreground"
+          >
+            <GithubMark className="h-3.5 w-3.5" />
+            HimanshuSingh213/anviksha
+          </a>
         </div>
       </footer>
     </div>

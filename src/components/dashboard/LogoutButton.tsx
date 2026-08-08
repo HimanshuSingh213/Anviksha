@@ -17,8 +17,10 @@ export function LogoutButton() {
         } catch {
             toast.error("Failed to log out");
         } finally {
-            clearResult();
             router.push("/login");
+            setTimeout(() => {
+                clearResult();
+            }, 150);
         }
     };
 

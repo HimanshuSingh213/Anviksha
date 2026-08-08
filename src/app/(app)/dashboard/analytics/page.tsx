@@ -98,7 +98,7 @@ export default function AnalyticsPage() {
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-7">
 
-                {/* Top Controls: Semester filter + Marksheet download */}
+                {/* Semester filter + Marksheet download */}
                 <SemesterSelector
                     activeSem={activeSem}
                     onSelectSem={setActiveSem}

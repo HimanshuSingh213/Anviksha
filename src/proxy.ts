@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ApiErrorResponse } from "@/types/ApiResponse";
 
-export function proxy(req: NextRequest) {
+export default function proxy(req: NextRequest) {
     const { pathname } = req.nextUrl;
     
     const authSession = req.cookies.get("auth_session")?.value;
@@ -9,6 +9,7 @@ export function proxy(req: NextRequest) {
 
     const isProtectedApi = pathname.startsWith("/api/result");
     const isProtectedPage = pathname.startsWith("/dashboard");
+    const isAuthPage = pathname.startsWith("/login");
 
     // Intercept protected API routes
     if (isProtectedApi && !isAuthenticated) {
@@ -31,6 +32,11 @@ export function proxy(req: NextRequest) {
         return response;
     }
 
+    // Already signed in — don't show the login form again
+    if (isAuthPage && isAuthenticated) {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+    }
+
     return NextResponse.next();
 }
 
@@ -38,5 +44,6 @@ export const config = {
     matcher: [
         "/api/result/:path*",
         "/dashboard/:path*",
+        "/login",
     ],
 };

@@ -12,6 +12,7 @@ import useResultStore from "@/store/result-store";
 import { ResultData } from "@/types/result";
 import { getDefaultCredit, getGradeAndPoints, getGradeThemeClasses } from "@/helpers/grade-system";
 import PixelAvatar from "@/components/dashboard/PixelAvatar";
+import CreditTipModal from "@/components/dashboard/CreditTipModal";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/types/ApiResponse";
 
 const SEMESTERS = [
@@ -149,6 +150,7 @@ export default function DashboardPage() {
         <div className="min-h-screen bg-background text-foreground">
 
             <AppNavbar profile={profile} />
+            <CreditTipModal />
 
             <main className="max-w-7xl mx-auto px-6 py-8 space-y-6">
 

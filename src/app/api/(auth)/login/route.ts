@@ -1,3 +1,4 @@
+import * as cheerio from "cheerio";
 import { LoginSchema } from "@/validations/login.validation";
 import axios, { AxiosError } from "axios";
 import { NextRequest, NextResponse } from "next/server";
@@ -10,6 +11,22 @@ const hashPassword = (password: string, captcha: string): string => {
 };
 
 const REQUEST_TIMEOUT = 10000;
+
+function extractErrorFromHtml(html: string): { message: string; attemptsLeft?: number } {
+  const $ = cheerio.load(html);
+  const h2Text = $("#content h2").first().text().trim() || $("h2").first().text().trim();
+
+  if (!h2Text) {
+    return { message: "Login failed. Please check your credentials." };
+  }
+
+  const attemptsMatch = h2Text.match(/(\d+)\s*attempts?\s*left/i);
+  if (attemptsMatch) {
+    return { message: h2Text, attemptsLeft: parseInt(attemptsMatch[1], 10) };
+  }
+
+  return { message: h2Text };
+}
 
 export const POST = async (req: NextRequest) => {
   try {
@@ -29,7 +46,7 @@ export const POST = async (req: NextRequest) => {
     if (!sessionId) {
       const errPayload: ApiErrorResponse = {
         success: false,
-        error: "Session expired. Please refresh the CAPTCHA.",
+        error: "Session expired. Please refresh CAPTCHA.",
         expired: true,
         code: "SESSION_EXPIRED",
       };
@@ -78,39 +95,30 @@ export const POST = async (req: NextRequest) => {
     if (!success) {
       const rawHtml = typeof res.data === "string" ? res.data : "";
       const lower = rawHtml.toLowerCase();
+      const extracted = extractErrorFromHtml(rawHtml);
 
-      let errorMessage = "Invalid credentials or CAPTCHA";
-      let code: 'INVALID_CREDENTIALS' | 'SESSION_EXPIRED' = 'INVALID_CREDENTIALS';
-      let expired = true;
+      let code: 'INVALID_CREDENTIALS' | 'INVALID_CAPTCHA' | 'SESSION_EXPIRED' | 'RATE_LIMITED' = 'INVALID_CREDENTIALS';
+      let locked = false;
 
-      if (lower.includes("account locked") || lower.includes("account is locked")) {
-        const errPayload: ApiErrorResponse = {
-          success: false,
-          error: "Account locked due to multiple failed attempts. Try again after some time.",
-          code: "RATE_LIMITED",
-          locked: true,
-        };
-        return NextResponse.json(errPayload, { status: 403 });
-      } else if (lower.includes("invalid captcha") || lower.includes("wrong captcha")) {
-        errorMessage = "Invalid CAPTCHA. Please try again.";
-      } else if (lower.includes("disabled")) {
-        errorMessage = "Account disabled on GGSIPU portal.";
-      } else if (lower.includes("password") || lower.includes("username")) {
-        errorMessage = "Invalid Enrollment Number or Password.";
-      } else if (lower.includes("session") || lower.includes("expired") ||
-        res.status === 302 && !location.includes("studenthome")) {
-        errorMessage = "Session expired. Please refresh CAPTCHA.";
+      if (lower.includes("account locked") || lower.includes("account is locked") || lower.includes("0 attempts left")) {
+        code = "RATE_LIMITED";
+        locked = true;
+      } else if (lower.includes("captcha")) {
+        code = "INVALID_CAPTCHA";
+      } else if (lower.includes("session") || lower.includes("expired") || (res.status === 302 && !location.includes("studenthome"))) {
         code = "SESSION_EXPIRED";
       }
 
       const errPayload: ApiErrorResponse = {
         success: false,
-        error: errorMessage,
+        error: extracted.message,
         code,
-        expired,
+        expired: true,
+        locked,
+        attemptsLeft: extracted.attemptsLeft,
       };
 
-      return NextResponse.json(errPayload, { status: 401 });
+      return NextResponse.json(errPayload, { status: locked ? 403 : 401 });
     }
 
     const payload: ApiSuccessResponse<{ message: string }> = {
@@ -119,7 +127,6 @@ export const POST = async (req: NextRequest) => {
     };
 
     const response = NextResponse.json(payload);
-
     const activeSessionId = newSessionId || sessionId;
 
     response.cookies.set("JSESSIONID", activeSessionId, {
