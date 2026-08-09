@@ -22,10 +22,8 @@ export default function AnalyticsPage() {
         if (!fullResult) router.push("/dashboard");
     }, [fullResult, router]);
 
-    if (!fullResult) return <Skeleton />;
-
-    const allResults = fullResult.stresult ?? [];
-    const profile = fullResult.stprofile;
+    const allResults = fullResult?.stresult ?? [];
+    const profile = fullResult?.stprofile;
 
     // Available semester list
     const availableSemesters = useMemo(() => {
@@ -91,6 +89,7 @@ export default function AnalyticsPage() {
             percentage: (computedGpa * 10).toFixed(2),
         };
     }, [activeSem, allResults, customCredit]);
+    if (!fullResult) return <Skeleton />;
 
     return (
         <div className="min-h-screen bg-background text-foreground">

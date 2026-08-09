@@ -10,15 +10,15 @@ import { toast } from "sonner";
 import { ResultGradeSheet } from "../export/ResultGradeSheet";
 
 const SEMESTERS = [
-    { label: "All Sems", value: "100" },
-    { label: "Sem I", value: "1" },
-    { label: "Sem II", value: "2" },
-    { label: "Sem III", value: "3" },
-    { label: "Sem IV", value: "4" },
-    { label: "Sem V", value: "5" },
-    { label: "Sem VI", value: "6" },
-    { label: "Sem VII", value: "7" },
-    { label: "Sem VIII", value: "8" },
+    { label: "All Sems", shortLabel: "All", value: "100" },
+    { label: "Sem I", shortLabel: "I", value: "1" },
+    { label: "Sem II", shortLabel: "II", value: "2" },
+    { label: "Sem III", shortLabel: "III", value: "3" },
+    { label: "Sem IV", shortLabel: "IV", value: "4" },
+    { label: "Sem V", shortLabel: "V", value: "5" },
+    { label: "Sem VI", shortLabel: "VI", value: "6" },
+    { label: "Sem VII", shortLabel: "VII", value: "7" },
+    { label: "Sem VIII", shortLabel: "VIII", value: "8" },
 ];
 
 const DOWNLOAD_OPTIONS = [
@@ -73,6 +73,7 @@ export default function SemesterSelector({
     const handleDownloadPDF = async () => {
         if (!printRef.current) return;
         setIsExporting(true);
+        toast.info("Preparing the Marksheet for you...");
         try {
             const canvas = await html2canvas(printRef.current, {
                 scale: 2,
@@ -92,7 +93,9 @@ export default function SemesterSelector({
             const fileName = `${profile?.stname || "Student"}_${docName}.pdf`.replace(/\s+/g, "_");
             pdf.save(fileName);
 
-            toast.success(isOverallDownload ? "Overall Transcript PDF downloaded!" : "Marksheet PDF downloaded!");
+            toast.success(
+                isOverallDownload ? "Overall Transcript PDF downloaded!" : "Marksheet PDF downloaded!"
+            );
         } catch (err) {
             console.error("PDF Export Error:", err);
             toast.error("Failed to generate PDF. Please try again.");
@@ -122,26 +125,28 @@ export default function SemesterSelector({
             >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-2">
-                        <SlidersHorizontal size={13} className="text-cat-violet" />
+                        <SlidersHorizontal size={13} className="text-cat-violet shrink-0" />
                         <span className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
                             Viewing: {activeLabel}
                         </span>
-                        <span className="text-[10px] font-mono text-foreground-secondary px-2 py-0.5 rounded-sm bg-surface-deep border border-border-strong">
+                        <span className="text-[10px] font-mono text-foreground-secondary px-2 py-0.5 rounded-sm bg-surface-deep border border-border-strong shrink-0">
                             {totalSubjects} subjects
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-2 font-mono">
-                        <div className="relative">
+                    <div className="flex items-center gap-2 font-mono w-full sm:w-auto justify-between sm:justify-end">
+                        <div className="relative flex-1 sm:flex-initial">
                             <button
                                 onClick={() => setOpenDownloadDropdown((p) => !p)}
-                                className="flex items-center gap-2 px-2.5 py-1.5 bg-surface-deep border border-border-strong rounded-sm text-xs text-foreground hover:border-foreground-secondary transition-colors cursor-pointer"
+                                className="w-full sm:w-auto flex items-center justify-between gap-2 px-2.5 py-1.5 bg-surface-deep border border-border-strong rounded-sm text-xs text-foreground hover:border-gold-border hover:text-gold transition-colors duration-200 cursor-pointer"
                             >
-                                <FileText size={12} className="text-chart-cyan" />
-                                <span>{selectedDownloadLabel}</span>
+                                <span className="flex items-center gap-2 truncate">
+                                    <FileText size={12} className="text-chart-cyan shrink-0" />
+                                    <span className="truncate">{selectedDownloadLabel}</span>
+                                </span>
                                 <ChevronDown
                                     size={12}
-                                    className={`text-foreground-muted transition-transform duration-200 ${openDownloadDropdown ? "rotate-180" : ""}`}
+                                    className={`text-foreground-muted shrink-0 transition-transform duration-200 ${openDownloadDropdown ? "rotate-180" : ""}`}
                                 />
                             </button>
 
@@ -152,7 +157,7 @@ export default function SemesterSelector({
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -4 }}
                                         transition={{ duration: 0.15 }}
-                                        className="absolute right-0 top-full mt-1 z-30 w-48 bg-surface-elevated border border-border-strong rounded-sm overflow-hidden shadow-xl"
+                                        className="absolute right-0 top-full mt-1 z-30 w-full sm:w-48 bg-surface-elevated border border-border-strong rounded-sm overflow-hidden shadow-xl"
                                     >
                                         {downloadOptions.map((o) => (
                                             <button
@@ -180,7 +185,7 @@ export default function SemesterSelector({
                             whileTap={{ scale: 0.96 }}
                             disabled={isExporting}
                             onClick={handleDownloadPDF}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-foreground text-background text-xs font-bold rounded-sm border border-foreground hover:bg-foreground-secondary disabled:opacity-50 transition-colors cursor-pointer uppercase tracking-wider shadow-xs"
+                            className="flex items-center justify-center gap-1.5 px-3 py-1.5 bg-foreground text-background text-xs font-bold rounded-sm border border-foreground hover:bg-foreground-secondary disabled:opacity-50 transition-colors cursor-pointer uppercase tracking-wider shadow-xs shrink-0"
                         >
                             <Download size={12} />
                             <span>{isExporting ? "Exporting..." : "Download"}</span>
@@ -188,14 +193,16 @@ export default function SemesterSelector({
                     </div>
                 </div>
 
-                <div className="flex flex-wrap gap-1 p-1 bg-surface border border-border-strong rounded-sm">
+                <div role="tablist" aria-label="Semester Selection Tabs" className="flex flex-wrap items-center justify-between sm:justify-start gap-0.5 sm:gap-1 p-1 bg-surface border border-border-strong rounded-sm w-full sm:w-auto">
                     {SemseterOptions.map((sem) => {
                         const active = activeSem === sem.value;
                         return (
                             <button
                                 key={sem.value}
+                                role="tab"
+                                aria-selected={active}
                                 onClick={() => onSelectSem(sem.value)}
-                                className={`relative px-3 py-1.5 rounded-sm text-xs font-mono font-semibold transition-colors duration-150 cursor-pointer ${
+                                className={`relative flex-1 sm:flex-none text-center px-1 sm:px-3 py-1.5 rounded-sm text-[11px] sm:text-xs font-mono font-semibold transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-gold ${
                                     active ? "text-background font-bold" : "text-foreground-muted hover:text-foreground"
                                 }`}
                             >
@@ -206,7 +213,8 @@ export default function SemesterSelector({
                                         transition={{ type: "spring", stiffness: 400, damping: 32 }}
                                     />
                                 )}
-                                <span className="relative z-10">{sem.label}</span>
+                                <span className="relative z-10 hidden sm:inline">{sem.label}</span>
+                                <span className="relative z-10 sm:hidden">{sem.shortLabel}</span>
                             </button>
                         );
                     })}

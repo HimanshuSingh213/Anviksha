@@ -99,6 +99,7 @@ export const LoginForm = () => {
                             {...register("enrollment")}
                             type="text"
                             placeholder="09414802721"
+                            autoComplete="username"
                             suppressHydrationWarning
                             className="w-full rounded-lg border border-border-strong bg-background py-2.5 pl-10 pr-3 font-mono text-sm text-foreground outline-none transition focus:border-gold focus:ring-1 focus:ring-gold"
                         />
@@ -125,14 +126,16 @@ export const LoginForm = () => {
                             {...register("password")}
                             type={showPass ? "text" : "password"}
                             placeholder="••••••••"
+                            autoComplete="current-password"
                             suppressHydrationWarning
                             className="w-full rounded-lg border border-border-strong bg-background py-2.5 pl-10 pr-10 font-mono text-sm text-foreground outline-none transition focus:border-gold focus:ring-1 focus:ring-gold"
                         />
                         <button
                             type="button"
                             onClick={() => setShowPass(!showPass)}
+                            aria-label={showPass ? "Hide password" : "Show password"}
                             suppressHydrationWarning
-                            className="absolute right-3 text-foreground-muted hover:text-foreground"
+                            className="absolute right-3 text-foreground-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-gold rounded p-0.5"
                         >
                             {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
@@ -145,14 +148,15 @@ export const LoginForm = () => {
                 {/* CAPTCHA Section */}
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                        <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-foreground-secondary">
+                        <label htmlFor="captcha" className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-foreground-secondary cursor-pointer">
                             <Fingerprint size={14} />
                             CAPTCHA
                         </label>
                         <button
                             type="button"
+                            aria-label="Refresh CAPTCHA image"
                             suppressHydrationWarning
-                            className="flex items-center gap-1 text-xs text-foreground-muted hover:text-gold transition duration-200 ease-in-out cursor-pointer"
+                            className="flex items-center gap-1 text-xs text-foreground-muted hover:text-gold transition duration-200 ease-in-out cursor-pointer focus-visible:ring-2 focus-visible:ring-gold rounded px-1"
                             onClick={handleRefreshCaptcha}
                         >
                             <RefreshCcw size={12} className={`transition-transform duration-500 ${isRefreshing ? "rotate-180" : ""}`} /> Refresh

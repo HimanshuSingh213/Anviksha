@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 import {
   Hash,
   KeyRound,
@@ -78,8 +79,8 @@ export default function LoginPage() {
       {/* Header */}
       <header className="relative z-10 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 overflow-hidden rounded-lg border border-border shadow-sm">
+          <Link href="/" title="Go to Homepage" className="flex items-center gap-3 group cursor-pointer">
+            <div className="h-9 w-9 overflow-hidden rounded-lg border border-border shadow-sm transition-opacity group-hover:opacity-85">
               <Image
                 src="/favicon.png"
                 alt="Anviksha"
@@ -90,14 +91,14 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <span className="font-mono text-xs font-semibold tracking-widest text-foreground">
+              <span className="font-mono text-xs font-semibold tracking-widest text-foreground transition-colors group-hover:text-gold">
                 ANVIKSHA
               </span>
               <p className="font-mono text-[10px] text-foreground-muted">
                 GGSIPU Exam Portal
               </p>
             </div>
-          </div>
+          </Link>
 
           <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-foreground-muted">
             <ShieldCheck size={14} className="text-positive" />

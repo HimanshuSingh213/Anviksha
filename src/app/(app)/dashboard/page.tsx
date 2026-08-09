@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios, { AxiosError } from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, CheckCircle2, Percent, BarChart2, BookOpen, Pencil, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { AlertTriangle, CheckCircle2, Percent, BarChart2, BookOpen, Pencil, ArrowRight, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import Skeleton from "@/components/dashboard/Skeleton";
 import AppNavbar from "@/components/common/AppNavbar";
@@ -147,12 +148,14 @@ export default function DashboardPage() {
     const profile = fullResult?.stprofile;
 
     return (
-        <div className="min-h-screen bg-background text-foreground">
+        <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
+            {/* Ambient background glow */}
+            <div className="pointer-events-none absolute -top-32 -left-24 h-96 w-96 rounded-full bg-gold opacity-[0.06] blur-3xl" aria-hidden="true" />
 
             <AppNavbar profile={profile} />
             <CreditTipModal />
 
-            <main className="max-w-7xl mx-auto px-6 py-8 space-y-6">
+            <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
 
                 {/* Error Banner */}
                 <AnimatePresence>
@@ -186,7 +189,7 @@ export default function DashboardPage() {
                                 hidden: { opacity: 0, y: 20 },
                                 show: { opacity: 1, y: 0 },
                             }}
-                            className="lg:col-span-1 bg-surface border border-border-strong rounded-lg p-6 flex flex-col justify-between gap-5"
+                            className="lg:col-span-1 bg-surface border border-border-strong rounded-lg p-5 sm:p-6 flex flex-col justify-between gap-5 hover:border-gold-border transition-all duration-200 shadow-xs"
                         >
                             <div>
                                 <div className="flex items-start gap-3 mb-4">
@@ -219,7 +222,7 @@ export default function DashboardPage() {
                         </motion.div>
 
                         {/* Stat Cards Grid */}
-                        <div className="lg:col-span-2 grid grid-cols-2 gap-4">
+                        <div className="lg:col-span-2 grid grid-cols-2 gap-3 sm:gap-4">
                             {[
                                 {
                                     label: gpaLabel,
@@ -263,20 +266,20 @@ export default function DashboardPage() {
                                         show: { opacity: 1, y: 0 },
                                     }}
                                     whileHover={{ scale: 1.015, transition: { duration: 0.15 } }}
-                                    className={`bg-surface border border-border-strong rounded-lg p-5 flex flex-col justify-between cursor-default ${card.bgClass ?? ""}`}
+                                    className={`bg-surface border border-border-strong hover:border-gold-border transition-all duration-200 shadow-xs rounded-lg p-4 sm:p-5 flex flex-col justify-between cursor-default ${card.bgClass ?? ""}`}
                                 >
-                                    <div className="flex items-center justify-between mb-4">
-                                        <span className="text-[10px] font-mono uppercase tracking-widest text-foreground-secondary font-bold">{card.label}</span>
+                                    <div className="flex items-center justify-between mb-3 sm:mb-4">
+                                        <span className="text-[10px] font-mono uppercase tracking-widest text-foreground-secondary font-bold truncate pr-1">{card.label}</span>
                                         {card.icon}
                                     </div>
                                     <div>
-                                        <div className={`text-4xl font-bold font-mono ${card.color}`}>
+                                        <div className={`text-2xl sm:text-4xl font-bold font-mono ${card.color}`}>
                                             {card.value}
                                             {card.valueSuffix && (
-                                                <span className="text-xl text-foreground-secondary font-semibold">{card.valueSuffix}</span>
+                                                <span className="text-sm sm:text-xl text-foreground-secondary font-semibold">{card.valueSuffix}</span>
                                             )}
                                         </div>
-                                        <div className="text-[10px] text-foreground-secondary font-mono font-medium mt-2">{card.sub}</div>
+                                        <div className="text-[10px] text-foreground-secondary font-mono font-medium mt-1.5 sm:mt-2 truncate">{card.sub}</div>
                                     </div>
                                 </motion.div>
                             ))}
@@ -288,14 +291,15 @@ export default function DashboardPage() {
                 <motion.section
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
-                    <div className="inline-flex items-center gap-0.5 bg-surface-deep border border-border-strong rounded-md p-1 flex-wrap">
+                    <div className="flex sm:inline-flex items-center justify-between sm:justify-start gap-0.5 sm:gap-0.5 bg-surface-deep border border-border-strong rounded-md p-1 w-full sm:w-auto">
                         {SEMESTERS.map((sem) => (
                             <button
                                 key={sem.value}
                                 onClick={() => setActiveSem(sem.value)}
                                 disabled={loading}
-                                className={`relative px-3.5 py-1.5 text-xs font-mono font-semibold transition-colors duration-100 disabled:opacity-40 rounded-sm cursor-pointer ${activeSem === sem.value
+                                className={`relative flex-1 sm:flex-none text-center px-1.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-mono font-semibold transition-colors duration-100 disabled:opacity-40 rounded-sm cursor-pointer ${activeSem === sem.value
                                     ? "text-background font-bold"
                                     : "text-foreground-secondary hover:text-foreground"
                                     }`}
@@ -311,6 +315,16 @@ export default function DashboardPage() {
                             </button>
                         ))}
                     </div>
+
+                    <Link
+                        href="/dashboard/analytics"
+                        title="Go to Analytics & PDF Export"
+                        className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors duration-200 shadow-xs cursor-pointer shrink-0"
+                    >
+                        <FileDown size={13} className="text-chart-cyan" />
+                        <span>Download Marksheet</span>
+                        <ArrowRight size={12} className="opacity-70" />
+                    </Link>
                 </motion.section>
 
                 {/* Results Table */}
@@ -318,22 +332,26 @@ export default function DashboardPage() {
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                 >
-                    <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                        <div className="flex items-center gap-2">
-                            <span className="px-2.5 py-1 rounded-md bg-surface-deep border border-border-strong text-xs font-mono font-bold text-foreground tracking-wider uppercase shadow-sm">
-                                {activeSem === "100" ? "All Semesters" : `Semester ${activeSem}`}
-                            </span>
-                            <span className="px-2.5 py-1 rounded-md bg-cat-teal-surface border border-cat-teal-border text-xs font-mono font-bold text-cat-teal shadow-sm">
-                                {filteredResults?.length ?? 0} subjects
-                            </span>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 mb-3">
+                        <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+                            <div className="flex items-center gap-2">
+                                <span className="px-2.5 py-1 rounded-md bg-surface-deep border border-border-strong text-xs font-mono font-bold text-foreground tracking-wider uppercase shadow-sm">
+                                    {activeSem === "100" ? "All Semesters" : `Semester ${activeSem}`}
+                                </span>
+                                <span className="px-2.5 py-1 rounded-md bg-cat-teal-surface border border-cat-teal-border text-xs font-mono font-bold text-cat-teal shadow-sm">
+                                    {filteredResults?.length ?? 0} subjects
+                                </span>
+                            </div>
+                            <span className="sm:hidden text-[10px] font-mono text-foreground-muted italic shrink-0">Scroll sideways →</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[11px] font-mono text-gold bg-gold-surface border border-gold-border px-2.5 py-1 rounded-md shadow-sm">
-                            <Pencil size={11} className="animate-pulse" />
+
+                        <div className="flex items-center gap-1.5 text-[11px] sm:text-[11px] font-mono text-gold bg-gold-surface border border-gold-border px-2.5 py-1 rounded-md shadow-sm w-full sm:w-auto">
+                            <Pencil size={11} className="animate-pulse shrink-0" />
                             <span>Click any credit value to edit & recalculate GPA</span>
                         </div>
                     </div>
 
-                    <div className="bg-surface border border-border-strong rounded-lg overflow-hidden">
+                    <div className="bg-surface border border-border-strong rounded-lg overflow-hidden hover:border-gold-border/80 transition-all duration-200 shadow-xs">
                         <AnimatePresence mode="wait">
                             {filteredResults && filteredResults.length > 0 ? (
                                 <motion.div
@@ -345,6 +363,7 @@ export default function DashboardPage() {
                                     className="overflow-x-auto"
                                 >
                                     <table className="w-full">
+                                        <caption className="sr-only">Detailed Subject Results and Grades</caption>
                                         <thead>
                                             <tr className="bg-surface-deep border-b border-border-strong">
                                                 {["Sem", "Code", "Subject", "Int.", "Ext.", "Total", "Credits", "Grade", "Status"].map((h) => (
@@ -376,7 +395,7 @@ export default function DashboardPage() {
                                                         initial={{ opacity: 0, x: -6 }}
                                                         animate={{ opacity: 1, x: 0 }}
                                                         transition={{ delay: idx * 0.025, duration: 0.25 }}
-                                                        className="border-b border-border-strong/40 last:border-0 hover:bg-surface-elevated/50 transition-colors duration-75"
+                                                        className="border-b border-border-strong/40 last:border-0 hover:bg-surface-elevated/80 hover:border-gold-border/40 transition-colors duration-150"
                                                     >
                                                         <td className="px-4 py-3.5 text-xs font-mono text-foreground-secondary font-medium">{row[0]}</td>
                                                         <td className="px-4 py-3.5 text-xs font-mono font-bold text-gold">{paperCode}</td>
@@ -397,7 +416,14 @@ export default function DashboardPage() {
                                                                 min={0}
                                                                 max={10}
                                                                 value={currentCredit}
+                                                                aria-label={`Edit credit value for ${subjectTitle}`}
                                                                 title="Click to edit credits for custom GPA calculation"
+                                                                onKeyDown={(e) => {
+                                                                    if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                                                                        e.preventDefault();
+                                                                    }
+                                                                }}
+                                                                onWheel={(e) => (e.target as HTMLInputElement).blur()}
                                                                 onChange={(e) => setCustomCredit(paperCode, Number(e.target.value))}
                                                                 className="w-10 text-center bg-surface-deep border border-border-strong hover:border-gold/60 focus:border-gold focus:ring-1 focus:ring-gold/30 rounded-sm py-0.5 font-mono text-xs font-bold text-foreground outline-none transition-all cursor-pointer focus:cursor-text [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                             />
@@ -446,7 +472,7 @@ export default function DashboardPage() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: 12 }}
                             transition={{ duration: 0.3 }}
-                            className="bg-surface border border-border-strong rounded-lg overflow-hidden"
+                            className="bg-surface border border-border-strong rounded-lg overflow-hidden hover:border-gold-border/80 transition-all duration-200 shadow-xs"
                         >
                             <div className="bg-surface-deep border-b border-border-strong px-5 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <div>

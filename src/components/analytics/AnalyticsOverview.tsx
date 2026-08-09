@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Award, BookOpen, Percent, FileText, AlertTriangle, CheckCircle2 } from "lucide-react";
 
@@ -14,7 +15,7 @@ interface Props {
     backlogsCount: number;
 }
 
-const cards = (props: Props) => [
+const getCards = (props: Props) => [
     {
         label: props.gpaLabel,
         value: props.gpa,
@@ -56,7 +57,16 @@ const cards = (props: Props) => [
 ];
 
 export default function AnalyticsOverview(props: Props) {
-    const metricCards = cards(props);
+    // Memoize the array of metric cards to prevent object recreation on every render
+    const metricCards = useMemo(() => getCards(props), [
+        props.gpa, 
+        props.gpaLabel, 
+        props.earnedCredits, 
+        props.totalCredits, 
+        props.obtainedMarks, 
+        props.totalMaxMarks, 
+        props.percentage
+    ]);
 
     return (
         <div className="space-y-4">

@@ -1,10 +1,16 @@
 import axios, { AxiosError } from "axios";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
 export const BASE_URL = "https://examweb.ggsipu.ac.in";
 const REQUEST_TIMEOUT = 8000; // 8 seconds
 
-export const GET = async () => {
+export const GET = async (req: NextRequest) => {
+  // Anti-abuse: block direct browser navigation and cross-origin embedding
+  const fetchSite = req.headers.get("sec-fetch-site");
+  if (fetchSite === "none" || fetchSite === "cross-site") {
+    return NextResponse.json({ error: "Direct API access forbidden" }, { status: 403 });
+  }
+
   try {
     const timestamp = Date.now();
     const res = await axios.get(`${BASE_URL}/web/CaptchaServlet`, {

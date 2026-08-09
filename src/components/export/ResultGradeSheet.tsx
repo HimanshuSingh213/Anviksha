@@ -136,6 +136,7 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
 
                     {/* Subject Table */}
                     <table className="w-full text-xs font-sans border-collapse border border-black text-center">
+                        <caption className="sr-only">Academic Marks Breakdown Table</caption>
                         <thead>
                             <tr className="bg-[#18181b] text-white uppercase text-[10px] font-bold border-b border-black">
                                 <th className="border border-black p-2 text-left">Code</th>

@@ -62,7 +62,7 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
         const loSubject = passedRows.find((r) => Number(r[5]) === lo);
 
         const data = Object.entries(counts)
-            .filter(([_, count]) => count > 0)
+            .filter(([, count]) => count > 0)
             .map(([grade, count]) => ({
                 name: `Grade ${grade}`,
                 grade,

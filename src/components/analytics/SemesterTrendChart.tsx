@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { TrendingUp, Award, BarChart3 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import {
     ResponsiveContainer,
     AreaChart,

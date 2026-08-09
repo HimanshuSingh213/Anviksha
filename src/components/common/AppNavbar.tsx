@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Home } from "lucide-react";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
 import { StudentProfile } from "@/types/result";
 
@@ -34,13 +34,13 @@ export default function AppNavbar({ profile }: AppNavbarProps) {
                             exit={{ opacity: 0, x: -8 }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
                         >
-                            <Link href="/dashboard" className="flex items-center shrink-0">
+                            <Link href="/" title="Go to Homepage" className="flex items-center gap-2 shrink-0 group">
                                 <Image
                                     src="/navbar-logo.png"
                                     alt="Anviksha"
                                     width={160}
                                     height={44}
-                                    className="object-contain h-8 w-auto"
+                                    className="object-contain h-8 w-auto transition-opacity group-hover:opacity-85"
                                     priority
                                 />
                             </Link>
@@ -64,6 +64,15 @@ export default function AppNavbar({ profile }: AppNavbarProps) {
                 </AnimatePresence>
 
                 <div className="flex items-center gap-2.5 shrink-0">
+                    <Link
+                        href="/"
+                        title="Go to Homepage"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors duration-200 shrink-0 shadow-xs"
+                    >
+                        <Home size={13} />
+                        <span className="hidden sm:inline">Home</span>
+                    </Link>
+
                     {profile?.stname && (
                         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-md bg-surface border border-border-strong text-xs font-mono shadow-xs">
                             <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />

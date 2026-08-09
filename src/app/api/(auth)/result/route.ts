@@ -17,6 +17,12 @@ function extractHtmlText(html: string): string {
 }
 
 export const GET = async (req: NextRequest) => {
+  // Anti-abuse: block direct browser navigation and cross-origin requests
+  const fetchSite = req.headers.get("sec-fetch-site");
+  if (fetchSite === "none" || fetchSite === "cross-site") {
+    return NextResponse.json({ error: "Direct API access forbidden" }, { status: 403 });
+  }
+
   try {
     const sessionId = req.cookies.get("JSESSIONID")?.value;
 

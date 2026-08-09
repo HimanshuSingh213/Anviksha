@@ -18,7 +18,7 @@ html {
   /* Text */
   --foreground: #f2efea;
   --foreground-secondary: #a39e96;
-  --foreground-muted: #63605a;
+  --foreground-muted: #8a867d;
 
   /* Gold — secondary/tertiary brand accent only */
   --gold: #c9a961;
@@ -40,9 +40,9 @@ html {
   --grade-average-surface: rgba(224, 166, 57, 0.12);
   --grade-average-border: rgba(224, 166, 57, 0.35);
 
-  --grade-pass: #e07b39;
-  --grade-pass-surface: rgba(224, 123, 57, 0.12);
-  --grade-pass-border: rgba(224, 123, 57, 0.35);
+  --grade-pass: #e88d4a;
+  --grade-pass-surface: rgba(232, 141, 74, 0.12);
+  --grade-pass-border: rgba(232, 141, 74, 0.35);
 
   --grade-fail: #e1504b;
   --grade-fail-surface: rgba(225, 80, 75, 0.12);
