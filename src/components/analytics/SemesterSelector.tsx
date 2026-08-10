@@ -97,7 +97,7 @@ export default function SemesterSelector({
                 isOverallDownload ? "Overall Transcript PDF downloaded!" : "Marksheet PDF downloaded!"
             );
         } catch (err) {
-            console.error("PDF Export Error:", err);
+            // console.error("PDF Export Error:", err);
             toast.error("Failed to generate PDF. Please try again.");
         } finally {
             setIsExporting(false);
