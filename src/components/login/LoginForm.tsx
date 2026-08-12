@@ -11,6 +11,7 @@ import {
     Loader2,
 } from "lucide-react";
 import { useState, useEffect, Suspense } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LoginSchema, LoginInput } from "@/validations/login.validation";
@@ -81,6 +82,30 @@ export const LoginForm = () => {
             </Suspense>
 
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5" suppressHydrationWarning>
+
+                {/* GGSIPU Unreachable Warning Banner */}
+                <AnimatePresence>
+                    {captchaError && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+                            animate={{ opacity: 1, height: "auto", marginBottom: 4 }}
+                            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                            className="overflow-hidden"
+                        >
+                            <div className="p-3 bg-grade-fail-surface border border-grade-fail-border rounded-lg flex items-start gap-2.5 shadow-sm">
+                                <div className="text-grade-fail mt-0.5 shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                                </div>
+                                <div className="space-y-0.5">
+                                    <h3 className="text-xs font-bold text-grade-fail uppercase tracking-wider font-mono">GGSIPU Portal Unreachable</h3>
+                                    <p className="text-[11px] text-foreground-secondary leading-snug">
+                                        The official university servers are currently not responding. You may not be able to log in. Please try refreshing the CAPTCHA or try again later.
+                                    </p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Enrollment Number (Username) */}
                 <div className="flex flex-col gap-1.5">
