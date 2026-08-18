@@ -8,12 +8,14 @@ import {
   Timer,
   Calculator,
   TrendingUp,
-  Pencil,
   PieChart,
   Award,
   FileDown,
+  Briefcase,
+  Calendar,
 } from "lucide-react";
 import ResultPreviewCard from "@/components/home/ResultPreviewCard";
+import StructuredData from "@/components/common/StructuredData";
 
 /* ---------------------------------- data ---------------------------------- */
 
@@ -36,11 +38,13 @@ const ACCENTS: Record<Accent, { icon: string; bg: string; border: string }> = {
 
 const FEATURES: { icon: typeof Calculator; accent: Accent; title: string; desc: string }[] = [
   { icon: Calculator, accent: "blue", title: "Instant SGPA & CGPA", desc: "Calculated the moment your result loads, exactly per GGSIPU Ordinance 11." },
-  { icon: TrendingUp, accent: "violet", title: "Semester analytics", desc: "Track SGPA across all 8 semesters with sem-by-sem trend charts." },
-  { icon: Pencil, accent: "teal", title: "Editable credits", desc: "Lab and theory credits are auto-detected — edit inline if something's off." },
-  { icon: PieChart, accent: "pink", title: "Grade breakdown", desc: "See your O–F distribution and internal vs. external split for any semester." },
-  { icon: Award, accent: "gold", title: "Division & distinction", desc: "Auto-classified First Division with Distinction, First Division, or Second Division." },
-  { icon: FileDown, accent: "green", title: "Transcript PDF", desc: "Download an official-style marksheet or full transcript in one click." },
+  { icon: ShieldCheck, accent: "green", title: "50% Promotion Standing", desc: "Monitors annual credit accumulation to prevent year-back detentions under Ordinance 11." },
+  { icon: Briefcase, accent: "gold", title: "Placement Gatekeeper", desc: "Evaluates your standing against 60%, 65%, 70%, and 75% corporate recruiter cutoffs." },
+  { icon: Calendar, accent: "teal", title: "Odd/Even Reappear Planner", desc: "Intelligently schedules failed papers into Nov/Dec winter and May/June summer exam windows." },
+  { icon: FileDown, accent: "violet", title: "Consolidated Master Transcript", desc: "Generate a single-page official academic transcript with QR code verification in one click." },
+  { icon: Award, accent: "gold", title: "Division & Distinction", desc: "Auto-classified First Division with Distinction, First Division, or Second Division." },
+  { icon: TrendingUp, accent: "blue", title: "Semester Trends", desc: "Track SGPA progression curves and internal vs. external exam distributions." },
+  { icon: PieChart, accent: "pink", title: "Grade Breakdown", desc: "Comprehensive O to F grade distributions with highest and lowest scoring highlights." },
 ];
 
 const STEPS = [
@@ -60,7 +64,30 @@ const GRADE_BADGES = [
   { label: "F", points: 0, cls: "text-grade-fail bg-grade-fail-surface border-grade-fail-border" },
 ];
 
-/* --------------------------------- helpers --------------------------------- */
+const FAQS = [
+  {
+    q: "How can I check my GGSIPU Semester Results 2026 on Anviksha?",
+    a: "Simply sign in using your official GGSIPU student enrollment number and password. Anviksha securely connects to the university exam servers to fetch and parse your complete semester results, marks breakdown, and credit points live into an interactive dashboard.",
+  },
+  {
+    q: "How is SGPA and CGPA calculated in GGSIPU under Ordinance 11?",
+    a: "GGSIPU uses the Choice Based Credit System (CBCS) defined in Ordinance 11. SGPA is calculated by taking the sum of (Subject Credits × Grade Points) divided by the total semester credits. CGPA is the cumulative credit-weighted average across all completed semesters. Percentage is calculated as CGPA × 10.0.",
+  },
+  {
+    q: "What is the GGSIPU 50% Credit Rule for Academic Promotion?",
+    a: "Under GGSIPU Ordinance 11 regulations, a student must clear at least 50% of the total credits offered across both semesters of an academic year (e.g. Sem 1 + Sem 2 for Year 1) to be eligible for promotion to the next academic year without facing detention (year-back).",
+  },
+  {
+    q: "What are the common Campus Placement Cutoff Benchmarks for IPU students?",
+    a: "Most corporate recruiters shortlisting at GGSIPU affiliated colleges enforce thresholds of 60% (6.00 CGPA) for IT services & analysts, 65% (6.50 CGPA) for consulting & product tracks, 70% (7.00 CGPA) for core engineering & tier-1 tech firms, and 75%+ (7.50 CGPA) for high-compensation R&D drives, alongside a strict 0 active backlog policy.",
+  },
+  {
+    q: "How does the Odd vs Even Re-appear Examination Cycle work in GGSIPU?",
+    a: "GGSIPU examination windows strictly separate semesters: backlogs from Odd semesters (1st, 3rd, 5th, 7th) can only be given during the November/December winter exam cycle, while Even semester backlogs (2nd, 4th, 6th, 8th) can only be given during the May/June summer exam cycle.",
+  },
+];
+
+/* ---------------------------------- component ----------------------------- */
 
 function GithubMark({ className }: { className?: string }) {
   return (
@@ -85,6 +112,8 @@ export default async function Home() {
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden bg-background text-foreground">
+      <StructuredData />
+
       {/* Ambient background */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle,var(--color-border-strong)_1.5px,transparent_1.5px)] bg-size-[28px_28px] mask-[radial-gradient(ellipse_80%_60%_at_50%_0%,black_20%,transparent_100%)]" />
@@ -130,14 +159,15 @@ export default async function Home() {
             </span>
 
             <h1 className="mt-5 max-w-lg text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl">
-              Your GGSIPU result,{" "}
-              <span className="text-gold">actually easy to read.</span>
+              GGSIPU Results &amp; SGPA Calculator,{" "}
+              <span className="text-gold">made simple.</span>
             </h1>
 
             <p className="mt-5 max-w-md text-base leading-7 text-foreground-secondary">
-              Anviksha pulls your result straight from the GGSIPU portal and turns it
-              into a clean dashboard — SGPA, CGPA, semester trends, and a downloadable
-              transcript. Nothing is ever stored.
+              Anviksha fetches your GGSIPU semester exam results live and turns them
+              into a clean analytics dashboard — instant SGPA/CGPA calculation, Ordinance 11
+              promotion standing, placement cutoffs, and a downloadable transcript PDF.
+              Nothing stored, fully privacy-first.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -174,11 +204,12 @@ export default async function Home() {
         <section id="features" className="mx-auto max-w-6xl px-6 py-24">
           <div className="max-w-lg">
             <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              Everything your result page should have
+              Everything GGSIPU students need in one portal
             </h2>
             <p className="mt-3 text-sm leading-6 text-foreground-secondary">
-              The GGSIPU portal gives you numbers in a table. Anviksha gives you the
-              picture — built for how students actually check their result.
+              The official GGSIPU result page gives you raw numbers in a table. Anviksha gives you
+              the full picture — SGPA/CGPA analytics, promotion standing, placement benchmarks, and
+              downloadable transcripts built for how IPU students actually check results.
             </p>
           </div>
 
@@ -245,6 +276,37 @@ export default async function Home() {
           </div>
         </section>
 
+        {/* SEO FAQ Section */}
+        <section className="mx-auto max-w-6xl px-6 py-16 sm:py-20 border-t border-border">
+          <div className="space-y-4 max-w-2xl">
+            <p className="text-xs font-mono uppercase tracking-widest text-gold">
+              Knowledge Base
+            </p>
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              Frequently Asked Questions about GGSIPU Results
+            </h2>
+            <p className="text-sm text-foreground-secondary">
+              Everything you need to know about GGSIPU semester marks, Ordinance 11 CGPA calculation, 50% credit rules, and transcripts.
+            </p>
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 gap-4 md:grid-cols-2">
+            {FAQS.map((faq, idx) => (
+              <article
+                key={idx}
+                className="rounded-xl border border-border bg-surface p-6 space-y-2.5 transition-colors hover:border-border-strong"
+              >
+                <h3 className="text-sm font-semibold text-foreground">
+                  {faq.q}
+                </h3>
+                <p className="text-xs leading-6 text-foreground-secondary">
+                  {faq.a}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
+
         {/* Final CTA */}
         <section className="mx-auto max-w-6xl px-6 pb-24">
           <div className="relative overflow-hidden rounded-2xl border border-border-strong bg-surface px-8 py-16 text-center">
@@ -266,30 +328,37 @@ export default async function Home() {
       </main>
 
       <footer className="relative z-10 border-t border-border">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-6 text-center sm:flex-row sm:text-left">
-          <span className="text-xs text-foreground-muted">
-            Anviksha · Unofficial, not affiliated with GGSIPU
-          </span>
-          <div className="flex items-center gap-3 font-mono text-xs text-foreground-muted">
-            <a
-              href="https://himanshusinghdangi.vercel.app"
-              target="_blank"
-              rel="noreferrer"
-              className="transition-colors hover:text-foreground"
-            >
-              Built by Himanshu Singh
-            </a>
-            <span className="text-border-strong">·</span>
-            <a
-              href="https://github.com/HimanshuSingh213/anviksha"
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1.5 transition-colors hover:text-foreground"
-            >
-              <GithubMark className="h-3.5 w-3.5" />
-              GitHub
-            </a>
+        <div className="mx-auto max-w-6xl px-6 py-8 space-y-4">
+          <div className="flex flex-col items-center justify-between gap-3 text-center sm:flex-row sm:text-left">
+            <span className="text-xs text-foreground-muted">
+              Anviksha · GGSIPU Results, SGPA/CGPA Calculator & Transcript Portal · Unofficial, not affiliated with GGSIPU
+            </span>
+            <div className="flex items-center gap-3 font-mono text-xs text-foreground-muted">
+              <a
+                href="https://himanshusinghdangi.vercel.app"
+                target="_blank"
+                rel="noreferrer"
+                className="transition-colors hover:text-foreground"
+              >
+                Built by Himanshu Singh
+              </a>
+              <span className="text-border-strong">·</span>
+              <a
+                href="https://github.com/HimanshuSingh213/anviksha"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 transition-colors hover:text-foreground"
+              >
+                <GithubMark className="h-3.5 w-3.5" />
+                GitHub
+              </a>
+            </div>
           </div>
+          <p className="text-center text-[10px] leading-5 text-foreground-muted/60 sm:text-left">
+            Anviksha is a free, open-source GGSIPU results and academic analytics portal for students of Guru Gobind Singh Indraprastha University (IPU).
+            Works with all affiliated colleges including USICT, MAIT, MSIT, BVCOE, BPIT, GTBIT, VIPS, ADGITM, JIMS, and more.
+            Supports B.Tech, BCA, BBA, MBA, and other IPU programmes.
+          </p>
         </div>
       </footer>
     </div>

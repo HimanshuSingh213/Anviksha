@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SlidersHorizontal, Download, ChevronDown, FileText } from "lucide-react";
 import html2canvas from "html2canvas-pro";
@@ -8,6 +8,7 @@ import jsPDF from "jspdf";
 import useResultStore from "@/store/result-store";
 import { toast } from "sonner";
 import { ResultGradeSheet } from "../export/ResultGradeSheet";
+import { ConsolidatedMasterTranscript } from "../export/ConsolidatedMasterTranscript";
 
 const SEMESTERS = [
     { label: "All Sems", shortLabel: "All", value: "100" },
@@ -22,6 +23,7 @@ const SEMESTERS = [
 ];
 
 const DOWNLOAD_OPTIONS = [
+    { label: "Consolidated Transcript", value: "master_transcript" },
     { label: "Overall Marksheet", value: "100" },
     { label: "Sem I Marksheet", value: "1" },
     { label: "Sem II Marksheet", value: "2" },
@@ -46,36 +48,49 @@ export default function SemesterSelector({
     totalSubjects,
     availableSemesters,
 }: Props) {
-    const [downloadSem, setDownloadSem] = useState<string>("100");
+    const [downloadSem, setDownloadSem] = useState<string>("master_transcript");
     const [openDownloadDropdown, setOpenDownloadDropdown] = useState<boolean>(false);
 
     const activeLabel = activeSem === "100" ? "All Semesters" : `Semester ${activeSem}`;
-    const selectedDownloadLabel = DOWNLOAD_OPTIONS.find((o) => o.value === downloadSem)?.label ?? "Overall Marksheet";
+    const selectedDownloadLabel = useMemo(() => {
+        return DOWNLOAD_OPTIONS.find((o) => o.value === downloadSem)?.label ?? "Consolidated Transcript";
+    }, [downloadSem]);
 
-    const downloadOptions = DOWNLOAD_OPTIONS.filter(
-        (o) => o.value === "100" || availableSemesters.includes(Number(o.value))
-    );
+    const downloadOptions = useMemo(() => {
+        return DOWNLOAD_OPTIONS.filter(
+            (o) => o.value === "master_transcript" || o.value === "100" || availableSemesters.includes(Number(o.value))
+        );
+    }, [availableSemesters]);
 
-    const SemseterOptions = SEMESTERS.filter(
-        (sem) => sem.value === "100" || availableSemesters.includes(Number(sem.value))
-    );
+    const SemseterOptions = useMemo(() => {
+        return SEMESTERS.filter(
+            (sem) => sem.value === "100" || availableSemesters.includes(Number(sem.value))
+        );
+    }, [availableSemesters]);
 
     const printRef = useRef<HTMLDivElement>(null);
+    const masterTranscriptRef = useRef<HTMLDivElement>(null);
     const [isExporting, setIsExporting] = useState(false);
     const profile = useResultStore((state) => state.result?.stprofile);
-    const allResults = useResultStore((state) => state.result?.stresult) ?? [];
+    const rawResults = useResultStore((state) => state.result?.stresult);
+    const allResults = useMemo(() => rawResults ?? [], [rawResults]);
     const customCredits = useResultStore((state) => state.customCredits);
 
-    const downloadResults = allResults.filter(
-        (row) => downloadSem === "100" || row[0] === Number(downloadSem)
-    );
+    const downloadResults = useMemo(() => {
+        return allResults.filter(
+            (row) => downloadSem === "100" || row[0] === Number(downloadSem)
+        );
+    }, [allResults, downloadSem]);
 
-    const handleDownloadPDF = async () => {
-        if (!printRef.current) return;
+    const handleDownloadPDF = useCallback(async () => {
+        const isMaster = downloadSem === "master_transcript";
+        const targetNode = isMaster ? masterTranscriptRef.current : printRef.current;
+        if (!targetNode) return;
+
         setIsExporting(true);
-        toast.info("Preparing the Marksheet for you...");
+        toast.info(isMaster ? "Preparing Consolidated Transcript..." : "Preparing the Marksheet for you...");
         try {
-            const canvas = await html2canvas(printRef.current, {
+            const canvas = await html2canvas(targetNode, {
                 scale: 2,
                 useCORS: true,
                 backgroundColor: "#ffffff",
@@ -88,13 +103,23 @@ export default function SemesterSelector({
 
             pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
 
-            const isOverallDownload = downloadSem === "100";
-            const docName = isOverallDownload ? "Overall_Cumulative_Record" : `Semester_${downloadSem}_Marksheet`;
-            const fileName = `${profile?.stname || "Student"}_${docName}.pdf`.replace(/\s+/g, "_");
+            let fileName = "";
+            if (isMaster) {
+                fileName = `${profile?.stname || "Student"}_Consolidated_Transcript.pdf`.replace(/\s+/g, "_");
+            } else {
+                const isOverallDownload = downloadSem === "100";
+                const docName = isOverallDownload ? "Overall_Cumulative_Record" : `Semester_${downloadSem}_Marksheet`;
+                fileName = `${profile?.stname || "Student"}_${docName}.pdf`.replace(/\s+/g, "_");
+            }
+
             pdf.save(fileName);
 
             toast.success(
-                isOverallDownload ? "Overall Transcript PDF downloaded!" : "Marksheet PDF downloaded!"
+                isMaster
+                    ? "Consolidated Transcript PDF downloaded!"
+                    : downloadSem === "100"
+                    ? "Overall Transcript PDF downloaded!"
+                    : "Marksheet PDF downloaded!"
             );
         } catch (_err) {
             // console.error("PDF Export Error:", err);
@@ -102,17 +127,27 @@ export default function SemesterSelector({
         } finally {
             setIsExporting(false);
         }
-    };
+    }, [downloadSem, profile]);
 
     return (
         <>
-            {/* Hidden off-screen grade sheet DOM node for PDF export */}
+            {/* Hidden off-screen grade sheet DOM node for detailed PDF export */}
             <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
                 <ResultGradeSheet
                     ref={printRef}
                     profile={profile}
                     results={downloadResults}
                     activeSem={downloadSem}
+                    customCredits={customCredits}
+                />
+            </div>
+
+            {/* Hidden off-screen 1-page master transcript DOM node for placement PDF export */}
+            <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
+                <ConsolidatedMasterTranscript
+                    ref={masterTranscriptRef}
+                    profile={profile}
+                    allResults={allResults}
                     customCredits={customCredits}
                 />
             </div>

@@ -115,22 +115,22 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
                     </div>
 
                     {/* Student Info Grid */}
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs font-sans border-b border-black pb-4">
-                        <div className="flex gap-2">
-                            <span className="text-neutral-600 min-w-27.5 font-medium">Name:</span>
-                            <span className="font-bold uppercase text-black">{profile?.stname || "N/A"}</span>
+                    <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-xs font-sans border-b border-black pb-4">
+                        <div className="flex items-start gap-3">
+                            <span className="text-neutral-600 min-w-28 font-medium shrink-0">Name :</span>
+                            <span className="font-bold uppercase text-black leading-tight break-words">{profile?.stname || "N/A"}</span>
                         </div>
-                        <div className="flex gap-2">
-                            <span className="text-neutral-600 min-w-27.5 font-medium">Semester:</span>
-                            <span className="font-bold text-black">{semRoman}</span>
+                        <div className="flex items-start gap-3">
+                            <span className="text-neutral-600 min-w-28 font-medium shrink-0">Semester :</span>
+                            <span className="font-bold text-black leading-tight">{semRoman}</span>
                         </div>
-                        <div className="flex gap-2">
-                            <span className="text-neutral-600 min-w-27.5 font-medium">Enrollment No:</span>
-                            <span className="font-bold text-black">{profile?.nrollno || "N/A"}</span>
+                        <div className="flex items-start gap-3">
+                            <span className="text-neutral-600 min-w-28 font-medium shrink-0">Enrollment No :</span>
+                            <span className="font-bold text-black leading-tight">{profile?.nrollno || "N/A"}</span>
                         </div>
-                        <div className="flex gap-2">
-                            <span className="text-neutral-600 min-w-27.5 font-medium">Institution:</span>
-                            <span className="font-bold text-black truncate max-w-55">{profile?.iname || "GGSIPU"}</span>
+                        <div className="flex items-start gap-3">
+                            <span className="text-neutral-600 min-w-28 font-medium shrink-0">Institution :</span>
+                            <span className="font-bold text-black leading-snug break-words">{profile?.iname || "GGSIPU"}</span>
                         </div>
                     </div>
 

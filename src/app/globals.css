@@ -10,17 +10,20 @@ html {
   --surface: #0d0d10;
   --surface-elevated: #141418;
   --surface-deep: #020204;
+  --surface-soft: #101015;
+  --surface-hover: #18181e;
 
   /* Borders */
   --border: #1e1e24;
   --border-strong: #2a2a32;
+  --border-subtle: #17171d;
 
   /* Text */
   --foreground: #f2efea;
   --foreground-secondary: #a39e96;
   --foreground-muted: #8a867d;
 
-  /* Gold — secondary/tertiary brand accent only */
+  /* Gold — restrained academic brand accent */
   --gold: #c9a961;
   --gold-bright: #e4c67c;
   --gold-dim: #7a6434;
@@ -69,6 +72,17 @@ html {
   --cat-slate-surface: rgba(124, 133, 145, 0.12);
   --cat-slate-border: rgba(124, 133, 145, 0.35);
 
+  --accent-copper: #d48b5c;
+  --accent-copper-surface: rgba(212, 139, 92, 0.12);
+  --accent-copper-border: rgba(212, 139, 92, 0.36);
+
+  --accent-mint: #6bd6a2;
+  --accent-mint-surface: rgba(107, 214, 162, 0.1);
+  --accent-mint-border: rgba(107, 214, 162, 0.32);
+
+  --panel-highlight: rgba(255, 255, 255, 0.035);
+  --panel-shadow: 0 22px 70px rgba(0, 0, 0, 0.28);
+
   /* Chart palette tokens */
   --chart-cyan: #38bdf8;
   --chart-purple: #c084fc;
@@ -87,9 +101,12 @@ html {
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
   --color-surface-deep: var(--surface-deep);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-hover: var(--surface-hover);
 
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
+  --color-border-subtle: var(--border-subtle);
 
   --color-foreground: var(--foreground);
   --color-foreground-secondary: var(--foreground-secondary);
@@ -141,6 +158,14 @@ html {
   --color-cat-slate-surface: var(--cat-slate-surface);
   --color-cat-slate-border: var(--cat-slate-border);
 
+  --color-accent-copper: var(--accent-copper);
+  --color-accent-copper-surface: var(--accent-copper-surface);
+  --color-accent-copper-border: var(--accent-copper-border);
+
+  --color-accent-mint: var(--accent-mint);
+  --color-accent-mint-surface: var(--accent-mint-surface);
+  --color-accent-mint-border: var(--accent-mint-border);
+
   --color-chart-cyan: var(--chart-cyan);
   --color-chart-purple: var(--chart-purple);
   --color-chart-amber: var(--chart-amber);
@@ -158,6 +183,30 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+.analytics-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  box-shadow: var(--panel-shadow);
+}
+
+.analytics-panel::before {
+  content: none;
+}
+
+.analytics-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.analytics-card {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: var(--surface-deep);
 }
 
 /* Custom theme scrollbar */
@@ -191,6 +240,7 @@ input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;

@@ -153,3 +153,253 @@ export function getAcademicPromotionStatus(
         activeYear,
     };
 }
+
+export interface PlacementTier {
+    id: string;
+    name: string;
+    benchmarkLabel: string;
+    minCgpa: number;
+    minPercentage: number;
+    maxActiveBacklogs: number;
+    description: string;
+    isEligible: boolean;
+    cgpaDeficit: number;
+    backlogDeficit: number;
+    statusReason: string;
+}
+
+export interface PlacementEligibilitySummary {
+    cgpa: number;
+    percentage: number;
+    activeBacklogs: number;
+    eligibleTierCount: number;
+    totalTierCount: number;
+    overallEligibilityRate: number;
+    highestUnlockedTier: string | null;
+    nextTargetTier: PlacementTier | null;
+    tiers: PlacementTier[];
+}
+
+export const PLACEMENT_TIERS_CONFIG: Array<Omit<PlacementTier, "isEligible" | "cgpaDeficit" | "backlogDeficit" | "statusReason">> = [
+    {
+        id: "benchmark_60",
+        name: "60% Base Cutoff",
+        benchmarkLabel: "≥ 6.00 CGPA (60%)",
+        minCgpa: 6.0,
+        minPercentage: 60.0,
+        maxActiveBacklogs: 0,
+        description: "Standard minimum baseline for corporate recruitment & pooled on-campus drives.",
+    },
+    {
+        id: "benchmark_65",
+        name: "65% Elevated Cutoff",
+        benchmarkLabel: "≥ 6.50 CGPA (65%)",
+        minCgpa: 6.5,
+        minPercentage: 65.0,
+        maxActiveBacklogs: 0,
+        description: "Standard technical threshold for consulting, financial services, and IT analysts.",
+    },
+    {
+        id: "benchmark_70",
+        name: "70% Product & Core Cutoff",
+        benchmarkLabel: "≥ 7.00 CGPA (70%)",
+        minCgpa: 7.0,
+        minPercentage: 70.0,
+        maxActiveBacklogs: 0,
+        description: "Preferred baseline for core engineering roles, product companies, and R&D divisions.",
+    },
+    {
+        id: "benchmark_75",
+        name: "75%+ High Honors Cutoff",
+        benchmarkLabel: "≥ 7.50 CGPA (75%)",
+        minCgpa: 7.5,
+        minPercentage: 75.0,
+        maxActiveBacklogs: 0,
+        description: "Top-bracket benchmark for high-compensation technical drives and research roles.",
+    },
+];
+
+export function getPlacementEligibility(
+    cgpa: number,
+    activeBacklogs: number
+): PlacementEligibilitySummary {
+    const validCgpa = isNaN(cgpa) ? 0 : Math.max(0, cgpa);
+    const validBacklogs = isNaN(activeBacklogs) ? 0 : Math.max(0, activeBacklogs);
+    const percentage = Number((validCgpa * 10).toFixed(2));
+
+    const evaluatedTiers: PlacementTier[] = PLACEMENT_TIERS_CONFIG.map((tier) => {
+        const cgpaMet = validCgpa >= tier.minCgpa;
+        const backlogMet = validBacklogs <= tier.maxActiveBacklogs;
+        const isEligible = cgpaMet && backlogMet;
+
+        const cgpaDeficit = cgpaMet ? 0 : Number((tier.minCgpa - validCgpa).toFixed(2));
+        const backlogDeficit = backlogMet ? 0 : validBacklogs - tier.maxActiveBacklogs;
+
+        let statusReason = "Meets benchmark requirements (0 active backlogs)";
+        if (!cgpaMet && !backlogMet) {
+            statusReason = `Requires +${cgpaDeficit} CGPA & clearing ${backlogDeficit} backlog(s)`;
+        } else if (!cgpaMet) {
+            statusReason = `Requires +${cgpaDeficit} CGPA to reach benchmark`;
+        } else if (!backlogMet) {
+            statusReason = `Requires clearing ${backlogDeficit} active backlog(s)`;
+        }
+
+        return {
+            ...tier,
+            isEligible,
+            cgpaDeficit,
+            backlogDeficit,
+            statusReason,
+        };
+    });
+
+    const eligibleTiers = evaluatedTiers.filter((t) => t.isEligible);
+    const eligibleTierCount = eligibleTiers.length;
+    const totalTierCount = evaluatedTiers.length;
+    const overallEligibilityRate = Number(((eligibleTierCount / totalTierCount) * 100).toFixed(0));
+
+    const highestUnlockedTier = eligibleTiers.length > 0 ? eligibleTiers[eligibleTiers.length - 1].name : null;
+    const nextTargetTier = evaluatedTiers.find((t) => !t.isEligible) || null;
+
+    return {
+        cgpa: validCgpa,
+        percentage,
+        activeBacklogs: validBacklogs,
+        eligibleTierCount,
+        totalTierCount,
+        overallEligibilityRate,
+        highestUnlockedTier,
+        nextTargetTier,
+        tiers: evaluatedTiers,
+    };
+}
+
+export interface ReappearSubject {
+    semester: number;
+    paperCode: string;
+    subjectTitle: string;
+    marks: number;
+    maxMarks: number;
+    credit: number;
+    isOddSem: boolean;
+    sessionType: "ODD_TERM" | "EVEN_TERM";
+    sessionWindow: string;
+    priority: "HIGH" | "MEDIUM" | "STANDARD";
+    priorityReason: string;
+}
+
+export interface ReappearSessionPlan {
+    totalBacklogs: number;
+    totalCreditsAtRisk: number;
+    oddTermBacklogs: ReappearSubject[];
+    evenTermBacklogs: ReappearSubject[];
+    oddTermCredits: number;
+    evenTermCredits: number;
+    nextRecommendedSession: "ODD" | "EVEN" | "NONE";
+    nextSessionLabel: string;
+    cleanRecord: boolean;
+}
+
+export function getReappearSessionPlan(
+    allResults: any[][],
+    customCredits: Record<string, number> = {}
+): ReappearSessionPlan {
+    const oddTermBacklogs: ReappearSubject[] = [];
+    const evenTermBacklogs: ReappearSubject[] = [];
+    let totalCreditsAtRisk = 0;
+
+    let maxSemEvaluated = 0;
+    allResults.forEach((row) => {
+        const semNum = Number(row[0]);
+        if (!isNaN(semNum) && semNum >= 1 && semNum <= 8 && semNum > maxSemEvaluated) {
+            maxSemEvaluated = semNum;
+        }
+    });
+
+    allResults.forEach((row) => {
+        const semNum = Number(row[0]);
+        if (isNaN(semNum) || semNum < 1 || semNum > 8) return;
+
+        const rawTotal = Number(row[5]);
+        const total = isNaN(rawTotal) ? 0 : rawTotal;
+        const paperCode = String(row[1] ?? "");
+        const subjectTitle = String(row[2] ?? "");
+        const credit = customCredits[paperCode] ?? getDefaultCredit(subjectTitle);
+        const { pass, grade } = getGradeAndPoints(total);
+
+        if (!pass || grade === "F") {
+            const isOddSem = semNum % 2 !== 0;
+            totalCreditsAtRisk += credit;
+
+            let priority: "HIGH" | "MEDIUM" | "STANDARD" = "STANDARD";
+            let priorityReason = "Standard re-appear timeline";
+
+            if (semNum <= 2 && maxSemEvaluated >= 3) {
+                priority = "HIGH";
+                priorityReason = "First Year Backlog (Promotional Standing Critical)";
+            } else if (credit >= 4) {
+                priority = "HIGH";
+                priorityReason = `High Credit Weight (${credit} Credits Impact)`;
+            } else if (semNum % 2 !== maxSemEvaluated % 2) {
+                priority = "MEDIUM";
+                priorityReason = "Immediate Upcoming Exam Window";
+            }
+
+            const item: ReappearSubject = {
+                semester: semNum,
+                paperCode,
+                subjectTitle,
+                marks: total,
+                maxMarks: 100,
+                credit,
+                isOddSem,
+                sessionType: isOddSem ? "ODD_TERM" : "EVEN_TERM",
+                sessionWindow: isOddSem ? "Nov - Dec Winter Window" : "May - Jun Summer Window",
+                priority,
+                priorityReason,
+            };
+
+            if (isOddSem) {
+                oddTermBacklogs.push(item);
+            } else {
+                evenTermBacklogs.push(item);
+            }
+        }
+    });
+
+    // Sort high priority first
+    const priorityOrder = { HIGH: 0, MEDIUM: 1, STANDARD: 2 };
+    oddTermBacklogs.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority] || a.semester - b.semester);
+    evenTermBacklogs.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority] || a.semester - b.semester);
+
+    const oddTermCredits = oddTermBacklogs.reduce((acc, curr) => acc + curr.credit, 0);
+    const evenTermCredits = evenTermBacklogs.reduce((acc, curr) => acc + curr.credit, 0);
+    const totalBacklogs = oddTermBacklogs.length + evenTermBacklogs.length;
+    const cleanRecord = totalBacklogs === 0;
+
+    let nextRecommendedSession: "ODD" | "EVEN" | "NONE" = "NONE";
+    let nextSessionLabel = "All Semesters Cleared";
+
+    if (!cleanRecord) {
+        const nextIsEven = maxSemEvaluated % 2 !== 0;
+        if (nextIsEven) {
+            nextRecommendedSession = evenTermBacklogs.length > 0 ? "EVEN" : oddTermBacklogs.length > 0 ? "ODD" : "NONE";
+            nextSessionLabel = "Upcoming Session: May - Jun (Even Term Re-appear)";
+        } else {
+            nextRecommendedSession = oddTermBacklogs.length > 0 ? "ODD" : evenTermBacklogs.length > 0 ? "EVEN" : "NONE";
+            nextSessionLabel = "Upcoming Session: Nov - Dec (Odd Term Re-appear)";
+        }
+    }
+
+    return {
+        totalBacklogs,
+        totalCreditsAtRisk,
+        oddTermBacklogs,
+        evenTermBacklogs,
+        oddTermCredits,
+        evenTermCredits,
+        nextRecommendedSession,
+        nextSessionLabel,
+        cleanRecord,
+    };
+}

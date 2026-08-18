@@ -480,13 +480,15 @@ export default function DashboardPage() {
                                         {activeSem === "100" ? "Overall Summary" : `Semester ${activeSem} Summary`}
                                     </div>
                                     {semStats.backlogs > 0 ? (
-                                        <div className="flex items-center gap-1.5 text-grade-fail text-xs font-mono font-bold">
-                                            <AlertTriangle size={11} />
-                                            {semStats.backlogs} backlog subject{semStats.backlogs > 1 ? "s" : ""}
+                                        <div className="flex items-center gap-1.5 text-xs font-mono text-foreground font-medium">
+                                            <AlertTriangle size={13} className="text-grade-fail shrink-0" />
+                                            <span>
+                                                <strong className="text-grade-fail font-bold">{semStats.backlogs}</strong> backlog subject{semStats.backlogs > 1 ? "s" : ""} detected
+                                            </span>
                                         </div>
                                     ) : (
                                         <div className="flex items-center gap-1.5 text-grade-excellent text-xs font-mono font-bold">
-                                            <CheckCircle2 size={11} />
+                                            <CheckCircle2 size={13} className="shrink-0" />
                                             All subjects cleared
                                         </div>
                                     )}
@@ -542,20 +544,26 @@ export default function DashboardPage() {
                                 <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
-                                    className="px-5 py-4 border-t border-border-strong space-y-3"
+                                    className="px-5 py-3.5 border-t border-border-strong space-y-2.5 bg-surface-deep/60"
                                 >
-                                    <div className="text-[11px] font-mono text-foreground flex items-center gap-2 font-medium">
+                                    <div className="text-[11px] font-mono text-foreground-secondary flex items-center gap-2 font-medium">
                                         <AlertTriangle size={13} className="text-grade-fail shrink-0" />
-                                        <span>0 credits & 0 points counted for backlog subjects. Clear these subjects in re-appear exams to boost your GPA!</span>
+                                        <span>Backlog papers carry 0 earned credits until cleared in re-appear examinations:</span>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         {filteredResults
                                             .filter((row) => !getGradeAndPoints(Number(row[5])).pass)
                                             .map((row, i) => (
-                                                <span key={i} className="text-[11px] font-mono px-2.5 py-1 rounded-sm bg-surface border border-grade-fail-border text-grade-fail flex items-center gap-1.5 shadow-xs font-bold">
-                                                    <span className="font-bold">{row[1]}</span> · {row[2]}
-                                                    <span className="text-[9px] opacity-90 bg-grade-fail-surface px-1 py-0.5 rounded border border-grade-fail-border font-semibold">(0 pts)</span>
-                                                </span>
+                                                <div
+                                                    key={i}
+                                                    className="text-xs font-mono px-3 py-1.5 rounded bg-surface border border-border-strong flex items-center gap-2.5 shadow-xs"
+                                                >
+                                                    <span className="font-bold text-gold">{row[1]}</span>
+                                                    <span className="text-foreground font-medium">{row[2]}</span>
+                                                    <span className="text-[10px] font-bold text-grade-fail bg-grade-fail-surface border border-grade-fail-border px-1.5 py-0.5 rounded shrink-0">
+                                                        Backlog (0 pts)
+                                                    </span>
+                                                </div>
                                             ))}
                                     </div>
                                 </motion.div>

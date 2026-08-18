@@ -106,14 +106,15 @@ export default function AnalyticsOverview(props: Props) {
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="flex items-center gap-3 p-3.5 rounded-md bg-surface border border-grade-fail-border text-foreground"
+                    className="flex items-center gap-3 p-3.5 rounded-md bg-surface-elevated border border-border-strong text-foreground shadow-xs"
                 >
-                    <div className="p-1.5 rounded-sm bg-grade-fail-surface border border-grade-fail-border text-grade-fail shrink-0">
-                        <AlertTriangle size={14} />
+                    <div className="p-2 rounded-sm bg-grade-fail-surface border border-grade-fail-border text-grade-fail shrink-0">
+                        <AlertTriangle size={15} />
                     </div>
                     <div>
-                        <div className="text-xs font-mono font-bold text-grade-fail">
-                            {props.backlogsCount} Backlog{props.backlogsCount > 1 ? "s" : ""} Active
+                        <div className="text-xs font-mono font-bold text-foreground flex items-center gap-2">
+                            <span className="text-grade-fail font-extrabold">{props.backlogsCount} Backlog{props.backlogsCount > 1 ? "s" : ""} Active</span>
+                            <span className="text-[10px] font-normal text-foreground-muted">(Re-appear required)</span>
                         </div>
                         <div className="text-[11px] font-mono text-foreground-secondary mt-0.5">
                             Backlog subjects carry 0 grade points — clear them in re-appear exams to raise GPA.

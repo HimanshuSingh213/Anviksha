@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { getGradeAndPoints, getGradeThemeClasses, getDefaultCredit, getAcademicPromotionStatus } from "@/helpers/grade-system";
+import {
+  getGradeAndPoints,
+  getGradeThemeClasses,
+  getDefaultCredit,
+  getAcademicPromotionStatus,
+  getPlacementEligibility,
+  getReappearSessionPlan,
+} from "@/helpers/grade-system";
 
 describe("grade-system.ts - Ordinance 11 Grade Calculations", () => {
   describe("getGradeAndPoints", () => {
@@ -161,6 +168,148 @@ describe("grade-system.ts - Ordinance 11 Grade Calculations", () => {
       expect(status.years[1].status).toBe("UPCOMING");
       expect(status.years[2].status).toBe("UPCOMING");
       expect(status.years[3].status).toBe("UPCOMING");
+    });
+
+    it("respects custom credit overrides for promotion calculations", () => {
+      const mockResults = [
+        [1, "ETCS101", "Applied Maths", 20, 50, 70], // default 3, override to 4
+        [2, "ETCS102", "Applied Physics", 20, 50, 70], // default 3, override to 2
+      ];
+
+      const customCredits = { ETCS101: 4, ETCS102: 2 };
+      const status = getAcademicPromotionStatus(mockResults, customCredits);
+
+      expect(status.years[0].totalCredits).toBe(6);
+      expect(status.years[0].earnedCredits).toBe(6);
+      expect(status.years[0].status).toBe("PROMOTED");
+    });
+
+    it("evaluates exactly 50% credits as PROMOTED", () => {
+      const mockResults = [
+        // Sem 1: passed 1 (3 cr), failed 1 (3 cr)
+        [1, "ETCS101", "Maths", 20, 50, 70],
+        [1, "ETCS102", "Physics", 10, 20, 30],
+        // Sem 2: passed 1 (3 cr), failed 1 (3 cr)
+        [2, "ETCS103", "Data Structures", 20, 50, 70],
+        [2, "ETCS104", "Digital Electronics", 10, 20, 30],
+      ];
+
+      const status = getAcademicPromotionStatus(mockResults);
+      expect(status.years[0].totalCredits).toBe(12);
+      expect(status.years[0].earnedCredits).toBe(6);
+      expect(status.years[0].percentage).toBe(50);
+      expect(status.years[0].status).toBe("PROMOTED");
+      expect(status.hasDetentionRisk).toBe(false);
+    });
+
+    it("handles Lateral Entry students starting in Semester 3 (Year 2)", () => {
+      const mockResults = [
+        [3, "ETCS201", "Algorithm Design", 20, 50, 70],
+        [4, "ETCS202", "Operating Systems", 20, 50, 70],
+      ];
+
+      const status = getAcademicPromotionStatus(mockResults);
+      expect(status.years[0].status).toBe("UPCOMING"); // Year 1 empty
+      expect(status.years[1].status).toBe("PROMOTED"); // Year 2 evaluated
+      expect(status.activeYear).toBe(2);
+      expect(status.hasDetentionRisk).toBe(false);
+    });
+
+    it("handles non-numeric or NaN total marks safely", () => {
+      const mockResults = [
+        [1, "ETCS101", "Maths", "A", "B", "INVALID_MARKS"],
+        [2, "ETCS102", "Physics", 20, 50, 70],
+      ];
+
+      const status = getAcademicPromotionStatus(mockResults);
+      expect(status.years[0].earnedCredits).toBe(3); // only Physics passed
+      expect(status.years[0].totalCredits).toBe(6);
+      expect(status.years[0].status).toBe("PROMOTED"); // 3/6 = 50%
+    });
+  });
+
+  describe("getPlacementEligibility", () => {
+    it("unlocks all 4 tiers for a student with CGPA >= 7.5 and 0 active backlogs", () => {
+      const summary = getPlacementEligibility(8.2, 0);
+      expect(summary.eligibleTierCount).toBe(4);
+      expect(summary.totalTierCount).toBe(4);
+      expect(summary.overallEligibilityRate).toBe(100);
+      expect(summary.highestUnlockedTier).toBe("75%+ High Honors Cutoff");
+      expect(summary.nextTargetTier).toBeNull();
+      expect(summary.percentage).toBe(82.0);
+    });
+
+    it("restricts tier eligibility when student has CGPA = 6.8 and 0 backlogs", () => {
+      const summary = getPlacementEligibility(6.8, 0);
+      expect(summary.eligibleTierCount).toBe(2); // Tier 1 (6.0) & Tier 2 (6.5)
+      expect(summary.overallEligibilityRate).toBe(50);
+      expect(summary.highestUnlockedTier).toBe("65% Elevated Cutoff");
+      expect(summary.nextTargetTier?.id).toBe("benchmark_70");
+      expect(summary.nextTargetTier?.cgpaDeficit).toBe(0.2); // 7.0 - 6.8 = 0.2
+    });
+
+    it("blocks all tiers if student has active backlogs even with high CGPA", () => {
+      const summary = getPlacementEligibility(8.5, 1);
+      expect(summary.eligibleTierCount).toBe(0);
+      expect(summary.overallEligibilityRate).toBe(0);
+      expect(summary.highestUnlockedTier).toBeNull();
+      expect(summary.nextTargetTier?.id).toBe("benchmark_60");
+      expect(summary.nextTargetTier?.backlogDeficit).toBe(1);
+    });
+
+    it("handles zero or NaN CGPA gracefully", () => {
+      const summary = getPlacementEligibility(NaN as any, 0);
+      expect(summary.cgpa).toBe(0);
+      expect(summary.percentage).toBe(0);
+      expect(summary.eligibleTierCount).toBe(0);
+    });
+  });
+
+  describe("getReappearSessionPlan", () => {
+    it("returns clean record when student has passed all subjects", () => {
+      const allResults = [
+        [1, "ETCS101", "Applied Mathematics-I", 25, 60, 85],
+        [2, "ETCS102", "Applied Mathematics-II", 20, 50, 70],
+      ];
+      const plan = getReappearSessionPlan(allResults);
+      expect(plan.cleanRecord).toBe(true);
+      expect(plan.totalBacklogs).toBe(0);
+      expect(plan.oddTermBacklogs).toHaveLength(0);
+      expect(plan.evenTermBacklogs).toHaveLength(0);
+      expect(plan.totalCreditsAtRisk).toBe(0);
+    });
+
+    it("correctly segregates odd semester and even semester backlogs", () => {
+      const allResults = [
+        [1, "ETCS101", "Applied Mathematics-I", 10, 15, 25], // Sem 1 (Odd) FAIL
+        [2, "ETCS102", "Applied Mathematics-II", 20, 50, 70], // Sem 2 (Even) PASS
+        [3, "ETCS201", "Data Structures", 5, 20, 25], // Sem 3 (Odd) FAIL
+        [4, "ETCS202", "Database Management", 10, 10, 20], // Sem 4 (Even) FAIL
+      ];
+      const customCredits = { ETCS101: 4, ETCS201: 4, ETCS202: 4 };
+      const plan = getReappearSessionPlan(allResults, customCredits);
+
+      expect(plan.cleanRecord).toBe(false);
+      expect(plan.totalBacklogs).toBe(3);
+      expect(plan.oddTermBacklogs).toHaveLength(2); // Sem 1 & Sem 3
+      expect(plan.evenTermBacklogs).toHaveLength(1); // Sem 4
+      expect(plan.oddTermCredits).toBe(8);
+      expect(plan.evenTermCredits).toBe(4);
+      expect(plan.totalCreditsAtRisk).toBe(12);
+
+      // Verify Session Window tags
+      expect(plan.oddTermBacklogs[0].sessionWindow).toBe("Nov - Dec Winter Window");
+      expect(plan.evenTermBacklogs[0].sessionWindow).toBe("May - Jun Summer Window");
+    });
+
+    it("assigns HIGH priority to Year 1 backlogs when student has advanced to Year 2+", () => {
+      const allResults = [
+        [1, "ETCS101", "Applied Mathematics-I", 5, 10, 15], // Sem 1 FAIL
+        [3, "ETCS201", "Data Structures", 25, 60, 85], // Sem 3 PASS
+      ];
+      const plan = getReappearSessionPlan(allResults);
+      expect(plan.oddTermBacklogs[0].priority).toBe("HIGH");
+      expect(plan.oddTermBacklogs[0].priorityReason).toContain("First Year Backlog");
     });
   });
 });
