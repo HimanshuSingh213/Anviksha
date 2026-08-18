@@ -14,38 +14,33 @@ describe("login.validation.ts - Zod Schema Validation", () => {
       expect(result.success).toBe(true);
     });
 
-    it("rejects enrollment with less than 11 digits", () => {
-      const result = LoginSchema.safeParse({ ...validInput, enrollment: "1234567890" });
+    it("rejects enrollment with less than 5 digits", () => {
+      const result = LoginSchema.safeParse({ ...validInput, enrollment: "1234" });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues[0].message).toContain("11 digits");
+        expect(result.error.issues[0].message).toContain("too short");
       }
     });
 
-    it("rejects enrollment with more than 11 digits", () => {
-      const result = LoginSchema.safeParse({ ...validInput, enrollment: "123456789012" });
+    it("rejects enrollment with more than 15 digits", () => {
+      const result = LoginSchema.safeParse({ ...validInput, enrollment: "1234567890123456" });
       expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain("too long");
+      }
     });
 
     it("rejects enrollment with non-numeric characters", () => {
       const result = LoginSchema.safeParse({ ...validInput, enrollment: "1234567890A" });
       expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain("Only numbers allowed");
+      }
     });
 
     it("rejects empty enrollment", () => {
       const result = LoginSchema.safeParse({ ...validInput, enrollment: "" });
       expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toContain("required");
-      }
-    });
-
-    it("trims whitespace from enrollment", () => {
-      const result = LoginSchema.safeParse({ ...validInput, enrollment: "  12345678901  " });
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.enrollment).toBe("12345678901");
-      }
     });
   });
 

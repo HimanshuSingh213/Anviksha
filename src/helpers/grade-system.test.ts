@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getGradeAndPoints, getGradeThemeClasses, getDefaultCredit } from "@/helpers/grade-system";
+import { getGradeAndPoints, getGradeThemeClasses, getDefaultCredit, getAcademicPromotionStatus } from "@/helpers/grade-system";
 
 describe("grade-system.ts - Ordinance 11 Grade Calculations", () => {
   describe("getGradeAndPoints", () => {
@@ -99,6 +99,68 @@ describe("grade-system.ts - Ordinance 11 Grade Calculations", () => {
       expect(getDefaultCredit("")).toBe(3);
       expect(getDefaultCredit(null as any)).toBe(3);
       expect(getDefaultCredit(undefined as any)).toBe(3);
+    });
+  });
+
+  describe("getAcademicPromotionStatus", () => {
+    it("returns PROMOTED when student clears >= 50% credits in both semesters of a year", () => {
+      const mockResults = [
+        // Sem 1: 2 theory subjects (3 credits each), passed both
+        [1, "ETCS101", "Applied Maths", 20, 50, 70],
+        [1, "ETCS102", "Applied Physics", 20, 50, 70],
+        // Sem 2: 2 theory subjects, passed both
+        [2, "ETCS103", "Data Structures", 20, 50, 70],
+        [2, "ETCS104", "Digital Electronics", 20, 50, 70],
+      ];
+
+      const status = getAcademicPromotionStatus(mockResults);
+      expect(status.years[0].status).toBe("PROMOTED");
+      expect(status.years[0].earnedCredits).toBe(12);
+      expect(status.years[0].totalCredits).toBe(12);
+      expect(status.years[0].percentage).toBe(100);
+      expect(status.hasDetentionRisk).toBe(false);
+    });
+
+    it("returns YEAR_BACK_RISK when student clears < 50% credits in a completed year", () => {
+      const mockResults = [
+        // Sem 1: failed both (total 6 credits)
+        [1, "ETCS101", "Applied Maths", 10, 20, 30],
+        [1, "ETCS102", "Applied Physics", 10, 20, 30],
+        // Sem 2: passed 1, failed 1 (3 earned out of 6)
+        [2, "ETCS103", "Data Structures", 20, 50, 70],
+        [2, "ETCS104", "Digital Electronics", 10, 20, 30],
+      ];
+
+      const status = getAcademicPromotionStatus(mockResults);
+      expect(status.years[0].status).toBe("YEAR_BACK_RISK");
+      expect(status.years[0].earnedCredits).toBe(3);
+      expect(status.years[0].totalCredits).toBe(12);
+      expect(status.years[0].percentage).toBe(25);
+      expect(status.hasDetentionRisk).toBe(true);
+      expect(status.years[0].creditsDeficit).toBe(3); // needs 6 credits (50% of 12) - earned 3 = 3
+    });
+
+    it("returns IN_PROGRESS when only odd semester is completed", () => {
+      const mockResults = [
+        [1, "ETCS101", "Applied Maths", 20, 50, 70],
+        [1, "ETCS102", "Applied Physics", 20, 50, 70],
+      ];
+
+      const status = getAcademicPromotionStatus(mockResults);
+      expect(status.years[0].status).toBe("IN_PROGRESS");
+      expect(status.years[0].hasOddSem).toBe(true);
+      expect(status.years[0].hasEvenSem).toBe(false);
+    });
+
+    it("returns UPCOMING for future academic years", () => {
+      const mockResults = [
+        [1, "ETCS101", "Applied Maths", 20, 50, 70],
+      ];
+
+      const status = getAcademicPromotionStatus(mockResults);
+      expect(status.years[1].status).toBe("UPCOMING");
+      expect(status.years[2].status).toBe("UPCOMING");
+      expect(status.years[3].status).toBe("UPCOMING");
     });
   });
 });

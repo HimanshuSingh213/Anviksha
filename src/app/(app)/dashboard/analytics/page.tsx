@@ -9,6 +9,7 @@ import AppNavbar from "@/components/common/AppNavbar";
 import SemesterSelector from "@/components/analytics/SemesterSelector";
 import AnalyticsOverview from "@/components/analytics/AnalyticsOverview";
 import DivisionClassificationCard from "@/components/analytics/DivisionClassificationCard";
+import AcademicPromotionCard from "@/components/analytics/AcademicPromotionCard";
 import SemesterTrendChart from "@/components/analytics/SemesterTrendChart";
 import QuickStatsDistribution from "@/components/analytics/QuickStatsDistribution";
 
@@ -122,6 +123,12 @@ export default function AnalyticsPage() {
                     cgpa={stats.gpa}
                     backlogsCount={stats.backlogs}
                     isOverall={activeSem === "100"}
+                />
+
+                {/* GGSIPU 50% Annual Credit Rule Promotion & Year-Back Standing */}
+                <AcademicPromotionCard
+                    allResults={allResults}
+                    customCredit={customCredit}
                 />
 
                 {/* Quick stats (Left) & Recharts Donut Chart (Right) */}
