@@ -126,7 +126,7 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
                         <div className="flex items-center justify-between gap-3 py-1.5 border-b border-border-strong">
                             <div className="min-w-0 flex-1">
                                 <div className="text-xs font-medium text-foreground-secondary">Highest Score</div>
-                                <div className="text-[10px] text-foreground-muted leading-tight font-mono">
+                                <div className="text-[10px] text-foreground-muted leading-tight font-mono truncate" title={highestSubject ? String(highestSubject[2]) : undefined}>
                                     {highestSubject ? String(highestSubject[2]) : "N/A"}
                                 </div>
                             </div>
@@ -139,7 +139,7 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
                         <div className="flex items-center justify-between gap-3 py-1.5 border-b border-border-strong">
                             <div className="min-w-0 flex-1">
                                 <div className="text-xs font-medium text-foreground-secondary">Lowest Score</div>
-                                <div className="text-[10px] text-foreground-muted leading-tight font-mono">
+                                <div className="text-[10px] text-foreground-muted leading-tight font-mono truncate" title={lowestSubject ? String(lowestSubject[2]) : undefined}>
                                     {lowestSubject ? String(lowestSubject[2]) : "N/A"}
                                 </div>
                             </div>
@@ -170,7 +170,11 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
                     </div>
 
                     {mounted && chartData.length > 0 ? (
-                        <div className="relative h-44 w-full flex items-center justify-center">
+                        <div
+                            role="img"
+                            aria-label={`Grade distribution donut chart showing breakdown across ${totalSubjects} subjects`}
+                            className="relative h-44 w-full flex items-center justify-center"
+                        >
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie

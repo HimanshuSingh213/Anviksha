@@ -91,13 +91,13 @@ export default function AcademicPromotionCard({
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className="analytics-panel space-y-8 p-5 sm:p-7 lg:p-8"
+            className="analytics-panel space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8"
         >
-            <header className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-3xl space-y-4">
+            <header className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl space-y-3 sm:space-y-4">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-md border border-gold-border bg-gold-surface text-gold">
-                            <GraduationCap size={19} strokeWidth={1.8} aria-hidden="true" />
+                        <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-md border border-gold-border bg-gold-surface text-gold shrink-0">
+                            <GraduationCap size={18} strokeWidth={1.8} aria-hidden="true" />
                         </div>
                         <div>
                             <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold">
@@ -105,20 +105,20 @@ export default function AcademicPromotionCard({
                             </div>
                             <h2
                                 id="academic-promotion-heading"
-                                className="mt-1 text-lg font-semibold tracking-tight text-foreground sm:text-xl"
+                                className="mt-0.5 text-base sm:text-xl font-semibold tracking-tight text-foreground"
                             >
                                 Promotion & Year-Back Assessment
                             </h2>
                         </div>
                     </div>
-                    <p className="max-w-2xl text-sm leading-6 text-foreground-secondary">
+                    <p className="max-w-2xl text-xs sm:text-sm leading-5 sm:leading-6 text-foreground-secondary">
                         Annual standing based on the 50% credit threshold, with the
                         current academic year and recovery deficit surfaced separately.
                     </p>
                 </div>
 
                 <div
-                    className={`inline-flex w-fit items-center gap-2 rounded-md border px-3 py-2 text-[11px] font-semibold ${
+                    className={`inline-flex w-fit items-center gap-2 rounded-md border px-3 py-1.5 sm:py-2 text-[10px] sm:text-[11px] font-semibold ${
                         hasDetentionRisk
                             ? "border-grade-fail-border bg-grade-fail-surface text-grade-fail"
                             : "border-grade-excellent-border bg-grade-excellent-surface text-grade-excellent"
@@ -187,7 +187,7 @@ export default function AcademicPromotionCard({
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
                 {years.map((year: AcademicYearStatus) => {
                     const tone = statusTone[year.status];
                     const StatusIcon = tone.icon;
@@ -198,9 +198,9 @@ export default function AcademicPromotionCard({
                         <article
                             key={year.yearNumber}
                             aria-label={`${year.yearLabel} promotion status: ${tone.label}`}
-                            className={`flex min-h-[268px] flex-col justify-between rounded-lg border p-5 transition-colors hover:border-border-strong ${tone.card}`}
+                            className={`flex min-h-fit sm:min-h-[268px] flex-col justify-between rounded-lg border p-4 sm:p-5 transition-colors hover:border-border-strong ${tone.card}`}
                         >
-                            <div className="space-y-5">
+                            <div className="space-y-4 sm:space-y-5">
                                 <div className="flex items-start justify-between gap-4">
                                     <div>
                                         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
@@ -259,18 +259,21 @@ export default function AcademicPromotionCard({
                                             </div>
                                         </div>
 
-                                        <div className="relative h-2 overflow-hidden rounded-full bg-surface">
+                                        <div
+                                            className="relative h-2 overflow-hidden rounded-full bg-surface"
+                                            title={`Ordinance 11: Requires ≥50% annual credits (${year.requiredCredits} cr) to clear year-back detention`}
+                                        >
                                             <div
                                                 role="progressbar"
                                                 aria-label={`${year.yearLabel} earned credit percentage`}
                                                 aria-valuemin={0}
                                                 aria-valuemax={100}
                                                 aria-valuenow={year.percentage}
-                                                aria-valuetext={`${year.percentage}% credits earned. Minimum 50% required.`}
+                                                aria-valuetext={`${year.percentage}% credits earned. Minimum 50% required (${year.requiredCredits} credits).`}
                                                 className={`h-full rounded-full transition-all duration-700 ${tone.bar}`}
                                                 style={{ width: `${Math.min(100, Math.max(0, year.percentage))}%` }}
                                             />
-                                            <span className="absolute inset-y-0 left-1/2 w-px bg-foreground/70" aria-hidden="true" />
+                                            <span className="absolute inset-y-0 left-1/2 w-px bg-foreground/70" aria-hidden="true" title="50% Annual Credit Threshold" />
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-2 text-[10px]">

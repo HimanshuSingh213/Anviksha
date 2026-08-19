@@ -6,6 +6,7 @@ import {
   getAcademicPromotionStatus,
   getPlacementEligibility,
   getReappearSessionPlan,
+  getDivisionClassification,
 } from "@/helpers/grade-system";
 
 describe("grade-system.ts - Ordinance 11 Grade Calculations", () => {
@@ -310,6 +311,58 @@ describe("grade-system.ts - Ordinance 11 Grade Calculations", () => {
       const plan = getReappearSessionPlan(allResults);
       expect(plan.oddTermBacklogs[0].priority).toBe("HIGH");
       expect(plan.oddTermBacklogs[0].priorityReason).toContain("First Year Backlog");
+    });
+  });
+
+  describe("getDivisionClassification", () => {
+    it("returns Exemplary Performance for CGPA 10.0 with 0 backlogs", () => {
+      const result = getDivisionClassification(10.0, 0);
+      expect(result.division).toBe("Exemplary Performance");
+      expect(result.divisionCode).toBe("EXEMPLARY");
+      expect(result.isPass).toBe(true);
+      expect(result.progressPercent).toBe(100);
+    });
+
+    it("returns First Division with Distinction for CGPA >= 7.5 with 0 backlogs", () => {
+      const result = getDivisionClassification(8.2, 0);
+      expect(result.division).toBe("First Division with Distinction");
+      expect(result.divisionCode).toBe("DISTINCTION");
+      expect(result.isPass).toBe(true);
+    });
+
+    it("downgrades from Distinction to First Division if CGPA >= 7.5 but has active backlogs", () => {
+      const result = getDivisionClassification(8.5, 1);
+      expect(result.division).toBe("First Division");
+      expect(result.divisionCode).toBe("FIRST");
+      expect(result.nextTierMessage).toContain("Clear active backlogs");
+    });
+
+    it("returns First Division for CGPA 6.50 - 7.49", () => {
+      const result = getDivisionClassification(6.8, 0);
+      expect(result.division).toBe("First Division");
+      expect(result.divisionCode).toBe("FIRST");
+      expect(result.isPass).toBe(true);
+    });
+
+    it("returns Second Division for CGPA 5.00 - 6.49", () => {
+      const result = getDivisionClassification(5.5, 0);
+      expect(result.division).toBe("Second Division");
+      expect(result.divisionCode).toBe("SECOND");
+      expect(result.isPass).toBe(true);
+    });
+
+    it("returns Third Division for CGPA 4.00 - 4.99", () => {
+      const result = getDivisionClassification(4.5, 0);
+      expect(result.division).toBe("Third Division");
+      expect(result.divisionCode).toBe("THIRD");
+      expect(result.isPass).toBe(true);
+    });
+
+    it("returns Unqualified for CGPA < 4.00", () => {
+      const result = getDivisionClassification(3.2, 0);
+      expect(result.division).toContain("Unqualified");
+      expect(result.divisionCode).toBe("UNQUALIFIED");
+      expect(result.isPass).toBe(false);
     });
   });
 });

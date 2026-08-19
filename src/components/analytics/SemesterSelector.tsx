@@ -103,13 +103,14 @@ export default function SemesterSelector({
 
             pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
 
+            const safeName = (profile?.stname || "Student").trim().replace(/[^a-zA-Z0-9_-]/g, "_").replace(/_+/g, "_");
             let fileName = "";
             if (isMaster) {
-                fileName = `${profile?.stname || "Student"}_Consolidated_Transcript.pdf`.replace(/\s+/g, "_");
+                fileName = `${safeName}_Consolidated_Transcript.pdf`;
             } else {
                 const isOverallDownload = downloadSem === "100";
                 const docName = isOverallDownload ? "Overall_Cumulative_Record" : `Semester_${downloadSem}_Marksheet`;
-                fileName = `${profile?.stname || "Student"}_${docName}.pdf`.replace(/\s+/g, "_");
+                fileName = `${safeName}_${docName}.pdf`;
             }
 
             pdf.save(fileName);
@@ -169,11 +170,11 @@ export default function SemesterSelector({
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-2 font-mono w-full sm:w-auto justify-between sm:justify-end">
-                        <div className="relative flex-1 sm:flex-initial">
+                    <div className="flex items-center gap-2 font-mono w-full sm:w-auto">
+                        <div className="relative flex-1 sm:flex-initial min-w-0">
                             <button
                                 onClick={() => setOpenDownloadDropdown((p) => !p)}
-                                className="w-full sm:w-auto flex items-center justify-between gap-2 px-2.5 py-1.5 bg-surface-deep border border-border-strong rounded-sm text-xs text-foreground hover:border-gold-border hover:text-gold transition-colors duration-200 cursor-pointer"
+                                className="w-full sm:w-auto min-w-0 flex items-center justify-between gap-2 px-2.5 py-1.5 bg-surface-deep border border-border-strong rounded-sm text-xs text-foreground hover:border-gold-border hover:text-gold transition-colors duration-200 cursor-pointer"
                             >
                                 <span className="flex items-center gap-2 truncate">
                                     <FileText size={12} className="text-chart-cyan shrink-0" />
@@ -192,10 +193,10 @@ export default function SemesterSelector({
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -4 }}
                                         transition={{ duration: 0.15 }}
-                                        className="absolute right-0 top-full mt-1 z-30 w-full sm:w-48 bg-surface-elevated border border-border-strong rounded-sm overflow-hidden shadow-xl"
+                                        className="absolute right-0 top-full mt-1 z-30 w-full sm:w-52 bg-surface-elevated border border-border-strong rounded-sm overflow-hidden shadow-xl"
                                     >
                                         {downloadOptions.map((o) => (
-                                            <button
+                                             <button
                                                 key={o.value}
                                                 onClick={() => {
                                                     setDownloadSem(o.value);
@@ -228,7 +229,7 @@ export default function SemesterSelector({
                     </div>
                 </div>
 
-                <div role="tablist" aria-label="Semester Selection Tabs" className="flex flex-wrap items-center justify-between sm:justify-start gap-0.5 sm:gap-1 p-1 bg-surface border border-border-strong rounded-sm w-full sm:w-auto">
+                <div role="tablist" aria-label="Semester Selection Tabs" className="flex items-center justify-between sm:justify-start gap-1 p-1 bg-surface border border-border-strong rounded-sm w-full sm:w-auto overflow-x-auto custom-h-scrollbar">
                     {SemseterOptions.map((sem) => {
                         const active = activeSem === sem.value;
                         return (
@@ -237,7 +238,7 @@ export default function SemesterSelector({
                                 role="tab"
                                 aria-selected={active}
                                 onClick={() => onSelectSem(sem.value)}
-                                className={`relative flex-1 sm:flex-none text-center px-1 sm:px-3 py-1.5 rounded-sm text-[11px] sm:text-xs font-mono font-semibold transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-gold ${
+                                className={`relative flex-1 sm:flex-none min-w-[28px] sm:min-w-0 text-center px-1.5 sm:px-3 py-1.5 rounded-sm text-[11px] sm:text-xs font-mono font-semibold transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-gold ${
                                     active ? "text-background font-bold" : "text-foreground-muted hover:text-foreground"
                                 }`}
                             >

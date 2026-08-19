@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, TrendingUp } from "lucide-react";
 import {
     ResponsiveContainer,
     AreaChart,
@@ -117,6 +117,7 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
                 <div className="flex items-center justify-between gap-2">
                     <div>
                         <h3 className="text-xs font-mono font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
+                            <TrendingUp size={13} className="text-chart-cyan" />
                             Semester SGPA Trend
                         </h3>
                         <p className="text-[11px] font-mono text-foreground-secondary mt-0.5">
@@ -245,7 +246,7 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
                                         axisLine={{ stroke: "var(--border-strong)" }}
                                     />
                                     <YAxis
-                                        domain={[0, 75]}
+                                        domain={[0, (dataMax: number) => Math.max(75, Math.ceil(dataMax / 25) * 25)]}
                                         stroke="var(--foreground-secondary)"
                                         fontSize={11}
                                         tickLine={false}

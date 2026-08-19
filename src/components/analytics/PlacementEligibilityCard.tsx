@@ -39,13 +39,13 @@ export default function PlacementEligibilityCard({
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className="analytics-panel space-y-8 p-5 sm:p-7 lg:p-8"
+            className="analytics-panel space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8"
         >
-            <header className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-3xl space-y-4">
+            <header className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl space-y-3 sm:space-y-4">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-md border border-accent-copper-border bg-accent-copper-surface text-accent-copper">
-                            <BriefcaseBusiness size={19} strokeWidth={1.8} />
+                        <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-md border border-accent-copper-border bg-accent-copper-surface text-accent-copper shrink-0">
+                            <BriefcaseBusiness size={18} strokeWidth={1.8} />
                         </div>
                         <div>
                             <div className="flex flex-wrap items-center gap-2">
@@ -56,19 +56,19 @@ export default function PlacementEligibilityCard({
                                     {isOverall ? "Cumulative" : "Semester"}
                                 </span>
                             </div>
-                            <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+                            <h2 className="mt-0.5 text-base sm:text-xl font-semibold tracking-tight text-foreground">
                                 Campus Placement Eligibility
                             </h2>
                         </div>
                     </div>
-                    <p className="max-w-2xl text-sm leading-6 text-foreground-secondary">
+                    <p className="max-w-2xl text-xs sm:text-sm leading-5 sm:leading-6 text-foreground-secondary">
                         Recruitment cutoff readiness across common aggregate brackets,
                         with backlog gatekeeping separated from CGPA progress.
                     </p>
                 </div>
 
                 <div
-                    className={`inline-flex w-fit items-center gap-2 rounded-md border px-3 py-2 text-[11px] font-semibold ${
+                    className={`inline-flex w-fit items-center gap-2 rounded-md border px-3 py-1.5 sm:py-2 text-[10px] sm:text-[11px] font-semibold ${
                         gateOpen
                             ? "border-grade-excellent-border bg-grade-excellent-surface text-grade-excellent"
                             : "border-grade-fail-border bg-grade-fail-surface text-grade-fail"
@@ -148,28 +148,28 @@ export default function PlacementEligibilityCard({
                 </div>
             </div>
 
-            <div className="rounded-lg border border-border bg-surface-deep/75 p-4">
+            <div className="rounded-lg border border-border bg-surface-deep/75 p-3.5 sm:p-4">
                 <div className="flex items-center justify-between gap-3">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
                         Cutoff track
                     </p>
-                    <p className="font-mono text-[11px] text-foreground-secondary">
+                    <p className="font-mono text-[10px] sm:text-[11px] text-foreground-secondary">
                         {summary.eligibleTierCount}/{summary.totalTierCount} cleared
                     </p>
                 </div>
 
-                <div className="mt-4 grid grid-cols-4 gap-2">
+                <div className="mt-3 sm:mt-4 grid grid-cols-4 gap-1.5 sm:gap-2">
                     {summary.tiers.map((tier) => (
-                        <div key={tier.id} className="space-y-2">
-                            <div className="h-2 overflow-hidden rounded-full bg-surface">
+                        <div key={tier.id} className="space-y-1.5 sm:space-y-2">
+                            <div className="h-1.5 sm:h-2 overflow-hidden rounded-full bg-surface">
                                 <div
                                     className={`h-full rounded-full ${
                                         tier.isEligible ? "bg-grade-excellent" : "bg-border-strong"
                                     }`}
                                 />
                             </div>
-                            <div className="text-[10px] leading-4">
-                                <p className={tier.isEligible ? "text-grade-excellent" : "text-foreground-muted"}>
+                            <div className="text-[9px] sm:text-[10px] leading-3.5 sm:leading-4">
+                                <p className={tier.isEligible ? "text-grade-excellent font-semibold" : "text-foreground-muted"}>
                                     {tier.minPercentage}%
                                 </p>
                                 <p className="truncate text-foreground-secondary">
@@ -225,9 +225,25 @@ export default function PlacementEligibilityCard({
                                 </span>
                             </div>
 
-                            <p className="mt-4 text-[12px] leading-6 text-foreground-secondary">
+                            <p className="mt-3 text-[12px] leading-5 text-foreground-secondary">
                                 {tier.description}
                             </p>
+
+                            {tier.exampleCompanies && tier.exampleCompanies.length > 0 && (
+                                <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                                    <span className="text-[9px] font-mono uppercase tracking-wider text-foreground-muted mr-1 font-semibold">
+                                        Recruiters:
+                                    </span>
+                                    {tier.exampleCompanies.map((company) => (
+                                        <span
+                                            key={company}
+                                            className="rounded border border-border-strong bg-surface-deep px-1.5 py-0.5 font-mono text-[9px] text-foreground-secondary"
+                                        >
+                                            {company}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
 
                             <div className="mt-5 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
                                 <span className="inline-flex items-start gap-2 text-[11px] leading-5">

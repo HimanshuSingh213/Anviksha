@@ -37,15 +37,15 @@ yarn-error.log*
 # vercel
 .vercel
 
-# typescript
+# typescript & build caches
 *.tsbuildinfo
 next-env.d.ts
 
-# Internal documentation & audit reports
+# Internal documentation & versioned audit reports
+*AUDIT_REPORT*.md
+REPORT.md
 AISummary.md
 PUBLISHING_GUIDE.md
-SECURITY_AUDIT_REPORT.md
-UI_UX_AUDIT_REPORT.md
 flow.md
 features_and_specifications.md
 folder_structure_guide.md

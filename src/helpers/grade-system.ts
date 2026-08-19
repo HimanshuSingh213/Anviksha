@@ -162,6 +162,7 @@ export interface PlacementTier {
     minPercentage: number;
     maxActiveBacklogs: number;
     description: string;
+    exampleCompanies: string[];
     isEligible: boolean;
     cgpaDeficit: number;
     backlogDeficit: number;
@@ -189,6 +190,7 @@ export const PLACEMENT_TIERS_CONFIG: Array<Omit<PlacementTier, "isEligible" | "c
         minPercentage: 60.0,
         maxActiveBacklogs: 0,
         description: "Standard minimum baseline for corporate recruitment & pooled on-campus drives.",
+        exampleCompanies: ["TCS", "Infosys", "Wipro", "Cognizant", "Capgemini", "Tech Mahindra"],
     },
     {
         id: "benchmark_65",
@@ -198,6 +200,7 @@ export const PLACEMENT_TIERS_CONFIG: Array<Omit<PlacementTier, "isEligible" | "c
         minPercentage: 65.0,
         maxActiveBacklogs: 0,
         description: "Standard technical threshold for consulting, financial services, and IT analysts.",
+        exampleCompanies: ["Deloitte", "Accenture", "IBM", "EY", "HCLTech", "Nagarro"],
     },
     {
         id: "benchmark_70",
@@ -207,6 +210,7 @@ export const PLACEMENT_TIERS_CONFIG: Array<Omit<PlacementTier, "isEligible" | "c
         minPercentage: 70.0,
         maxActiveBacklogs: 0,
         description: "Preferred baseline for core engineering roles, product companies, and R&D divisions.",
+        exampleCompanies: ["Amazon", "Microsoft", "Cisco", "Samsung", "Oracle", "Qualcomm"],
     },
     {
         id: "benchmark_75",
@@ -216,6 +220,7 @@ export const PLACEMENT_TIERS_CONFIG: Array<Omit<PlacementTier, "isEligible" | "c
         minPercentage: 75.0,
         maxActiveBacklogs: 0,
         description: "Top-bracket benchmark for high-compensation technical drives and research roles.",
+        exampleCompanies: ["Google", "Tower Research", "D.E. Shaw", "Goldman Sachs", "Sprinklr", "Atlassian"],
     },
 ];
 
@@ -401,5 +406,84 @@ export function getReappearSessionPlan(
         nextRecommendedSession,
         nextSessionLabel,
         cleanRecord,
+    };
+}
+
+export interface DivisionClassification {
+    division: string;
+    divisionCode: "EXEMPLARY" | "DISTINCTION" | "FIRST" | "SECOND" | "THIRD" | "UNQUALIFIED";
+    minCgpa: number;
+    nextTierMessage: string;
+    progressPercent: number;
+    isPass: boolean;
+}
+
+export function getDivisionClassification(
+    cgpa: number,
+    backlogsCount: number = 0
+): DivisionClassification {
+    const validCgpa = isNaN(cgpa) ? 0 : Math.max(0, cgpa);
+    const validBacklogs = isNaN(backlogsCount) ? 0 : Math.max(0, backlogsCount);
+
+    let division = "Unqualified for Degree (< 4.00)";
+    let divisionCode: DivisionClassification["divisionCode"] = "UNQUALIFIED";
+    let minCgpa = 0.0;
+    let nextTierMessage = "";
+    let isPass = false;
+
+    if (validCgpa >= 10.0 && validBacklogs === 0) {
+        division = "Exemplary Performance";
+        divisionCode = "EXEMPLARY";
+        minCgpa = 10.0;
+        nextTierMessage = "Maximum distinction achieved!";
+        isPass = true;
+    } else if (validCgpa >= 7.50 && validBacklogs === 0) {
+        division = "First Division with Distinction";
+        divisionCode = "DISTINCTION";
+        minCgpa = 7.5;
+        const gap = (10.0 - validCgpa).toFixed(2);
+        nextTierMessage = `+${gap} CGPA for Exemplary Distinction`;
+        isPass = true;
+    } else if (validCgpa >= 6.50) {
+        division = "First Division";
+        divisionCode = "FIRST";
+        minCgpa = 6.5;
+        const gap = (7.50 - validCgpa).toFixed(2);
+        nextTierMessage = validBacklogs > 0
+            ? "Clear active backlogs for Distinction eligibility"
+            : `+${gap} CGPA for Distinction (7.50)`;
+        isPass = true;
+    } else if (validCgpa >= 5.00) {
+        division = "Second Division";
+        divisionCode = "SECOND";
+        minCgpa = 5.0;
+        const gap = (6.50 - validCgpa).toFixed(2);
+        nextTierMessage = `+${gap} CGPA needed for First Division (6.50)`;
+        isPass = true;
+    } else if (validCgpa >= 4.00) {
+        division = "Third Division";
+        divisionCode = "THIRD";
+        minCgpa = 4.0;
+        const gap = (5.00 - validCgpa).toFixed(2);
+        nextTierMessage = `+${gap} CGPA needed for Second Division (5.00)`;
+        isPass = true;
+    } else {
+        division = "Unqualified for Degree (< 4.00)";
+        divisionCode = "UNQUALIFIED";
+        minCgpa = 0.0;
+        const gap = (4.00 - validCgpa).toFixed(2);
+        nextTierMessage = `+${gap} CGPA needed for passing threshold (4.00)`;
+        isPass = false;
+    }
+
+    const progressPercent = Math.min(100, Math.max(0, (validCgpa / 10) * 100));
+
+    return {
+        division,
+        divisionCode,
+        minCgpa,
+        nextTierMessage,
+        progressPercent,
+        isPass,
     };
 }

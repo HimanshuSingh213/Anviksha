@@ -2,7 +2,7 @@
 
 import React, { forwardRef, useMemo } from "react";
 import { StudentProfile } from "@/types/result";
-import { getDefaultCredit, getGradeAndPoints } from "@/helpers/grade-system";
+import { getDefaultCredit, getGradeAndPoints, getDivisionClassification } from "@/helpers/grade-system";
 import { AnvikshaWatermark } from "./AnvikshaWatermark";
 
 interface Props {
@@ -91,15 +91,8 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
 
             const cgpa = totalCreds > 0 ? (weightedPts / totalCreds).toFixed(2) : "0.00";
             const percent = (Number(cgpa) * 10).toFixed(2);
-
-            let div = "Second Division";
-            const cgpaNum = Number(cgpa);
-            if (cgpaNum >= 10.0 && activeBacks === 0) div = "Exemplary Performance";
-            else if (cgpaNum >= 7.50 && activeBacks === 0) div = "First Division with Distinction";
-            else if (cgpaNum >= 6.50) div = "First Division";
-            else if (cgpaNum >= 5.00) div = "Second Division";
-            else if (cgpaNum >= 4.00) div = "Third Division";
-            else div = "Unqualified";
+            const divClassification = getDivisionClassification(Number(cgpa), activeBacks);
+            const division = divClassification.division;
 
             const date = new Date().toLocaleDateString("en-IN", {
                 day: "2-digit",
@@ -114,7 +107,7 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                 overallEarnedCredits: earnedCreds,
                 overallCgpa: cgpa,
                 overallPercentage: percent,
-                division: div,
+                division,
                 totalActiveBacklogs: activeBacks,
                 currentDate: date,
             };
@@ -184,9 +177,9 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                             </span>
                         </div>
 
-                        <table className="w-full text-[11px] font-mono border-collapse border border-black text-center">
+                        <table className="w-full text-[11px] font-mono border-collapse border border-black text-center print:break-inside-auto">
                             <caption className="sr-only">Official GGSIPU Semester-wise Academic Evaluation Matrix</caption>
-                            <thead>
+                            <thead className="print:table-header-group">
                                 <tr className="bg-neutral-900 text-white uppercase text-[9.5px] font-bold tracking-wider">
                                     <th scope="col" className="border border-black p-2 text-left">Semester</th>
                                     <th scope="col" className="border border-black p-2">Subjects</th>
@@ -199,7 +192,7 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                             </thead>
                             <tbody>
                                 {semesterSummaries.map((sem, idx) => (
-                                    <tr key={idx} className={idx % 2 === 0 ? "bg-white" : "bg-neutral-50"}>
+                                    <tr key={idx} className={`print:break-inside-avoid ${idx % 2 === 0 ? "bg-white" : "bg-neutral-50"}`}>
                                         <th scope="row" className="border border-black p-2 text-left font-bold text-black text-left">
                                             Semester {sem.semNum}
                                         </th>

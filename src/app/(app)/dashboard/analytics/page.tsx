@@ -155,7 +155,7 @@ export default function AnalyticsPage() {
                 <div
                     role="tablist"
                     aria-label="Analytics Perspectives"
-                    className="flex flex-wrap items-center gap-1.5 p-1.5 bg-surface border border-border-strong rounded-md shadow-xs"
+                    className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-1.5 p-1.5 bg-surface border border-border-strong rounded-md shadow-xs"
                 >
                     {ANALYTICS_VIEWS.map((tab, index) => {
                         const Icon = tab.icon;
@@ -172,7 +172,7 @@ export default function AnalyticsPage() {
                                 type="button"
                                 onClick={() => setActiveView(tab.id)}
                                 onKeyDown={(event) => handleViewKeyDown(event, index)}
-                                className={`relative flex items-center gap-2 px-3.5 py-1.5 rounded text-xs font-mono font-bold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-gold focus-visible:outline-none ${
+                                className={`relative flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 sm:py-1.5 rounded text-xs font-mono font-bold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-gold focus-visible:outline-none ${
                                     isActive
                                         ? "text-background font-bold"
                                         : "text-foreground-secondary hover:text-foreground hover:bg-surface-elevated/70"
@@ -186,7 +186,12 @@ export default function AnalyticsPage() {
                                     />
                                 )}
                                 <Icon size={13} className="relative z-10 shrink-0" aria-hidden="true" />
-                                <span className="relative z-10">{tab.label}</span>
+                                <span className="relative z-10 hidden sm:inline">{tab.label}</span>
+                                <span className="relative z-10 sm:hidden">
+                                    {tab.id === "performance" ? "Performance" :
+                                     tab.id === "standing" ? "Standing" :
+                                     tab.id === "placement" ? "Placement" : "All Insights"}
+                                </span>
                             </button>
                         );
                     })}

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
+import { getDivisionClassification } from "@/helpers/grade-system";
 
 interface DivisionProps {
     cgpa: number;
@@ -12,39 +13,14 @@ interface DivisionProps {
 export default function DivisionClassificationCard({ cgpa, backlogsCount, isOverall }: DivisionProps) {
     // Memoize the division classification logic to avoid recalculating on non-related re-renders
     const { divisionName, activeFillColor, nextTierMessage, progressPercent } = useMemo(() => {
-        let divisionName = "Unqualified (Fail)";
-        let activeFillColor = "bg-grade-fail";
-        let nextTierMessage = "";
-
-        if (cgpa >= 10.0 && backlogsCount === 0) {
-            divisionName = "Exemplary Performance";
-            activeFillColor = "bg-foreground";
-            nextTierMessage = "Maximum distinction achieved!";
-        } else if (cgpa >= 6.50) {
-            divisionName = "First Division";
-            activeFillColor = "bg-foreground";
-            const gap = (10.0 - cgpa).toFixed(2);
-            nextTierMessage = cgpa < 10.0 ? `+${gap} CGPA for Exemplary Distinction` : "Top Division Achieved";
-        } else if (cgpa >= 5.00) {
-            divisionName = "Second Division";
-            activeFillColor = "bg-foreground";
-            const gap = (6.50 - cgpa).toFixed(2);
-            nextTierMessage = `+${gap} CGPA needed for First Division (6.50)`;
-        } else if (cgpa >= 4.00) {
-            divisionName = "Third Division";
-            activeFillColor = "bg-foreground";
-            const gap = (5.00 - cgpa).toFixed(2);
-            nextTierMessage = `+${gap} CGPA needed for Second Division (5.00)`;
-        } else {
-            divisionName = "Unqualified for Degree (< 4.00)";
-            activeFillColor = "bg-grade-fail";
-            const gap = (4.00 - cgpa).toFixed(2);
-            nextTierMessage = `+${gap} CGPA needed for passing threshold (4.00)`;
-        }
-
-        const progressPercent = Math.min(100, Math.max(0, (cgpa / 10) * 100));
-
-        return { divisionName, activeFillColor, nextTierMessage, progressPercent };
+        const result = getDivisionClassification(cgpa, backlogsCount);
+        const activeFillColor = result.isPass ? "bg-foreground" : "bg-grade-fail";
+        return {
+            divisionName: result.division,
+            activeFillColor,
+            nextTierMessage: result.nextTierMessage,
+            progressPercent: result.progressPercent,
+        };
     }, [cgpa, backlogsCount]);
 
     return (
@@ -91,10 +67,22 @@ export default function DivisionClassificationCard({ cgpa, backlogsCount, isOver
             <div className="space-y-2 pt-1">
                 <div className="relative h-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-foreground-secondary">
                     <span className="absolute left-0 text-grade-fail font-bold">Fail (&lt;4.0)</span>
-                    <span className="hidden sm:inline absolute left-[40%] -translate-x-1/2">3rd (4.0)</span>
-                    <span className="hidden sm:inline absolute left-[50%] -translate-x-1/2">2nd (5.0)</span>
-                    <span className="hidden sm:inline absolute left-[65%] -translate-x-1/2">1st (6.5)</span>
-                    <span className="absolute right-0 text-foreground font-bold">Exemplary (10.0)</span>
+                    <span className="absolute left-[40%] -translate-x-1/2">
+                        <span className="hidden sm:inline">3rd (4.0)</span>
+                        <span className="sm:hidden">3rd</span>
+                    </span>
+                    <span className="absolute left-[50%] -translate-x-1/2">
+                        <span className="hidden sm:inline">2nd (5.0)</span>
+                        <span className="sm:hidden">2nd</span>
+                    </span>
+                    <span className="absolute left-[65%] -translate-x-1/2">
+                        <span className="hidden sm:inline">1st (6.5)</span>
+                        <span className="sm:hidden">1st</span>
+                    </span>
+                    <span className="absolute right-0 text-foreground font-bold">
+                        <span className="hidden sm:inline">Exemplary (10.0)</span>
+                        <span className="sm:hidden">Top (10.0)</span>
+                    </span>
                 </div>
 
                 <div className="relative h-3.5 bg-surface-deep rounded-full border border-border-strong overflow-hidden">

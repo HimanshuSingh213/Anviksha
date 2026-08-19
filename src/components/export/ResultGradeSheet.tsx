@@ -30,9 +30,9 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
 
             const defaultCredit = getDefaultCredit(subjectTitle);
             const credit = customCredits[paperCode] ?? defaultCredit;
-            const { grade, points } = getGradeAndPoints(totalMarks);
+            const { grade, points, pass } = getGradeAndPoints(totalMarks);
 
-            const isPassed = (statusStr === "08" || statusStr === "") && grade !== "F" && totalMarks >= 40;
+            const isPassed = pass && grade !== "F";
 
             totalCredits += credit;
             if (isPassed) {
@@ -135,9 +135,9 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
                     </div>
 
                     {/* Subject Table */}
-                    <table className="w-full text-xs font-sans border-collapse border border-black text-center">
+                    <table className="w-full text-xs font-sans border-collapse border border-black text-center print:break-inside-auto">
                         <caption className="sr-only">Academic Marks Breakdown Table</caption>
-                        <thead>
+                        <thead className="print:table-header-group">
                             <tr className="bg-[#18181b] text-white uppercase text-[10px] font-bold border-b border-black">
                                 <th className="border border-black p-2 text-left">Code</th>
                                 <th className="border border-black p-2 text-left">Paper Title</th>
@@ -151,7 +151,7 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
                         </thead>
                         <tbody>
                             {tableRows.map((row, idx) => (
-                                <tr key={idx} className="border-b border-neutral-300">
+                                <tr key={idx} className="border-b border-neutral-300 print:break-inside-avoid">
                                     <td className="border border-black p-1.5 text-left font-bold">{row.paperCode}</td>
                                     <td className="border border-black p-1.5 text-left font-medium">{row.subjectTitle}</td>
                                     <td className="border border-black p-1.5">{row.credit}</td>

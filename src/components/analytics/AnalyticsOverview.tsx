@@ -70,7 +70,7 @@ export default function AnalyticsOverview(props: Props) {
 
     return (
         <div className="space-y-4">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                 {metricCards.map((card, i) => {
                     const Icon = card.icon;
                     return (
@@ -79,22 +79,22 @@ export default function AnalyticsOverview(props: Props) {
                             initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05, duration: 0.25 }}
-                            className="p-4 bg-surface border border-border-strong rounded-md space-y-3 shadow-xs"
+                            className="p-3.5 sm:p-4 bg-surface border border-border-strong rounded-md space-y-2.5 sm:space-y-3 shadow-xs"
                         >
                             <div className={`w-7 h-7 rounded-sm flex items-center justify-center border ${card.bg} ${card.border} ${card.accent}`}>
                                 <Icon size={13} />
                             </div>
 
-                            <div>
-                                <div className="text-2xl font-bold font-mono tracking-tight text-foreground leading-none">
+                            <div className="min-w-0">
+                                <div className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-foreground leading-none truncate">
                                     {card.value}
                                 </div>
-                                <div className="text-[11px] font-mono text-foreground-secondary mt-1">
+                                <div className="text-[10px] sm:text-[11px] font-mono text-foreground-secondary mt-1 truncate">
                                     {card.sub}
                                 </div>
                             </div>
 
-                            <div className="text-[10px] font-mono font-bold uppercase tracking-widest text-foreground-secondary border-t border-border pt-2">
+                            <div className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-foreground-secondary border-t border-border pt-2 truncate">
                                 {card.label}
                             </div>
                         </motion.div>
