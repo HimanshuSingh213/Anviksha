@@ -1,5 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, CompassIcon } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "404 — Page Not Found | Anviksha",
+  robots: {
+    index: false,
+    follow: true,
+  },
+};
 
 export default function NotFound() {
   return (

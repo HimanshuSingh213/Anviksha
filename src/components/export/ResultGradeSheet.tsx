@@ -26,7 +26,6 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
             const externalMarks = row[4];
             const rawTotal = Number(row[5]);
             const totalMarks = isNaN(rawTotal) ? 0 : rawTotal;
-            const statusStr = row[6] || "";
 
             const defaultCredit = getDefaultCredit(subjectTitle);
             const credit = customCredits[paperCode] ?? defaultCredit;
@@ -118,7 +117,7 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
                     <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-xs font-sans border-b border-black pb-4">
                         <div className="flex items-start gap-3">
                             <span className="text-neutral-600 min-w-28 font-medium shrink-0">Name :</span>
-                            <span className="font-bold uppercase text-black leading-tight break-words">{profile?.stname || "N/A"}</span>
+                            <span className="font-bold uppercase text-black leading-tight wrap-break-word">{profile?.stname || "N/A"}</span>
                         </div>
                         <div className="flex items-start gap-3">
                             <span className="text-neutral-600 min-w-28 font-medium shrink-0">Semester :</span>
@@ -130,7 +129,7 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
                         </div>
                         <div className="flex items-start gap-3">
                             <span className="text-neutral-600 min-w-28 font-medium shrink-0">Institution :</span>
-                            <span className="font-bold text-black leading-snug break-words">{profile?.iname || "GGSIPU"}</span>
+                            <span className="font-bold text-black leading-snug wrap-break-word">{profile?.iname || "GGSIPU"}</span>
                         </div>
                     </div>
 

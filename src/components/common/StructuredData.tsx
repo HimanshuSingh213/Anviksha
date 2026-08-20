@@ -43,6 +43,13 @@ export default function StructuredData() {
         "@id": "https://anviksha-result.vercel.app/#website",
         "url": "https://anviksha-result.vercel.app",
         "name": "Anviksha",
+        "alternateName": [
+          "Anviksha Portal",
+          "Anviksha Results",
+          "Anviksha - GGSIPU Results",
+          "Anviksha GGSIPU",
+          "Anviksha Academic Analytics"
+        ],
         "description": "GGSIPU Academic Analytics, Examination Results & Transcript Portal",
         "publisher": {
           "@type": "Person",
@@ -141,14 +148,8 @@ export default function StructuredData() {
           {
             "@type": "ListItem",
             "position": 2,
-            "name": "GGSIPU Results & Analytics Dashboard",
-            "item": "https://anviksha-result.vercel.app/dashboard",
-          },
-          {
-            "@type": "ListItem",
-            "position": 3,
-            "name": "Academic Analytics & Ordinance 11 Standing",
-            "item": "https://anviksha-result.vercel.app/dashboard/analytics",
+            "name": "Sign In — GGSIPU Exam Portal",
+            "item": "https://anviksha-result.vercel.app/login",
           },
         ],
       },

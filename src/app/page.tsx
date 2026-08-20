@@ -53,6 +53,29 @@ const STEPS = [
   { n: "03", title: "See everything", desc: "Your dashboard, analytics, and transcript are ready instantly, recalculated live in your browser." },
 ];
 
+const COLLEGES = [
+  "USICT",
+  "MAIT",
+  "MSIT",
+  "BVCOE",
+  "BPIT",
+  "GTBIT",
+  "VIPS",
+  "ADGITM",
+  "JIMS",
+  "DTC",
+  "GNDIT",
+  "MERI",
+  "HMRITM",
+  "CPJ-CHS",
+  "IITM",
+  "BCIPS",
+  "TIIPS",
+  "FIMT",
+  "IINTM",
+  "+ 30 More Affiliated Colleges",
+];
+
 const GRADE_BADGES = [
   { label: "O", points: 10, cls: "text-grade-excellent bg-grade-excellent-surface border-grade-excellent-border" },
   { label: "A+", points: 9, cls: "text-grade-excellent bg-grade-excellent-surface border-grade-excellent-border" },
@@ -164,10 +187,7 @@ export default async function Home() {
             </h1>
 
             <p className="mt-5 max-w-md text-base leading-7 text-foreground-secondary">
-              Anviksha fetches your GGSIPU semester exam results live and turns them
-              into a clean analytics dashboard — instant SGPA/CGPA calculation, Ordinance 11
-              promotion standing, placement cutoffs, and a downloadable transcript PDF.
-              Nothing stored, fully privacy-first.
+              A modern academic portal for GGSIPU students. View live semester results, automated Ordinance 11 SGPA/CGPA calculations, promotion standing, and consolidated transcript exports.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -197,6 +217,33 @@ export default async function Home() {
                 <span className="text-xs">{item.text}</span>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Supported Colleges */}
+        <section className="border-b border-border bg-surface/30">
+          <div className="mx-auto max-w-6xl px-6 py-12">
+            <div className="max-w-lg mx-auto text-center mb-8">
+              <span className="font-mono text-xs uppercase tracking-widest text-gold">
+                Universal Support
+              </span>
+              <h2 className="mt-2 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+                Just Like the Official Portal, Works for Every College
+              </h2>
+              <p className="mt-2 text-xs leading-5 text-foreground-secondary">
+                If your results are on GGSIPU&apos;s server, they work seamlessly on Anviksha — covering all 50+ affiliated institutes across Delhi NCR.
+              </p>
+            </div>
+            <div className="flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
+              {COLLEGES.map((college) => (
+                <span
+                  key={college}
+                  className="px-3 py-1.5 rounded-full border border-border bg-surface text-xs font-mono font-medium text-foreground-secondary hover:border-gold-border hover:text-foreground transition-colors"
+                >
+                  {college}
+                </span>
+              ))}
+            </div>
           </div>
         </section>
 
