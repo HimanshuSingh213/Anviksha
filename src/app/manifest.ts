@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Anviksha",
     short_name: "Anviksha",
-    description: "Academic intelligence, Ordinance 11 CGPA analytics, and official transcript generator for GGSIPU students.",
+    description: "Academic intelligence, Ordinance 11 CGPA analytics, and consolidated transcript generator for GGSIPU students.",
     start_url: "/",
     display: "standalone",
     background_color: "#060608",

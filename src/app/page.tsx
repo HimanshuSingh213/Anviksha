@@ -15,7 +15,6 @@ import {
   Calendar,
 } from "lucide-react";
 import ResultPreviewCard from "@/components/home/ResultPreviewCard";
-import StructuredData from "@/components/common/StructuredData";
 
 /* ---------------------------------- data ---------------------------------- */
 
@@ -41,7 +40,7 @@ const FEATURES: { icon: typeof Calculator; accent: Accent; title: string; desc: 
   { icon: ShieldCheck, accent: "green", title: "50% Promotion Standing", desc: "Monitors annual credit accumulation to prevent year-back detentions under Ordinance 11." },
   { icon: Briefcase, accent: "gold", title: "Placement Gatekeeper", desc: "Evaluates your standing against 60%, 65%, 70%, and 75% corporate recruiter cutoffs." },
   { icon: Calendar, accent: "teal", title: "Odd/Even Reappear Planner", desc: "Intelligently schedules failed papers into Nov/Dec winter and May/June summer exam windows." },
-  { icon: FileDown, accent: "violet", title: "Consolidated Master Transcript", desc: "Generate a single-page official academic transcript with QR code verification in one click." },
+  { icon: FileDown, accent: "violet", title: "Consolidated Master Transcript", desc: "Generate a single-page consolidated academic transcript with QR code verification in one click." },
   { icon: Award, accent: "gold", title: "Division & Distinction", desc: "Auto-classified First Division with Distinction, First Division, or Second Division." },
   { icon: TrendingUp, accent: "blue", title: "Semester Trends", desc: "Track SGPA progression curves and internal vs. external exam distributions." },
   { icon: PieChart, accent: "pink", title: "Grade Breakdown", desc: "Comprehensive O to F grade distributions with highest and lowest scoring highlights." },
@@ -90,7 +89,7 @@ const GRADE_BADGES = [
 const FAQS = [
   {
     q: "How can I check my GGSIPU Semester Results 2026 on Anviksha?",
-    a: "Simply sign in using your official GGSIPU student enrollment number and password. Anviksha securely connects to the university exam servers to fetch and parse your complete semester results, marks breakdown, and credit points live into an interactive dashboard.",
+    a: "Simply sign in using your GGSIPU student enrollment number and password. Anviksha securely connects to the university exam servers to fetch and parse your complete semester results, marks breakdown, and credit points live into an interactive dashboard.",
   },
   {
     q: "How is SGPA and CGPA calculated in GGSIPU under Ordinance 11?",
@@ -135,7 +134,6 @@ export default async function Home() {
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden bg-background text-foreground">
-      <StructuredData />
 
       {/* Ambient background */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
