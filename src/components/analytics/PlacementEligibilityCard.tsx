@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
     BriefcaseBusiness,
@@ -10,6 +11,7 @@ import {
     AlertTriangle,
     ArrowUpRight,
     Lock,
+    HelpCircle,
 } from "lucide-react";
 import {
     getPlacementEligibility,
@@ -55,15 +57,22 @@ export default function PlacementEligibilityCard({
                                 <span className="rounded-md border border-border-strong bg-surface-deep px-2 py-0.5 font-mono text-[9px] text-foreground-muted">
                                     {isOverall ? "Cumulative" : "Semester"}
                                 </span>
+                                <Link
+                                    href="/calculations#placement"
+                                    title="How are placement benchmarks calculated?"
+                                    className="inline-flex items-center gap-1 text-[10px] font-mono text-foreground-muted hover:text-gold transition-colors"
+                                >
+                                    <HelpCircle size={11} />
+                                    <span className="hidden sm:inline">How is this calculated?</span>
+                                </Link>
                             </div>
                             <h2 className="mt-0.5 text-base sm:text-xl font-semibold tracking-tight text-foreground">
-                                Campus Placement Eligibility
+                                Anviksha Placement Benchmarks
                             </h2>
                         </div>
                     </div>
                     <p className="max-w-2xl text-xs sm:text-sm leading-5 sm:leading-6 text-foreground-secondary">
-                        Recruitment cutoff readiness across common aggregate brackets,
-                        with backlog gatekeeping separated from CGPA progress.
+                        Application benchmarks modeled on common recruitment brackets. These are not universal GGSIPU rules — actual criteria depend on the specific employer, role, and drive.
                     </p>
                 </div>
 
@@ -232,7 +241,7 @@ export default function PlacementEligibilityCard({
                             {tier.exampleCompanies && tier.exampleCompanies.length > 0 && (
                                 <div className="mt-3 flex flex-wrap items-center gap-1.5">
                                     <span className="text-[9px] font-mono uppercase tracking-wider text-foreground-muted mr-1 font-semibold">
-                                        Recruiters:
+                                        Typical Recruiters:
                                     </span>
                                     {tier.exampleCompanies.map((company) => (
                                         <span
@@ -251,7 +260,7 @@ export default function PlacementEligibilityCard({
                                         <>
                                             <CheckCircle2 size={12} className="mt-0.5 shrink-0 text-grade-excellent" />
                                             <span className="text-grade-excellent">
-                                                Cutoff and backlog gate cleared.
+                                                Benchmark and backlog gate cleared.
                                             </span>
                                         </>
                                     ) : (

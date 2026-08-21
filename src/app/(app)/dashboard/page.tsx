@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import axios, { AxiosError } from "axios";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,7 +11,7 @@ import Skeleton from "@/components/dashboard/Skeleton";
 import AppNavbar from "@/components/common/AppNavbar";
 import useResultStore from "@/store/result-store";
 import { ResultData } from "@/types/result";
-import { getDefaultCredit, getGradeAndPoints, getGradeThemeClasses } from "@/helpers/grade-system";
+import { getFallbackCredit, getGradeAndPoints, getGradeThemeClasses, getResultState } from "@/helpers/grade-system";
 import PixelAvatar from "@/components/dashboard/PixelAvatar";
 import CreditTipModal from "@/components/dashboard/CreditTipModal";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/types/ApiResponse";
@@ -41,7 +41,7 @@ export default function DashboardPage() {
     const customCredit = useResultStore((state) => state.customCredits);
     const setCustomCredit = useResultStore((state) => state.setCustomCredit);
 
-    const fetchResults = async () => {
+    const fetchResults = useCallback(async () => {
         setLoading(true);
         setError("");
         try {
@@ -82,7 +82,7 @@ export default function DashboardPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [clearResult, router, setFullResult]);
 
     useEffect(() => {
         const hasAuthCookie = typeof document !== "undefined" && document.cookie.split("; ").some((c) => c.startsWith("auth_session="));
@@ -91,15 +91,17 @@ export default function DashboardPage() {
         } else {
             setLoading(false);
         }
-    }, [fullResult]);
+    }, [fullResult, fetchResults]);
 
-    const filteredResults = fullResult?.stresult?.filter(
-        (result) => activeSem === "100" || result[0] === Number(activeSem)
-    );
+    const allResults = useMemo(() => fullResult?.stresult ?? [], [fullResult?.stresult]);
 
-    const allResults = fullResult?.stresult ?? [];
+    const filteredResults = useMemo(() => {
+        return allResults.filter(
+            (result) => activeSem === "100" || result[0] === Number(activeSem)
+        );
+    }, [allResults, activeSem]);
 
-    function computeStats(rows: any[][]) {
+    const computeStats = useCallback((rows: any[][]) => {
         let weightedPoints = 0;
         let totalCredits = 0;
         let earnedCredits = 0;
@@ -108,20 +110,25 @@ export default function DashboardPage() {
         let totalMaxMarks = 0;
 
         rows.forEach((row) => {
-            const rawTotal = Number(row[5]);
-            const total = isNaN(rawTotal) ? 0 : rawTotal;
+            const rawTotal = row[5];
+            const statusCode = row[6];
             const paperCode = row[1];
             const subjectTitle = row[2];
-            const credit = customCredit[paperCode] ?? getDefaultCredit(subjectTitle);
-            const { points, pass } = getGradeAndPoints(total);
+            const credit = customCredit[paperCode] ?? getFallbackCredit(subjectTitle);
 
-            const effectivePoints = pass ? points : 0;
+            const resultState = getResultState(statusCode, rawTotal);
+            const { points, pass } = getGradeAndPoints(rawTotal);
+
+            const isPassed = resultState === "CLEARED" || (resultState !== "BACK" && resultState !== "ABSENT" && resultState !== "DETAINED" && pass);
+            const effectivePoints = isPassed ? points : 0;
             weightedPoints += credit * effectivePoints;
             totalCredits += credit;
-            obtainedMarks += pass ? total : 0;
+
+            const numericTotal = Number(rawTotal);
+            obtainedMarks += isPassed && !isNaN(numericTotal) ? numericTotal : 0;
             totalMaxMarks += 100;
 
-            if (pass) {
+            if (isPassed) {
                 earnedCredits += credit;
             } else {
                 backlogs += 1;
@@ -130,22 +137,22 @@ export default function DashboardPage() {
 
         const gpa = totalCredits > 0 ? weightedPoints / totalCredits : 0;
         return { gpa, totalCredits, earnedCredits, backlogs, obtainedMarks, totalMaxMarks };
-    }
+    }, [customCredit]);
 
-    const semStats = computeStats(filteredResults ?? []);
-    const overallStats = computeStats(allResults);
+    const semStats = useMemo(() => computeStats(filteredResults), [computeStats, filteredResults]);
+    const overallStats = useMemo(() => computeStats(allResults), [computeStats, allResults]);
 
     const activeGpa = activeSem === "100" ? overallStats.gpa : semStats.gpa;
     const gpaLabel = activeSem === "100" ? "Overall CGPA" : `Sem ${activeSem} SGPA`;
     const percentLabel = activeSem === "100" ? "Equivalent %" : `Sem ${activeSem} Equivalent %`;
     const formulaSub = activeSem === "100" ? "CGPA × 10 (Ordinance 11)" : "SGPA × 10 (Ordinance 11)";
 
-    const displayGpa = activeGpa.toFixed(2);
-    const displayPercentage = (activeGpa * 10).toFixed(2);
+    const displayGpa = useMemo(() => activeGpa.toFixed(2), [activeGpa]);
+    const displayPercentage = useMemo(() => (activeGpa * 10).toFixed(2), [activeGpa]);
+
+    const profile = useMemo(() => fullResult?.stprofile, [fullResult?.stprofile]);
 
     if (loading && !fullResult) return <Skeleton />;
-
-    const profile = fullResult?.stprofile;
 
     return (
         <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
@@ -382,12 +389,15 @@ export default function DashboardPage() {
                                         </thead>
                                         <tbody>
                                             {filteredResults.map((row, idx) => {
-                                                const total = Number(row[5]);
-                                                const gradeInfo = getGradeAndPoints(total);
+                                                const rawTotal = row[5];
+                                                const statusCode = row[6];
+                                                const resultState = getResultState(statusCode, rawTotal);
+                                                const gradeInfo = getGradeAndPoints(rawTotal);
                                                 const themeClasses = getGradeThemeClasses(gradeInfo.grade);
                                                 const paperCode = row[1];
                                                 const subjectTitle = row[2];
-                                                const currentCredit = customCredit[paperCode] ?? getDefaultCredit(subjectTitle);
+                                                const currentCredit = customCredit[paperCode] ?? getFallbackCredit(subjectTitle);
+                                                const isPassed = resultState === "CLEARED" || (resultState !== "BACK" && resultState !== "ABSENT" && resultState !== "DETAINED" && gradeInfo.pass);
 
                                                 return (
                                                     <motion.tr
@@ -407,9 +417,9 @@ export default function DashboardPage() {
                                                                 </span>
                                                             )}
                                                         </td>
-                                                        <td className="px-4 py-3.5 text-xs font-mono text-center text-foreground-secondary font-medium">{row[3]}</td>
-                                                        <td className="px-4 py-3.5 text-xs font-mono text-center text-foreground-secondary font-medium">{row[4]}</td>
-                                                        <td className="px-4 py-3.5 text-xs font-mono text-center font-bold text-foreground">{row[5]}</td>
+                                                        <td className="px-4 py-3.5 text-xs font-mono text-center text-foreground-secondary font-medium">{row[3] || "–"}</td>
+                                                        <td className="px-4 py-3.5 text-xs font-mono text-center text-foreground-secondary font-medium">{row[4] || "–"}</td>
+                                                        <td className="px-4 py-3.5 text-xs font-mono text-center font-bold text-foreground">{row[5] || "–"}</td>
                                                         <td className="px-4 py-3.5 text-center">
                                                             <input
                                                                 type="number"
@@ -427,20 +437,27 @@ export default function DashboardPage() {
                                                                 onChange={(e) => setCustomCredit(paperCode, Number(e.target.value))}
                                                                 className="w-10 text-center bg-surface-deep border border-border-strong hover:border-gold/60 focus:border-gold focus:ring-1 focus:ring-gold/30 rounded-sm py-0.5 font-mono text-xs font-bold text-foreground outline-none transition-all cursor-pointer focus:cursor-text [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                             />
-                                                            {!gradeInfo.pass && (
+                                                            {!isPassed && (
                                                                 <div className="text-[9px] font-mono text-grade-fail font-semibold mt-0.5" title="Backlog: 0 credits earned until cleared">
                                                                     0 earned
                                                                 </div>
                                                             )}
                                                         </td>
                                                         <td className="px-4 py-3.5 text-center">
-                                                            <span className={`inline-flex items-center justify-center w-9 h-6 rounded-sm border font-mono text-[11px] font-bold ${themeClasses}`}>
+                                                            <span className={`inline-flex items-center justify-center min-w-9 px-1.5 h-6 rounded-sm border font-mono text-[11px] font-bold ${themeClasses}`}>
                                                                 {gradeInfo.grade}
                                                             </span>
                                                         </td>
                                                         <td className="px-4 py-3.5 text-center">
-                                                            <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${gradeInfo.pass ? "text-grade-excellent" : "text-grade-fail"}`}>
-                                                                {gradeInfo.pass ? "Pass" : "Back"}
+                                                            <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${
+                                                                resultState === "CLEARED" ? "text-grade-excellent" :
+                                                                resultState === "ABSENT" ? "text-foreground-muted" :
+                                                                resultState === "DETAINED" ? "text-grade-fail" :
+                                                                "text-grade-fail"
+                                                            }`}>
+                                                                {resultState === "CLEARED" ? "Pass" :
+                                                                 resultState === "ABSENT" ? "Absent" :
+                                                                 resultState === "DETAINED" ? "Detained" : "Back"}
                                                             </span>
                                                         </td>
                                                     </motion.tr>

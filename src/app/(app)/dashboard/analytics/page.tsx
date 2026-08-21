@@ -1,11 +1,11 @@
 "use client";
 
-import { KeyboardEvent, useEffect, useState, useMemo } from "react";
+import { KeyboardEvent, useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { TrendingUp, ShieldCheck, Briefcase, Layers } from "lucide-react";
 import useResultStore from "@/store/result-store";
-import { getDefaultCredit, getGradeAndPoints } from "@/helpers/grade-system";
+import { getFallbackCredit, getGradeAndPoints, getResultState } from "@/helpers/grade-system";
 import Skeleton from "@/components/dashboard/Skeleton";
 import AppNavbar from "@/components/common/AppNavbar";
 import SemesterSelector from "@/components/analytics/SemesterSelector";
@@ -33,7 +33,7 @@ export default function AnalyticsPage() {
     const [activeSem, setActiveSem] = useState<string>("100");
     const [activeView, setActiveView] = useState<AnalyticsViewType>("performance");
 
-    const handleViewKeyDown = (
+    const handleViewKeyDown = useCallback((
         event: KeyboardEvent<HTMLButtonElement>,
         currentIndex: number,
     ) => {
@@ -61,14 +61,14 @@ export default function AnalyticsPage() {
             '[role="tab"]',
         );
         window.requestAnimationFrame(() => tabButtons?.[nextIndex]?.focus());
-    };
+    }, []);
 
     useEffect(() => {
         if (!fullResult) router.push("/dashboard");
     }, [fullResult, router]);
 
     const allResults = useMemo(() => fullResult?.stresult ?? [], [fullResult?.stresult]);
-    const profile = fullResult?.stprofile;
+    const profile = useMemo(() => fullResult?.stprofile, [fullResult?.stprofile]);
 
     // Available semester list
     const availableSemesters = useMemo(() => {
@@ -96,20 +96,25 @@ export default function AnalyticsPage() {
         let totalMaxMarks = 0;
 
         filtered.forEach((row) => {
-            const rawTotal = Number(row[5]);
-            const total = isNaN(rawTotal) ? 0 : rawTotal;
+            const rawTotal = row[5];
+            const statusCode = row[6];
             const paperCode = row[1];
             const subjectTitle = row[2];
-            const credit = customCredit[paperCode] ?? getDefaultCredit(subjectTitle);
-            const { points, pass } = getGradeAndPoints(total);
+            const credit = customCredit[paperCode] ?? getFallbackCredit(subjectTitle);
 
-            const effectivePoints = pass ? points : 0;
+            const resultState = getResultState(statusCode, rawTotal);
+            const { points, pass } = getGradeAndPoints(rawTotal);
+
+            const isPassed = resultState === "CLEARED" || (resultState !== "BACK" && resultState !== "ABSENT" && resultState !== "DETAINED" && pass);
+            const effectivePoints = isPassed ? points : 0;
             weightedPoints += credit * effectivePoints;
             totalCredits += credit;
-            obtainedMarks += pass ? total : 0;
+
+            const numericTotal = Number(rawTotal);
+            obtainedMarks += isPassed && !isNaN(numericTotal) ? numericTotal : 0;
             totalMaxMarks += 100;
 
-            if (pass) {
+            if (isPassed) {
                 earnedCredits += credit;
             } else {
                 backlogs += 1;

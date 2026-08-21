@@ -199,21 +199,37 @@ export default function LoginPage() {
                 <span className="text-foreground font-semibold">SGPA Formula:</span> Σ(Subject Credits × Grade Points) / Σ(Total Semester Credits)
               </div>
               <div className="rounded-lg border border-border-strong bg-background p-2.5">
-                <span className="text-foreground font-semibold">CGPA Formula:</span> Σ(Semester SGPA × Semester Credits) / Σ(Total Earned Credits)
+                <span className="text-foreground font-semibold">CGPA Formula:</span> Total Quality Points / Total Registered Credits
               </div>
               <div className="rounded-lg border border-border-strong bg-background p-2.5 text-gold">
-                <span className="text-foreground font-semibold">Percentage (%):</span> CGPA × 10 [Ordinance 11]
+                <span className="text-foreground font-semibold">Percentage (%):</span> CGPA × 10.0 [Ordinance 11]
               </div>
+            </div>
+            <div className="mt-2.5 pt-2 border-t border-border text-center">
+              <Link
+                href="/calculations"
+                className="text-[11px] font-mono text-gold hover:underline"
+              >
+                Learn how all calculations work →
+              </Link>
             </div>
           </div>
 
-        </div >
-      </main >
+        </div>
+      </main>
 
       {/* Simple Footer */}
-      < footer className="relative z-10 border-t border-border py-4 text-center text-xs text-foreground-muted" >
-        Anviksha · Unofficial GGSIPU Results Portal
-      </footer >
-    </div >
+      <footer className="relative z-10 border-t border-border py-4 text-center text-xs text-foreground-muted flex flex-wrap items-center justify-center gap-3">
+        <span>Anviksha · Unofficial GGSIPU Results Portal</span>
+        <span className="text-border-strong">·</span>
+        <Link href="/calculations" className="hover:text-gold transition-colors">
+          How Calculations Work
+        </Link>
+        <span className="text-border-strong">·</span>
+        <Link href="/report?from=/login" className="hover:text-gold transition-colors">
+          Report a Problem
+        </Link>
+      </footer>
+    </div>
   );
 }

@@ -20,7 +20,7 @@ export default function ResultPreviewCard() {
           </span>
           <span className="flex items-center gap-1.5 rounded-full border border-gold-border bg-gold-surface px-2.5 py-1 font-mono text-[10px] font-semibold text-gold">
             <Award size={11} />
-            Distinction
+            First Division
           </span>
         </div>
 

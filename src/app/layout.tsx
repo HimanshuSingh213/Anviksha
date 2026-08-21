@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 import StructuredData from "@/components/common/StructuredData";
+import FloatingReportButton from "@/components/common/FloatingReportButton";
 import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
@@ -21,8 +22,6 @@ const geistMono = Geist_Mono({
 });
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.vercel.app";
-const currentYear = new Date().getFullYear();
-const nextYear = currentYear + 1;
 
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
@@ -86,7 +85,7 @@ export const metadata: Metadata = {
     ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "Anviksha — GGSIPU Results, SGPA/CGPA Calculator & Academic Analytics",
     description:
       "GGSIPU results, SGPA/CGPA calculations, promotion standing, and academic analytics for IPU students. Check semester marks and generate consolidated transcripts.",
@@ -135,9 +134,13 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <link rel="preconnect" href="https://examweb.ggsipu.ac.in" crossOrigin="" />
+      </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <StructuredData />
         <ErrorBoundary>{children}</ErrorBoundary>
+        <FloatingReportButton />
         <Toaster theme="dark" position="bottom-right" richColors />
         <Analytics />
       </body>

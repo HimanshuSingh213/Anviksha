@@ -70,7 +70,11 @@ export const LoginForm = () => {
                 router.push("/dashboard");
             }
         } catch (err: any) {
-            toast.error(err.response?.data?.error || "Login failed. Please try again.");
+            if (err.response?.status === 429) {
+                toast.error("Too many attempts. Please wait a minute and try again.");
+            } else {
+                toast.error(err.response?.data?.error || "Login failed. Please try again.");
+            }
             handleRefreshCaptcha();
         }
     };

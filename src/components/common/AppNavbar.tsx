@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Home } from "lucide-react";
+import { ArrowLeft, Home, HelpCircle } from "lucide-react";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
 import { StudentProfile } from "@/types/result";
 
@@ -63,7 +63,18 @@ export default function AppNavbar({ profile }: AppNavbarProps) {
                     )}
                 </AnimatePresence>
 
-                <div className="flex items-center gap-2.5 shrink-0">
+                <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                    {/* How Calculations Work Link */}
+                    <Link
+                        href="/calculations"
+                        title="How Calculations Work"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors duration-200 shrink-0 shadow-xs"
+                    >
+                        <HelpCircle size={13} />
+                        <span className="hidden md:inline">How Calculations Work</span>
+                        <span className="md:hidden">Guide</span>
+                    </Link>
+
                     <Link
                         href="/"
                         title="Go to Homepage"
@@ -74,9 +85,9 @@ export default function AppNavbar({ profile }: AppNavbarProps) {
                     </Link>
 
                     {profile?.stname && (
-                        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-md bg-surface border border-border-strong text-xs font-mono shadow-xs">
+                        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-md bg-surface border border-border-strong text-xs font-mono shadow-xs">
                             <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
-                            <span className="font-semibold text-foreground-secondary truncate max-w-40">
+                            <span className="font-semibold text-foreground-secondary truncate max-w-36">
                                 {profile.stname}
                             </span>
                         </div>

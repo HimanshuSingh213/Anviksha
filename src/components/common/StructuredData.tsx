@@ -1,12 +1,14 @@
 export default function StructuredData() {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.vercel.app";
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
       {
         "@type": "WebApplication",
-        "@id": "https://anviksha-result.vercel.app/#webapp",
+        "@id": `${appUrl}/#webapp`,
         "name": "Anviksha",
-        "url": "https://anviksha-result.vercel.app",
+        "url": appUrl,
         "applicationCategory": "EducationalApplication",
         "operatingSystem": "All",
         "description":
@@ -40,8 +42,8 @@ export default function StructuredData() {
       },
       {
         "@type": "WebSite",
-        "@id": "https://anviksha-result.vercel.app/#website",
-        "url": "https://anviksha-result.vercel.app",
+        "@id": `${appUrl}/#website`,
+        "url": appUrl,
         "name": "Anviksha",
         "alternateName": [
           "Anviksha Portal",

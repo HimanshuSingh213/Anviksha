@@ -1,7 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
+import { HelpCircle } from "lucide-react";
 import { getDivisionClassification } from "@/helpers/grade-system";
 
 interface DivisionProps {
@@ -11,7 +13,6 @@ interface DivisionProps {
 }
 
 export default function DivisionClassificationCard({ cgpa, backlogsCount, isOverall }: DivisionProps) {
-    // Memoize the division classification logic to avoid recalculating on non-related re-renders
     const { divisionName, activeFillColor, nextTierMessage, progressPercent } = useMemo(() => {
         const result = getDivisionClassification(cgpa, backlogsCount);
         const activeFillColor = result.isPass ? "bg-foreground" : "bg-grade-fail";
@@ -39,9 +40,17 @@ export default function DivisionClassificationCard({ cgpa, backlogsCount, isOver
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-surface-deep border border-border-strong text-foreground-secondary shrink-0">
                             Ordinance 11
                         </span>
+                        <Link
+                            href="/calculations#division"
+                            title="How is division calculated?"
+                            className="inline-flex items-center gap-1 text-[10px] text-foreground-muted hover:text-gold transition-colors"
+                        >
+                            <HelpCircle size={12} />
+                            <span className="hidden sm:inline">How is this calculated?</span>
+                        </Link>
                     </div>
                     <p className="text-xs text-foreground-secondary mt-1">
-                        Official classification standing specified by GGSIPU.
+                        Academic classification standing specified by revised GGSIPU Ordinance 11.
                     </p>
                 </div>
 

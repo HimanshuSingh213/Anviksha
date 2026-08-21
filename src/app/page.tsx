@@ -378,7 +378,14 @@ export default async function Home() {
             <span className="text-xs text-foreground-muted">
               Anviksha · GGSIPU Results, SGPA/CGPA Calculator & Transcript Portal · Unofficial, not affiliated with GGSIPU
             </span>
-            <div className="flex items-center gap-3 font-mono text-xs text-foreground-muted">
+            <div className="flex flex-wrap items-center justify-center gap-3 font-mono text-xs text-foreground-muted">
+              <Link
+                href="/calculations"
+                className="transition-colors hover:text-gold"
+              >
+                How Calculations Work
+              </Link>
+              <span className="text-border-strong">·</span>
               <a
                 href="https://himanshusinghdangi.vercel.app"
                 target="_blank"

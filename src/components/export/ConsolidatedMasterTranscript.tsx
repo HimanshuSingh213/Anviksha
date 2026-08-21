@@ -2,7 +2,7 @@
 
 import React, { forwardRef, useMemo } from "react";
 import { StudentProfile } from "@/types/result";
-import { getDefaultCredit, getGradeAndPoints, getDivisionClassification } from "@/helpers/grade-system";
+import { getFallbackCredit, getGradeAndPoints, getResultState, getDivisionClassification } from "@/helpers/grade-system";
 import { AnvikshaWatermark } from "./AnvikshaWatermark";
 
 interface Props {
@@ -50,17 +50,22 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                 let semBacklogs = 0;
 
                 rows.forEach((row) => {
-                    const rawTotal = Number(row[5]);
-                    const total = isNaN(rawTotal) ? 0 : rawTotal;
+                    const rawTotal = row[5];
+                    const statusCode = row[6];
                     const paperCode = row[1];
                     const subjectTitle = row[2];
-                    const credit = customCredits[paperCode] ?? getDefaultCredit(subjectTitle);
-                    const { grade, points, pass } = getGradeAndPoints(total);
+                    const credit = customCredits[paperCode] ?? getFallbackCredit(subjectTitle);
+
+                    const resultState = getResultState(statusCode, rawTotal);
+                    const { grade, points, pass } = getGradeAndPoints(rawTotal);
+
+                    const isPassed = resultState === "CLEARED" || (resultState !== "BACK" && resultState !== "ABSENT" && resultState !== "DETAINED" && pass && grade !== "F");
 
                     semCredits += credit;
-                    semObtained += total;
+                    const numTot = Number(rawTotal);
+                    semObtained += !isNaN(numTot) ? numTot : 0;
 
-                    if (pass && grade !== "F") {
+                    if (isPassed) {
                         semEarnedCredits += credit;
                         semPoints += points * credit;
                     } else {
@@ -193,7 +198,7 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                             <tbody>
                                 {semesterSummaries.map((sem, idx) => (
                                     <tr key={idx} className={`print:break-inside-avoid ${idx % 2 === 0 ? "bg-white" : "bg-neutral-50"}`}>
-                                        <th scope="row" className="border border-black p-2 text-left font-bold text-black text-left">
+                                        <th scope="row" className="border border-black p-2 text-left font-bold text-black">
                                             Semester {sem.semNum}
                                         </th>
                                         <td className="border border-black p-2 text-neutral-600">{sem.subjectCount}</td>
@@ -265,17 +270,17 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                     {/* Official Notes for Verification */}
                     <div className="bg-neutral-50 border border-neutral-300 rounded p-2.5 text-[9.5px] font-mono text-neutral-700 space-y-1">
                         <div className="font-bold text-black uppercase tracking-wider text-[10px]">
-                            Official Evaluation & Conversion Guidelines:
+                            Evaluation & Conversion Guidelines:
                         </div>
                         <ul className="list-disc pl-4 space-y-0.5 leading-tight">
                             <li>
-                                <strong>Percentage Formula:</strong> Per GGSIPU Examination Gazette (Ordinance 11), percentage is computed as <code>Percentage = CGPA × 10.0</code>.
+                                <strong>Percentage Formula:</strong> Per GGSIPU Examination Gazette (Ordinance 11), equivalent percentage is computed as <code>Percentage = CGPA × 10.0</code>.
                             </li>
                             <li>
-                                <strong>Credit Allocation:</strong> Theory papers carry 3–4 credits, practical/laboratory sessions carry 1 credit per approved syllabus.
+                                <strong>Credit Allocation:</strong> Theory papers carry 3–4 credits, practical/laboratory sessions carry 1 credit per approved scheme.
                             </li>
                             <li>
-                                <strong>Passing Threshold:</strong> Minimum passing grade is Grade P (40% aggregate marks) in each individual subject paper.
+                                <strong>Passing Threshold:</strong> Ordinance 11 baseline passing grade is Grade P (40% aggregate marks) in each individual subject paper.
                             </li>
                         </ul>
                     </div>

@@ -14,7 +14,7 @@ import {
     CartesianGrid,
     Tooltip,
 } from "recharts";
-import { getDefaultCredit, getGradeAndPoints } from "@/helpers/grade-system";
+import { getFallbackCredit, getGradeAndPoints, getResultState } from "@/helpers/grade-system";
 
 interface Props {
     allResults: any[][];
@@ -48,13 +48,20 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
             let backlogs = 0;
 
             semMap[semNum].forEach((row) => {
-                const total = isNaN(Number(row[5])) ? 0 : Number(row[5]);
-                const credit = customCredit[row[1]] ?? getDefaultCredit(row[2]);
-                const { points, pass } = getGradeAndPoints(total);
+                const rawTotal = row[5];
+                const statusCode = row[6];
+                const paperCode = row[1];
+                const subjectTitle = row[2];
+                const credit = customCredit[paperCode] ?? getFallbackCredit(subjectTitle);
 
-                weighted += credit * (pass ? points : 0);
+                const resultState = getResultState(statusCode, rawTotal);
+                const { points, pass } = getGradeAndPoints(rawTotal);
+
+                const isPassed = resultState === "CLEARED" || (resultState !== "BACK" && resultState !== "ABSENT" && resultState !== "DETAINED" && pass);
+
+                weighted += credit * (isPassed ? points : 0);
                 credits += credit;
-                if (!pass) backlogs += 1;
+                if (!isPassed) backlogs += 1;
             });
 
             const sgpa = credits > 0 ? Number((weighted / credits).toFixed(2)) : 0;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import {
     ShieldCheck,
@@ -9,6 +10,7 @@ import {
     CheckCircle2,
     ArrowUpRight,
     GraduationCap,
+    HelpCircle,
 } from "lucide-react";
 import {
     getAcademicPromotionStatus,
@@ -100,8 +102,18 @@ export default function AcademicPromotionCard({
                             <GraduationCap size={18} strokeWidth={1.8} aria-hidden="true" />
                         </div>
                         <div>
-                            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold">
-                                Academic Standing
+                            <div className="flex items-center gap-2">
+                                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold">
+                                    Academic Standing
+                                </div>
+                                <Link
+                                    href="/calculations#promotion"
+                                    title="How is promotion calculated?"
+                                    className="inline-flex items-center gap-1 text-[10px] font-mono text-foreground-muted hover:text-gold transition-colors"
+                                >
+                                    <HelpCircle size={11} />
+                                    <span className="hidden sm:inline">How is this calculated?</span>
+                                </Link>
                             </div>
                             <h2
                                 id="academic-promotion-heading"
@@ -112,8 +124,7 @@ export default function AcademicPromotionCard({
                         </div>
                     </div>
                     <p className="max-w-2xl text-xs sm:text-sm leading-5 sm:leading-6 text-foreground-secondary">
-                        Annual standing based on the 50% credit threshold, with the
-                        current academic year and recovery deficit surfaced separately.
+                        Ordinance 11 promotion baseline: student must obtain at least 50% of the existing academic year&apos;s credits. Additional programme or statutory body requirements may apply.
                     </p>
                 </div>
 
@@ -145,7 +156,7 @@ export default function AcademicPromotionCard({
                         </span>
                     </p>
                     <p className="mt-1 text-[11px] text-foreground-secondary">
-                        {summary.overallPercent}% across evaluated years
+                        {summary.overallPercent}% credit completion
                     </p>
                 </div>
 
@@ -198,7 +209,7 @@ export default function AcademicPromotionCard({
                         <article
                             key={year.yearNumber}
                             aria-label={`${year.yearLabel} promotion status: ${tone.label}`}
-                            className={`flex min-h-fit sm:min-h-[268px] flex-col justify-between rounded-lg border p-4 sm:p-5 transition-colors hover:border-border-strong ${tone.card}`}
+                            className={`flex min-h-fit sm:min-h-67 flex-col justify-between rounded-lg border p-4 sm:p-5 transition-colors hover:border-border-strong ${tone.card}`}
                         >
                             <div className="space-y-4 sm:space-y-5">
                                 <div className="flex items-start justify-between gap-4">
@@ -300,7 +311,7 @@ export default function AcademicPromotionCard({
                                         <>
                                             <CheckCircle2 size={13} className="mt-0.5 shrink-0 text-grade-excellent" aria-hidden="true" />
                                             <span className="text-foreground-secondary">
-                                                Promotion threshold cleared for this academic year.
+                                                Ordinance 11 50% baseline cleared for this academic year.
                                             </span>
                                         </>
                                     ) : year.status === "YEAR_BACK_RISK" ? (

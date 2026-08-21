@@ -4,6 +4,16 @@ const nextConfig: NextConfig = {
   /* config options here */
   reactCompiler: true,
 
+  async redirects() {
+    return [
+      {
+        source: "/about/calculations",
+        destination: "/calculations",
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {
@@ -17,6 +27,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' data: https://fonts.gstatic.com",
               "img-src 'self' data: https:",
+              "frame-src 'self' https://docs.google.com https://forms.gle",
               "connect-src 'self' https://examweb.ggsipu.ac.in",
               "frame-ancestors 'none'",
               "base-uri 'self'",

@@ -2,7 +2,7 @@
 
 import React, { forwardRef } from "react";
 import { StudentProfile } from "@/types/result";
-import { getDefaultCredit, getGradeAndPoints } from "@/helpers/grade-system";
+import { getFallbackCredit, getGradeAndPoints, getResultState } from "@/helpers/grade-system";
 import { AnvikshaWatermark } from "./AnvikshaWatermark";
 
 interface ResultGradeSheetProps {
@@ -24,14 +24,14 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
             const subjectTitle = row[2];
             const internalMarks = row[3];
             const externalMarks = row[4];
-            const rawTotal = Number(row[5]);
-            const totalMarks = isNaN(rawTotal) ? 0 : rawTotal;
+            const rawTotal = row[5];
+            const statusCode = row[6];
 
-            const defaultCredit = getDefaultCredit(subjectTitle);
-            const credit = customCredits[paperCode] ?? defaultCredit;
-            const { grade, points, pass } = getGradeAndPoints(totalMarks);
+            const credit = customCredits[paperCode] ?? getFallbackCredit(subjectTitle);
+            const resultState = getResultState(statusCode, rawTotal);
+            const { grade, points, pass } = getGradeAndPoints(rawTotal);
 
-            const isPassed = pass && grade !== "F";
+            const isPassed = resultState === "CLEARED" || (resultState !== "BACK" && resultState !== "ABSENT" && resultState !== "DETAINED" && pass && grade !== "F");
 
             totalCredits += credit;
             if (isPassed) {
@@ -52,7 +52,7 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
                 subjectTitle,
                 internalMarks,
                 externalMarks,
-                totalMarks,
+                totalMarks: rawTotal || "–",
                 credit,
                 grade,
                 points,
@@ -99,7 +99,7 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
                                 Prepared with <strong className="text-black font-bold">Anviksha</strong>
                             </span>
                             <span className="font-mono font-bold text-[#c9a961] bg-[#060608] px-2 py-0.5 rounded text-[10px]">
-                                https://anviksha-eta.vercel.app
+                                {process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.vercel.app"}
                             </span>
                         </div>
                         <h1 className="text-2xl font-bold uppercase tracking-wider text-black">

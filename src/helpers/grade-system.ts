@@ -1,12 +1,70 @@
-export function getGradeAndPoints(total: number) {
-    if (total >= 90) return { grade: "O", points: 10, pass: true };
-    if (total >= 75) return { grade: "A+", points: 9, pass: true };
-    if (total >= 65) return { grade: "A", points: 8, pass: true };
-    if (total >= 55) return { grade: "B+", points: 7, pass: true };
-    if (total >= 50) return { grade: "B", points: 6, pass: true };
-    if (total >= 45) return { grade: "C", points: 5, pass: true };
-    if (total >= 40) return { grade: "P", points: 4, pass: true };
-    return { grade: "F", points: 0, pass: false };
+// Centralised GGSIPU Academic Rules & Grading Engine
+// Follows GGSIPU Ordinance 11 (amended) and official ExamWeb data specifications
+
+export type ResultState = "CLEARED" | "BACK" | "ABSENT" | "DETAINED" | "UNKNOWN";
+
+/**
+ * Resolves official result state from GGSIPU status code and raw total value.
+ * Status '08' = CLEARED
+ * Status '09' = NOT CLEARED (distinguished by total: ABS -> ABSENT, DET -> DETAINED, numeric -> BACK)
+ */
+export function getResultState(
+    status: string | number | undefined,
+    rawTotal: string | number | undefined
+): ResultState {
+    const s = String(status ?? "").trim();
+    const tot = String(rawTotal ?? "").trim().toUpperCase();
+
+    if (s === "08") {
+        return "CLEARED";
+    }
+
+    if (s === "09") {
+        if (tot === "ABS" || tot.includes("ABS")) return "ABSENT";
+        if (tot === "DET" || tot.includes("DET")) return "DETAINED";
+        if (!isNaN(Number(tot))) return "BACK";
+        return "UNKNOWN";
+    }
+
+    // Fallback if status code is missing
+    if (tot === "ABS" || tot.includes("ABS")) return "ABSENT";
+    if (tot === "DET" || tot.includes("DET")) return "DETAINED";
+
+    const num = Number(tot);
+    if (!isNaN(num)) {
+        return num >= 40 ? "CLEARED" : "BACK";
+    }
+
+    return "UNKNOWN";
+}
+
+/**
+ * Maps numeric official marks to GGSIPU Ordinance 11 Grade and Grade Points.
+ * P (4) is the Ordinance 11 passing grade unless the programme scheme specifies otherwise.
+ */
+export function getGradeAndPoints(rawTotal: string | number | undefined) {
+    const totStr = String(rawTotal ?? "").trim().toUpperCase();
+
+    if (totStr === "ABS" || totStr.includes("ABS")) {
+        return { grade: "ABS", points: 0, pass: false, isNumeric: false };
+    }
+    if (totStr === "DET" || totStr.includes("DET")) {
+        return { grade: "DET", points: 0, pass: false, isNumeric: false };
+    }
+
+    const total = Number(totStr);
+    if (isNaN(total)) {
+        return { grade: "F", points: 0, pass: false, isNumeric: false };
+    }
+
+    if (total >= 90) return { grade: "O", points: 10, pass: true, isNumeric: true };
+    if (total >= 75) return { grade: "A+", points: 9, pass: true, isNumeric: true };
+    if (total >= 65) return { grade: "A", points: 8, pass: true, isNumeric: true };
+    if (total >= 55) return { grade: "B+", points: 7, pass: true, isNumeric: true };
+    if (total >= 50) return { grade: "B", points: 6, pass: true, isNumeric: true };
+    if (total >= 45) return { grade: "C", points: 5, pass: true, isNumeric: true };
+    if (total >= 40) return { grade: "P", points: 4, pass: true, isNumeric: true };
+    return { grade: "F", points: 0, pass: false, isNumeric: true };
 }
 
 export function getGradeThemeClasses(grade: string) {
@@ -22,16 +80,26 @@ export function getGradeThemeClasses(grade: string) {
             return "bg-grade-average-surface text-grade-average border-grade-average-border";
         case "P":
             return "bg-grade-pass-surface text-grade-pass border-grade-pass-border";
+        case "ABS":
+        case "DET":
+            return "bg-surface-deep text-foreground-muted border-border-strong";
         default:
             return "bg-grade-fail-surface text-grade-fail border-grade-fail-border";
     }
 }
 
-export function getDefaultCredit(subjectTitle: string): number {
+/**
+ * Fallback credit heuristic when official scheme credits are not available.
+ * Marked as estimated in calculations.
+ */
+export function getFallbackCredit(subjectTitle: string): number {
     const title = (subjectTitle || "").toUpperCase();
-    if (title.includes("LAB") || title.includes("PRACTICAL")) return 1;
+    if (title.includes("LAB") || title.includes("PRACTICAL") || title.includes("STUDIO")) return 1;
     return 3;
 }
+
+// Backward compatibility alias
+export const getDefaultCredit = getFallbackCredit;
 
 export interface AcademicYearStatus {
     yearNumber: number;
@@ -47,6 +115,10 @@ export interface AcademicYearStatus {
     creditsDeficit: number;
 }
 
+/**
+ * Evaluates Ordinance 11 50% annual credit promotion baseline.
+ * Rule: Student must obtain >= 50% of the total credits offered in the academic year.
+ */
 export function getAcademicPromotionStatus(
     allResults: any[][],
     customCredit: Record<string, number> = {}
@@ -100,15 +172,18 @@ export function getAcademicPromotionStatus(
 
         const allYearRows = [...oddRows, ...evenRows];
         allYearRows.forEach((row) => {
-            const rawTotal = Number(row[5]);
-            const total = isNaN(rawTotal) ? 0 : rawTotal;
+            const rawTotal = row[5];
+            const statusCode = row[6];
             const paperCode = row[1];
             const subjectTitle = row[2];
-            const credit = customCredit[paperCode] ?? getDefaultCredit(subjectTitle);
-            const { pass } = getGradeAndPoints(total);
+            const credit = customCredit[paperCode] ?? getFallbackCredit(subjectTitle);
+
+            const resultState = getResultState(statusCode, rawTotal);
+            const { pass } = getGradeAndPoints(rawTotal);
 
             totalCredits += credit;
-            if (pass) {
+            // Passed if result state is CLEARED or numeric pass
+            if (resultState === "CLEARED" || (resultState !== "BACK" && resultState !== "ABSENT" && resultState !== "DETAINED" && pass)) {
                 earnedCredits += credit;
             }
         });
@@ -184,42 +259,42 @@ export interface PlacementEligibilitySummary {
 export const PLACEMENT_TIERS_CONFIG: Array<Omit<PlacementTier, "isEligible" | "cgpaDeficit" | "backlogDeficit" | "statusReason">> = [
     {
         id: "benchmark_60",
-        name: "60% Base Cutoff",
+        name: "60% Base Benchmark",
         benchmarkLabel: "≥ 6.00 CGPA (60%)",
         minCgpa: 6.0,
         minPercentage: 60.0,
         maxActiveBacklogs: 0,
-        description: "Standard minimum baseline for corporate recruitment & pooled on-campus drives.",
+        description: "Common baseline threshold for corporate drives & mass recruitment eligibility.",
         exampleCompanies: ["TCS", "Infosys", "Wipro", "Cognizant", "Capgemini", "Tech Mahindra"],
     },
     {
         id: "benchmark_65",
-        name: "65% Elevated Cutoff",
+        name: "65% Consulting & IT Benchmark",
         benchmarkLabel: "≥ 6.50 CGPA (65%)",
         minCgpa: 6.5,
         minPercentage: 65.0,
         maxActiveBacklogs: 0,
-        description: "Standard technical threshold for consulting, financial services, and IT analysts.",
+        description: "Standard threshold for consulting, financial technology, and IT analyst roles.",
         exampleCompanies: ["Deloitte", "Accenture", "IBM", "EY", "HCLTech", "Nagarro"],
     },
     {
         id: "benchmark_70",
-        name: "70% Product & Core Cutoff",
+        name: "70% Product & Core Benchmark",
         benchmarkLabel: "≥ 7.00 CGPA (70%)",
         minCgpa: 7.0,
         minPercentage: 70.0,
         maxActiveBacklogs: 0,
-        description: "Preferred baseline for core engineering roles, product companies, and R&D divisions.",
+        description: "Standard baseline for core engineering, product divisions, and R&D roles.",
         exampleCompanies: ["Amazon", "Microsoft", "Cisco", "Samsung", "Oracle", "Qualcomm"],
     },
     {
         id: "benchmark_75",
-        name: "75%+ High Honors Cutoff",
+        name: "75%+ Premium Tier Benchmark",
         benchmarkLabel: "≥ 7.50 CGPA (75%)",
         minCgpa: 7.5,
         minPercentage: 75.0,
         maxActiveBacklogs: 0,
-        description: "Top-bracket benchmark for high-compensation technical drives and research roles.",
+        description: "Benchmark for competitive quantitative, specialized research, and high-tier technical drives.",
         exampleCompanies: ["Google", "Tower Research", "D.E. Shaw", "Goldman Sachs", "Sprinklr", "Atlassian"],
     },
 ];
@@ -283,10 +358,11 @@ export interface ReappearSubject {
     semester: number;
     paperCode: string;
     subjectTitle: string;
-    marks: number;
+    marks: number | string;
     maxMarks: number;
     credit: number;
     isOddSem: boolean;
+    resultState: ResultState;
     sessionType: "ODD_TERM" | "EVEN_TERM";
     sessionWindow: string;
     priority: "HIGH" | "MEDIUM" | "STANDARD";
@@ -325,21 +401,28 @@ export function getReappearSessionPlan(
         const semNum = Number(row[0]);
         if (isNaN(semNum) || semNum < 1 || semNum > 8) return;
 
-        const rawTotal = Number(row[5]);
-        const total = isNaN(rawTotal) ? 0 : rawTotal;
+        const rawTotal = row[5];
+        const statusCode = row[6];
         const paperCode = String(row[1] ?? "");
         const subjectTitle = String(row[2] ?? "");
-        const credit = customCredits[paperCode] ?? getDefaultCredit(subjectTitle);
-        const { pass, grade } = getGradeAndPoints(total);
+        const credit = customCredits[paperCode] ?? getFallbackCredit(subjectTitle);
 
-        if (!pass || grade === "F") {
+        const resultState = getResultState(statusCode, rawTotal);
+        const { pass } = getGradeAndPoints(rawTotal);
+
+        const isUnsuccessful = resultState === "BACK" || resultState === "ABSENT" || resultState === "DETAINED" || !pass;
+
+        if (isUnsuccessful) {
             const isOddSem = semNum % 2 !== 0;
             totalCreditsAtRisk += credit;
 
             let priority: "HIGH" | "MEDIUM" | "STANDARD" = "STANDARD";
             let priorityReason = "Standard re-appear timeline";
 
-            if (semNum <= 2 && maxSemEvaluated >= 3) {
+            if (resultState === "DETAINED") {
+                priority = "HIGH";
+                priorityReason = "Attendance / Course Detention (Registration Required)";
+            } else if (semNum <= 2 && maxSemEvaluated >= 3) {
                 priority = "HIGH";
                 priorityReason = "First Year Backlog (Promotional Standing Critical)";
             } else if (credit >= 4) {
@@ -354,12 +437,13 @@ export function getReappearSessionPlan(
                 semester: semNum,
                 paperCode,
                 subjectTitle,
-                marks: total,
+                marks: isNaN(Number(rawTotal)) ? String(rawTotal || "–") : Number(rawTotal),
                 maxMarks: 100,
                 credit,
                 isOddSem,
+                resultState,
                 sessionType: isOddSem ? "ODD_TERM" : "EVEN_TERM",
-                sessionWindow: isOddSem ? "Nov - Dec Winter Window" : "May - Jun Summer Window",
+                sessionWindow: isOddSem ? "Typical Nov - Dec Winter Window" : "Typical May - Jun Summer Window",
                 priority,
                 priorityReason,
             };
@@ -389,10 +473,10 @@ export function getReappearSessionPlan(
         const nextIsEven = maxSemEvaluated % 2 !== 0;
         if (nextIsEven) {
             nextRecommendedSession = evenTermBacklogs.length > 0 ? "EVEN" : oddTermBacklogs.length > 0 ? "ODD" : "NONE";
-            nextSessionLabel = "Upcoming Session: May - Jun (Even Term Re-appear)";
+            nextSessionLabel = "Typical Upcoming: May - Jun (Even Term Re-appear)";
         } else {
             nextRecommendedSession = oddTermBacklogs.length > 0 ? "ODD" : evenTermBacklogs.length > 0 ? "EVEN" : "NONE";
-            nextSessionLabel = "Upcoming Session: Nov - Dec (Odd Term Re-appear)";
+            nextSessionLabel = "Typical Upcoming: Nov - Dec (Odd Term Re-appear)";
         }
     }
 
@@ -411,16 +495,25 @@ export function getReappearSessionPlan(
 
 export interface DivisionClassification {
     division: string;
-    divisionCode: "EXEMPLARY" | "DISTINCTION" | "FIRST" | "SECOND" | "THIRD" | "UNQUALIFIED";
+    divisionCode: "EXEMPLARY" | "FIRST" | "SECOND" | "THIRD" | "UNQUALIFIED";
     minCgpa: number;
     nextTierMessage: string;
     progressPercent: number;
     isPass: boolean;
+    exemplaryStatus?: "ELIGIBLE" | "INELIGIBLE" | "UNDETERMINED";
 }
 
+/**
+ * Classifies academic division under revised GGSIPU Ordinance 11:
+ * - 4.00–4.99: Third Division
+ * - 5.00–6.49: Second Division
+ * - 6.50+: First Division
+ * - 10.00: Exemplary Performance ONLY if first-attempt and no academic break are verified.
+ */
 export function getDivisionClassification(
     cgpa: number,
-    backlogsCount: number = 0
+    backlogsCount: number = 0,
+    history?: { hasPassedAllFirstAttempt?: boolean; hasAcademicBreak?: boolean }
 ): DivisionClassification {
     const validCgpa = isNaN(cgpa) ? 0 : Math.max(0, cgpa);
     const validBacklogs = isNaN(backlogsCount) ? 0 : Math.max(0, backlogsCount);
@@ -430,28 +523,38 @@ export function getDivisionClassification(
     let minCgpa = 0.0;
     let nextTierMessage = "";
     let isPass = false;
+    let exemplaryStatus: DivisionClassification["exemplaryStatus"] = "UNDETERMINED";
 
     if (validCgpa >= 10.0 && validBacklogs === 0) {
-        division = "Exemplary Performance";
-        divisionCode = "EXEMPLARY";
-        minCgpa = 10.0;
-        nextTierMessage = "Maximum distinction achieved!";
-        isPass = true;
-    } else if (validCgpa >= 7.50 && validBacklogs === 0) {
-        division = "First Division with Distinction";
-        divisionCode = "DISTINCTION";
-        minCgpa = 7.5;
-        const gap = (10.0 - validCgpa).toFixed(2);
-        nextTierMessage = `+${gap} CGPA for Exemplary Distinction`;
+        if (history?.hasPassedAllFirstAttempt === true && history?.hasAcademicBreak === false) {
+            division = "Exemplary Performance";
+            divisionCode = "EXEMPLARY";
+            exemplaryStatus = "ELIGIBLE";
+            minCgpa = 10.0;
+            nextTierMessage = "Maximum distinction achieved (1st attempt verified)!";
+        } else if (history?.hasPassedAllFirstAttempt === false || history?.hasAcademicBreak === true) {
+            division = "First Division";
+            divisionCode = "FIRST";
+            exemplaryStatus = "INELIGIBLE";
+            minCgpa = 6.5;
+            nextTierMessage = "First Division (Exemplary requires 1st attempt clear & no academic break)";
+        } else {
+            // Historical attempt data cannot be conclusively determined from single marksheet
+            division = "First Division";
+            divisionCode = "FIRST";
+            exemplaryStatus = "UNDETERMINED";
+            minCgpa = 6.5;
+            nextTierMessage = "CGPA 10.00 meets First Division (Exemplary requires 1st attempt history verification)";
+        }
         isPass = true;
     } else if (validCgpa >= 6.50) {
         division = "First Division";
         divisionCode = "FIRST";
         minCgpa = 6.5;
-        const gap = (7.50 - validCgpa).toFixed(2);
+        const gap = (10.0 - validCgpa).toFixed(2);
         nextTierMessage = validBacklogs > 0
-            ? "Clear active backlogs for Distinction eligibility"
-            : `+${gap} CGPA for Distinction (7.50)`;
+            ? "Clear active backlogs for clean standing"
+            : `+${gap} CGPA to reach 10.00 scale max`;
         isPass = true;
     } else if (validCgpa >= 5.00) {
         division = "Second Division";
@@ -485,5 +588,6 @@ export function getDivisionClassification(
         nextTierMessage,
         progressPercent,
         isPass,
+        exemplaryStatus,
     };
 }

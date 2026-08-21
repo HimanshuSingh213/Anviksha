@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     CalendarDays,
@@ -10,6 +11,7 @@ import {
     Filter,
     ArrowRight,
     BookOpenCheck,
+    HelpCircle,
 } from "lucide-react";
 import {
     getReappearSessionPlan,
@@ -66,8 +68,18 @@ export default function ReappearSessionPlanner({
                             <CalendarDays size={18} strokeWidth={1.8} />
                         </div>
                         <div>
-                            <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cat-blue">
-                                Examination Planning
+                            <div className="flex items-center gap-2">
+                                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cat-blue">
+                                    Examination Planning
+                                </div>
+                                <Link
+                                    href="/calculations#result-states"
+                                    title="How are backlog states determined?"
+                                    className="inline-flex items-center gap-1 text-[10px] font-mono text-foreground-muted hover:text-gold transition-colors"
+                                >
+                                    <HelpCircle size={11} />
+                                    <span className="hidden sm:inline">How is this calculated?</span>
+                                </Link>
                             </div>
                             <h2 className="mt-0.5 text-base sm:text-xl font-semibold tracking-tight text-foreground">
                                 Odd vs Even Re-appear Planner
@@ -75,8 +87,7 @@ export default function ReappearSessionPlanner({
                         </div>
                     </div>
                     <p className="max-w-2xl text-xs sm:text-sm leading-5 sm:leading-6 text-foreground-secondary">
-                        Backlog papers are grouped by the exam window they can be
-                        cleared in, with priority and credit impact kept visible.
+                        Backlog papers are grouped by the typical exam window they can be cleared in. Actual dates and registrations are notified officially by GGSIPU.
                     </p>
                 </div>
 
@@ -103,8 +114,7 @@ export default function ReappearSessionPlanner({
                         All academic semesters cleared
                     </h3>
                     <p className="mt-2 max-w-md text-xs sm:text-sm leading-5 sm:leading-6 text-foreground-secondary">
-                        No active backlog subject is currently queued for Odd or Even
-                        term re-appearance registration.
+                        No active backlog subject is currently queued for Odd or Even term re-appearance registration.
                     </p>
                 </div>
             ) : (
@@ -113,7 +123,7 @@ export default function ReappearSessionPlanner({
                         <SessionWindowCard
                             title="Odd term queue"
                             subtitle="Sem 1 / 3 / 5 / 7"
-                            window="Nov - Dec winter examination window"
+                            window="Typical Nov - Dec winter examination window"
                             count={plan.oddTermBacklogs.length}
                             credits={plan.oddTermCredits}
                             accentClass="text-gold"
@@ -122,7 +132,7 @@ export default function ReappearSessionPlanner({
                         <SessionWindowCard
                             title="Even term queue"
                             subtitle="Sem 2 / 4 / 6 / 8"
-                            window="May - Jun summer examination window"
+                            window="Typical May - Jun summer examination window"
                             count={plan.evenTermBacklogs.length}
                             credits={plan.evenTermCredits}
                             accentClass="text-cat-blue"
@@ -144,7 +154,7 @@ export default function ReappearSessionPlanner({
                                     key={value}
                                     type="button"
                                     onClick={() => setSelectedTab(value)}
-                                    className={`flex-1 sm:flex-initial text-center rounded px-2.5 sm:px-3 py-1.5 text-[10px] font-semibold transition-colors ${
+                                    className={`flex-1 sm:flex-initial text-center rounded px-2.5 sm:px-3 py-1.5 text-[10px] font-semibold transition-colors cursor-pointer ${
                                         selectedTab === value
                                             ? "bg-foreground text-background"
                                             : "text-foreground-muted hover:bg-surface-hover hover:text-foreground"
@@ -183,6 +193,16 @@ export default function ReappearSessionPlanner({
                                                     <span className="text-foreground-muted">
                                                         {subject.credit} cr
                                                     </span>
+                                                    {subject.resultState === "ABSENT" && (
+                                                        <span className="px-1.5 py-0.2 rounded bg-surface-deep text-foreground-muted font-bold">
+                                                            ABSENT
+                                                        </span>
+                                                    )}
+                                                    {subject.resultState === "DETAINED" && (
+                                                        <span className="px-1.5 py-0.2 rounded bg-grade-fail-surface text-grade-fail font-bold border border-grade-fail-border">
+                                                            DETAINED
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <h3 className="mt-1.5 sm:mt-2 text-xs sm:text-sm font-semibold leading-5 text-foreground">
                                                     {subject.subjectTitle}
@@ -205,7 +225,7 @@ export default function ReappearSessionPlanner({
                                             </p>
                                         </div>
                                         <span className="inline-flex shrink-0 w-fit items-center gap-1 rounded-md border border-border-strong bg-surface px-2 sm:px-2.5 py-1 font-mono text-[10px] text-foreground-secondary">
-                                            {subject.marks}/{subject.maxMarks}
+                                            {typeof subject.marks === "number" ? `${subject.marks}/${subject.maxMarks}` : subject.marks}
                                             <ArrowRight size={10} />
                                         </span>
                                     </div>
@@ -216,14 +236,12 @@ export default function ReappearSessionPlanner({
 
                     <footer className="grid gap-3 rounded-lg border border-border bg-surface-deep/70 p-3.5 sm:p-4 text-[10px] sm:text-[11px] leading-5 text-foreground-secondary sm:grid-cols-2 sm:gap-6">
                         <div>
-                            <span className="font-semibold text-foreground">Term rule.</span>{" "}
-                            Odd semester papers belong to odd re-appear windows, and
-                            even semester papers belong to even re-appear windows.
+                            <span className="font-semibold text-foreground">Term heuristic:</span>{" "}
+                            Odd semester papers typically re-appear in Winter (Nov-Dec) windows, and even semester papers in Summer (May-June) windows.
                         </div>
                         <div>
-                            <span className="font-semibold text-foreground">Priority rule.</span>{" "}
-                            First-year and high-credit backlogs should be cleared first
-                            because they affect promotion and credit recovery fastest.
+                            <span className="font-semibold text-foreground">Priority guideline:</span>{" "}
+                            First-year and high-credit backlogs impact promotion standing most directly and should be prioritized.
                         </div>
                     </footer>
                 </>

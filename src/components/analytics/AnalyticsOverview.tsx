@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { Award, BookOpen, Percent, FileText, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Award, BookOpen, Percent, FileText, AlertTriangle, CheckCircle2, HelpCircle } from "lucide-react";
 
 interface Props {
     gpa: string;
@@ -24,6 +25,7 @@ const getCards = (props: Props) => [
         accent: "text-cat-violet",
         border: "border-cat-violet-border",
         bg: "bg-cat-violet-surface",
+        href: "/calculations#sgpa",
     },
     {
         label: "Credits Earned",
@@ -33,6 +35,7 @@ const getCards = (props: Props) => [
         accent: "text-cat-teal",
         border: "border-cat-teal-border",
         bg: "bg-cat-teal-surface",
+        href: "/calculations#credits",
     },
     {
         label: "Marks Obtained",
@@ -44,29 +47,22 @@ const getCards = (props: Props) => [
         accent: "text-cat-pink",
         border: "border-cat-pink-border",
         bg: "bg-cat-pink-surface",
+        href: "/calculations#grades",
     },
     {
-        label: "Percentage",
+        label: "Equivalent %",
         value: `${props.percentage}%`,
-        sub: "CGPA × 10 (GGSIPU Ordinance 11)",
+        sub: "CGPA × 10 (Ordinance 11)",
         icon: Percent,
         accent: "text-cat-blue",
         border: "border-cat-blue-border",
         bg: "bg-cat-blue-surface",
+        href: "/calculations#percentage",
     },
 ];
 
 export default function AnalyticsOverview(props: Props) {
-    // Memoize the array of metric cards to prevent object recreation on every render
-    const metricCards = useMemo(() => getCards(props), [
-        props.gpa, 
-        props.gpaLabel, 
-        props.earnedCredits, 
-        props.totalCredits, 
-        props.obtainedMarks, 
-        props.totalMaxMarks, 
-        props.percentage
-    ]);
+    const metricCards = useMemo(() => getCards(props), [props]);
 
     return (
         <div className="space-y-4">
@@ -79,10 +75,19 @@ export default function AnalyticsOverview(props: Props) {
                             initial={{ opacity: 0, y: 12 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05, duration: 0.25 }}
-                            className="p-3.5 sm:p-4 bg-surface border border-border-strong rounded-md space-y-2.5 sm:space-y-3 shadow-xs"
+                            className="p-3.5 sm:p-4 bg-surface border border-border-strong rounded-md space-y-2.5 sm:space-y-3 shadow-xs relative group"
                         >
-                            <div className={`w-7 h-7 rounded-sm flex items-center justify-center border ${card.bg} ${card.border} ${card.accent}`}>
-                                <Icon size={13} />
+                            <div className="flex items-center justify-between">
+                                <div className={`w-7 h-7 rounded-sm flex items-center justify-center border ${card.bg} ${card.border} ${card.accent}`}>
+                                    <Icon size={13} />
+                                </div>
+                                <Link
+                                    href={card.href}
+                                    title={`How is ${card.label} calculated?`}
+                                    className="text-foreground-muted hover:text-gold transition-colors p-1"
+                                >
+                                    <HelpCircle size={12} />
+                                </Link>
                             </div>
 
                             <div className="min-w-0">
@@ -94,8 +99,8 @@ export default function AnalyticsOverview(props: Props) {
                                 </div>
                             </div>
 
-                            <div className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-foreground-secondary border-t border-border pt-2 truncate">
-                                {card.label}
+                            <div className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-foreground-secondary border-t border-border pt-2 truncate flex items-center justify-between">
+                                <span>{card.label}</span>
                             </div>
                         </motion.div>
                     );

@@ -94,7 +94,7 @@ describe("API Route: /api/login", () => {
     const mock$ = {
       first: () => ({ text: () => "Invalid credentials" }),
     };
-    mockCheerio.load.mockReturnValue(() => mock$);
+    mockCheerio.load.mockReturnValue((() => mock$) as any);
 
     const req = createRequest(
       { enrollment: "12345678901", password: "test", captcha: "ABC" },
@@ -124,7 +124,7 @@ describe("API Route: /api/login", () => {
     const mock$ = {
       first: () => ({ text: () => "Account locked 0 attempts left" }),
     };
-    mockCheerio.load.mockReturnValue(() => mock$);
+    mockCheerio.load.mockReturnValue((() => mock$) as any);
 
     const req = createRequest(
       { enrollment: "12345678901", password: "test", captcha: "ABC" },
