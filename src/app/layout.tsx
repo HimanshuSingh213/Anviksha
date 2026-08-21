@@ -32,10 +32,9 @@ export const metadata: Metadata = {
   description:
     "GGSIPU results, SGPA/CGPA calculations, promotion standing, and academic analytics for IPU students. Check semester marks and generate consolidated transcripts.",
   applicationName: "Anviksha",
-  authors: [{ name: "Himanshu Singh", url: "https://github.com/HimanshuSingh213" }],
+  authors: [{ name: "Himanshu Singh" }],
   creator: "Himanshu Singh",
   publisher: "Himanshu Singh",
-  generator: "Next.js",
   category: "education",
   classification: "Educational Technology & Academic Analytics",
   alternates: {

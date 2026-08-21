@@ -109,15 +109,7 @@ const FAQS = [
   },
 ];
 
-/* ---------------------------------- component ----------------------------- */
 
-function GithubMark({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden="true">
-      <path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.57.1.79-.25.79-.55 0-.27-.01-1.17-.02-2.12-3.2.7-3.87-1.36-3.87-1.36-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.16 1.18a10.9 10.9 0 0 1 5.75 0c2.2-1.49 3.15-1.18 3.15-1.18.63 1.58.24 2.75.12 3.04.74.8 1.18 1.83 1.18 3.08 0 4.41-2.7 5.38-5.27 5.67.42.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.66.8.55A10.53 10.53 0 0 0 23.5 12c0-6.35-5.15-11.5-11.5-11.5Z" />
-    </svg>
-  );
-}
 
 const ctaClasses =
   "inline-flex items-center gap-2.5 rounded-md border border-white bg-white px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider text-black shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:bg-neutral-200 active:scale-95";
@@ -386,6 +378,13 @@ export default async function Home() {
                 How Calculations Work
               </Link>
               <span className="text-border-strong">·</span>
+              <Link
+                href="/report"
+                className="transition-colors hover:text-gold"
+              >
+                Report a Problem
+              </Link>
+              <span className="text-border-strong">·</span>
               <a
                 href="https://himanshusinghdangi.vercel.app"
                 target="_blank"
@@ -394,20 +393,10 @@ export default async function Home() {
               >
                 Built by Himanshu Singh
               </a>
-              <span className="text-border-strong">·</span>
-              <a
-                href="https://github.com/HimanshuSingh213/anviksha"
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center gap-1.5 transition-colors hover:text-foreground"
-              >
-                <GithubMark className="h-3.5 w-3.5" />
-                GitHub
-              </a>
             </div>
           </div>
           <p className="text-center text-[10px] leading-5 text-foreground-muted/60 sm:text-left">
-            Anviksha is a free, open-source GGSIPU results and academic analytics portal for students of Guru Gobind Singh Indraprastha University (IPU).
+            Anviksha is a modern, student-centric GGSIPU results and academic analytics portal for students of Guru Gobind Singh Indraprastha University (IPU).
             Works with all affiliated colleges including USICT, MAIT, MSIT, BVCOE, BPIT, GTBIT, VIPS, ADGITM, JIMS, and more.
             Supports B.Tech, BCA, BBA, MBA, and other IPU programmes.
           </p>

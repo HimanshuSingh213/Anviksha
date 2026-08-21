@@ -64,7 +64,6 @@ const CALCULATIONS_JSON_LD = {
   "author": {
     "@type": "Person",
     "name": "Himanshu Singh",
-    "url": "https://github.com/HimanshuSingh213",
   },
   "publisher": {
     "@type": "Person",

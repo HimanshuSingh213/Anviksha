@@ -23,13 +23,10 @@ export default function StructuredData() {
         "author": {
           "@type": "Person",
           "name": "Himanshu Singh",
-          "url": "https://github.com/HimanshuSingh213",
-          "sameAs": ["https://github.com/HimanshuSingh213"],
         },
         "creator": {
           "@type": "Person",
           "name": "Himanshu Singh",
-          "url": "https://github.com/HimanshuSingh213",
         },
         "featureList": [
           "GGSIPU Ordinance 11 SGPA and CGPA Calculator",
@@ -56,7 +53,6 @@ export default function StructuredData() {
         "publisher": {
           "@type": "Person",
           "name": "Himanshu Singh",
-          "url": "https://github.com/HimanshuSingh213",
         },
       },
     ],
