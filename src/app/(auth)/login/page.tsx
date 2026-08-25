@@ -166,11 +166,11 @@ export default function LoginPage() {
                   <div className="border-t border-border bg-background/40 px-4 py-3 text-xs leading-relaxed text-foreground-secondary">
                     <p className="mb-2 flex items-center gap-1.5 font-medium text-foreground">
                       <Hash size={14} className="text-gold" />
-                      <strong className="text-gold">Username:</strong> Your 11-digit GGSIPU Enrollment Number.
+                      <strong className="text-gold">Username: </strong>Your 11-digit GGSIPU Enrollment Number.
                     </p>
                     <p className="flex items-center gap-1.5 font-medium text-foreground">
                       <KeyRound size={14} className="text-gold" />
-                      <strong className="text-gold">Default Password:</strong> Your father&apos;s full name with spaces between first, middle, and surname (if not changed by you).
+                      <strong className="text-gold">Default Password: </strong>Your father&apos;s full name with spaces between first, middle, and surname (if not changed by you).
                     </p>
                   </div>
                 </motion.div>
@@ -208,13 +208,13 @@ export default function LoginPage() {
             </div>
             <div className="flex flex-col gap-2 font-mono text-[11px] text-foreground-secondary">
               <div className="rounded-lg border border-border-strong bg-background p-2.5">
-                <span className="text-foreground font-semibold">SGPA Formula:</span> Σ(Subject Credits × Grade Points) / Σ(Total Semester Credits)
+                <span className="text-foreground font-semibold">SGPA Formula: </span>Σ(Subject Credits × Grade Points) / Σ(Total Semester Credits)
               </div>
               <div className="rounded-lg border border-border-strong bg-background p-2.5">
-                <span className="text-foreground font-semibold">CGPA Formula:</span> Total Quality Points / Total Registered Credits
+                <span className="text-foreground font-semibold">CGPA Formula: </span>Total Quality Points / Total Registered Credits
               </div>
               <div className="rounded-lg border border-border-strong bg-background p-2.5 text-gold">
-                <span className="text-foreground font-semibold">Percentage (%):</span> CGPA × 10.0 [Ordinance 11]
+                <span className="text-foreground font-semibold">Percentage (%): </span>CGPA × 10.0 [Ordinance 11]
               </div>
             </div>
             <div className="mt-2.5 pt-2 border-t border-border text-center">

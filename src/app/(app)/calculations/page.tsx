@@ -58,19 +58,48 @@ const GRADE_TABLE = [
 
 const CALCULATIONS_JSON_LD = {
   "@context": "https://schema.org",
-  "@type": "Article",
-  "headline": "How GGSIPU SGPA, CGPA & Ordinance 11 Calculations Work",
-  "description":
-    "Comprehensive guide to GGSIPU Ordinance 11 grading formulas, SGPA/CGPA computation, 50% credit promotion rules, division classification, and placement benchmarks.",
-  "author": {
-    "@type": "Person",
-    "name": "Himanshu Singh",
-  },
-  "publisher": {
-    "@type": "Person",
-    "name": "Himanshu Singh",
-  },
-  "mainEntityOfPage": `${appUrl}/calculations`,
+  "@graph": [
+    {
+      "@type": "TechArticle",
+      "headline": "How GGSIPU SGPA, CGPA & Ordinance 11 Calculations Work",
+      "description":
+        "Comprehensive, mathematical guide to GGSIPU Ordinance 11 grading formulas, SGPA/CGPA credit-weighted computation, 50% annual credit promotion rules, division classification, and campus placement benchmarks.",
+      "author": {
+        "@type": "Person",
+        "name": "Himanshu Singh",
+        "url": "https://himanshusinghdangi.vercel.app",
+      },
+      "publisher": {
+        "@type": "Person",
+        "name": "Himanshu Singh",
+        "url": "https://himanshusinghdangi.vercel.app",
+      },
+      "inLanguage": "en-IN",
+      "mainEntityOfPage": `${appUrl}/calculations`,
+      "about": {
+        "@type": "EducationalOrganization",
+        "name": "Guru Gobind Singh Indraprastha University",
+        "alternateName": ["GGSIPU", "IP University"],
+      },
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": appUrl,
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Calculations Guide",
+          "item": `${appUrl}/calculations`,
+        },
+      ],
+    },
+  ],
 };
 
 export default function CalculationsPage() {
@@ -204,7 +233,7 @@ export default function CalculationsPage() {
             </div>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
-              <strong className="text-foreground">GGSIPU Rule:</strong> Ordinance 11 Clause 11 specifies Grade P (Grade Point 4 / 40% aggregate) as the minimum passing grade unless the approved programme Scheme prescribes a higher requirement.
+              <strong className="text-foreground">GGSIPU Rule: </strong>Ordinance 11 Clause 11 specifies Grade P (Grade Point 4 / 40% aggregate) as the minimum passing grade unless the approved programme Scheme prescribes a higher requirement.
             </div>
           </div>
         </section>
@@ -234,7 +263,7 @@ export default function CalculationsPage() {
             </div>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
-              <strong className="text-foreground">Important:</strong> SGPA is always credit-weighted. It is not a simple average of subject grade points. Backlog papers (Grade F, ABS, DET) contribute 0 grade points to the numerator while still counting in the registered credit denominator.
+              <strong className="text-foreground">Important: </strong>SGPA is always credit-weighted. It is not a simple average of subject grade points. Backlog papers (Grade F, ABS, DET) contribute 0 grade points to the numerator while still counting in the registered credit denominator.
             </div>
           </div>
         </section>
@@ -256,7 +285,7 @@ export default function CalculationsPage() {
             </div>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
-              <strong className="text-foreground">Important:</strong> CGPA is calculated directly from all semester quality points and credits. It is not calculated by averaging individual semester SGPA numbers directly, ensuring mathematical exactness.
+              <strong className="text-foreground">Important: </strong>CGPA is calculated directly from all semester quality points and credits. It is not calculated by averaging individual semester SGPA numbers directly, ensuring mathematical exactness.
             </div>
           </div>
         </section>
@@ -277,7 +306,7 @@ export default function CalculationsPage() {
             </div>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
-              <strong className="text-foreground">GGSIPU Rule:</strong> Stated in GGSIPU Ordinance 11. For example, a CGPA of 6.73 converts to exactly 67.30%. Note that this is distinct from your credit completion percentage.
+              <strong className="text-foreground">GGSIPU Rule: </strong>Stated in GGSIPU Ordinance 11. For example, a CGPA of 6.73 converts to exactly 67.30%. Note that this is distinct from your credit completion percentage.
             </div>
           </div>
         </section>
@@ -320,7 +349,7 @@ export default function CalculationsPage() {
             </div>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
-              <strong className="text-foreground">Important:</strong> This represents the general University baseline. Statutory regulatory bodies (such as AICTE, BCI, or COA) or specific programme schemes may prescribe additional promotion criteria.
+              <strong className="text-foreground">Important: </strong>This represents the general University baseline. Statutory regulatory bodies (such as AICTE, BCI, or COA) or specific programme schemes may prescribe additional promotion criteria.
             </div>
           </div>
         </section>
@@ -437,7 +466,7 @@ export default function CalculationsPage() {
               <li>No academic breaks or detentions during the programme.</li>
             </ul>
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
-              <strong className="text-foreground">Transparency Note:</strong> Because ExamWeb single marksheet responses do not contain historical first-attempt verification flags, Anviksha marks Exemplary eligibility as undetermined until complete attempt history is confirmed.
+              <strong className="text-foreground">Transparency Note: </strong>Because ExamWeb single marksheet responses do not contain historical first-attempt verification flags, Anviksha marks Exemplary eligibility as undetermined until complete attempt history is confirmed.
             </div>
           </div>
         </section>
@@ -455,13 +484,13 @@ export default function CalculationsPage() {
               These cutoffs are application benchmarks modeled on common campus recruitment criteria in Delhi NCR engineering colleges:
             </p>
             <ul className="list-disc pl-5 space-y-1 text-xs font-mono">
-              <li><strong>60% Benchmark (≥ 6.00 CGPA, 0 backlogs):</strong> Baseline mass recruitment screen.</li>
-              <li><strong>65% Benchmark (≥ 6.50 CGPA, 0 backlogs):</strong> Standard consulting and IT analyst screen.</li>
-              <li><strong>70% Benchmark (≥ 7.00 CGPA, 0 backlogs):</strong> Core engineering & product teams screen.</li>
-              <li><strong>75% Benchmark (≥ 7.50 CGPA, 0 backlogs):</strong> High-compensation technical drives.</li>
+              <li><strong>60% Benchmark (≥ 6.00 CGPA, 0 backlogs): </strong>Baseline mass recruitment screen.</li>
+              <li><strong>65% Benchmark (≥ 6.50 CGPA, 0 backlogs): </strong>Standard consulting and IT analyst screen.</li>
+              <li><strong>70% Benchmark (≥ 7.00 CGPA, 0 backlogs): </strong>Core engineering & product teams screen.</li>
+              <li><strong>75% Benchmark (≥ 7.50 CGPA, 0 backlogs): </strong>High-compensation technical drives.</li>
             </ul>
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
-              <strong className="text-foreground">Disclaimer:</strong> These are Anviksha application benchmarks, not universal GGSIPU placement rules. Actual eligibility is governed strictly by the respective company&apos;s job description and campus recruitment notice.
+              <strong className="text-foreground">Disclaimer: </strong>These are Anviksha application benchmarks, not universal GGSIPU placement rules. Actual eligibility is governed strictly by the respective company&apos;s job description and campus recruitment notice.
             </div>
           </div>
         </section>

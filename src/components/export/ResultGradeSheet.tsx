@@ -185,7 +185,7 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
                     {/* Disclaimer Footer */}
                     <div className="pt-2 text-[10px] font-sans text-neutral-600 text-center border-t border-black">
                         <p>
-                            <strong>UNOFFICIAL COPY:</strong> Reproduced from student result data for personal reference. Not an official transcript issued by GGSIPU.
+                            <strong>UNOFFICIAL COPY: </strong>Reproduced from student result data for personal reference. Not an official transcript issued by GGSIPU.
                         </p>
                     </div>
                 </div>

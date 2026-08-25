@@ -87,6 +87,17 @@ export default function NoticesClientView({ initialNotices }: Props) {
     setPage(1);
   };
 
+  const scrollToTop = () => {
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    scrollToTop();
+  };
+
   const handleSearch = (text: string) => {
     setSearch(text);
     setPage(1);
@@ -105,18 +116,21 @@ export default function NoticesClientView({ initialNotices }: Props) {
           <Search
             size={16}
             className="absolute left-3.5 top-1/2 -translate-y-1/2 text-foreground-muted"
+            aria-hidden="true"
           />
           <input
             type="text"
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="Search by course (e.g. B.Tech, BCA, MBA), semester, or keyword..."
+            aria-label="Search examination circulars and notices"
             className="w-full rounded-lg border border-border-strong bg-background py-2.5 pl-10 pr-16 font-mono text-xs sm:text-sm text-foreground outline-none transition focus:border-gold focus:ring-1 focus:ring-gold"
           />
           {search && (
             <button
               onClick={() => handleSearch("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-mono text-foreground-muted hover:text-foreground cursor-pointer px-2 py-0.5 rounded bg-surface-deep border border-border transition-colors"
+              aria-label="Clear search query"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-mono text-foreground-secondary hover:text-foreground cursor-pointer px-2 py-1 rounded bg-surface-deep border border-border transition-colors"
             >
               Clear
             </button>
@@ -213,17 +227,18 @@ export default function NoticesClientView({ initialNotices }: Props) {
                       href={notice.url}
                       target="_blank"
                       rel="noopener noreferrer"
+                      aria-label={`View PDF for ${notice.title}`}
                       onClick={() =>
                         track("open_notice_pdf", {
                           title: notice.title.slice(0, 30),
                         })
                       }
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-deep border border-border-strong text-foreground text-xs font-mono font-semibold hover:border-gold hover:text-gold transition-colors shadow-xs"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-surface-deep border border-border-strong text-foreground text-xs font-mono font-semibold hover:border-gold hover:text-gold transition-colors shadow-xs focus-visible:ring-2 focus-visible:ring-gold"
                       title="Open official university PDF in new tab"
                     >
-                      <FileText size={12} className="text-chart-cyan" />
+                      <FileText size={13} className="text-chart-cyan" aria-hidden="true" />
                       <span>View PDF</span>
-                      <ExternalLink size={11} className="opacity-70" />
+                      <ExternalLink size={11} className="opacity-70" aria-hidden="true" />
                     </motion.a>
 
                     <motion.a
@@ -233,10 +248,11 @@ export default function NoticesClientView({ initialNotices }: Props) {
                       download
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="p-1.5 rounded bg-surface border border-border text-foreground-muted hover:text-foreground hover:border-gold transition-colors shadow-xs"
+                      aria-label={`Download PDF for ${notice.title}`}
+                      className="p-2 rounded-md bg-surface border border-border text-foreground-secondary hover:text-foreground hover:border-gold transition-colors shadow-xs focus-visible:ring-2 focus-visible:ring-gold"
                       title="Direct download PDF"
                     >
-                      <Download size={13} />
+                      <Download size={14} aria-hidden="true" />
                     </motion.a>
                   </div>
                 </motion.article>
@@ -250,7 +266,7 @@ export default function NoticesClientView({ initialNotices }: Props) {
               className="rounded-xl border border-border-strong bg-surface p-12 text-center space-y-3"
             >
               <div className="w-12 h-12 rounded-full bg-surface-deep border border-border flex items-center justify-center mx-auto text-foreground-muted">
-                <Search size={22} />
+                <Search size={22} aria-hidden="true" />
               </div>
               <h3 className="text-sm font-semibold font-mono text-foreground">
                 No matching circulars found
@@ -263,9 +279,9 @@ export default function NoticesClientView({ initialNotices }: Props) {
                   setSearch("");
                   setActiveCategory("ALL");
                 }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded bg-foreground text-background text-xs font-mono font-bold cursor-pointer hover:bg-neutral-200 transition-colors shadow-xs"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded bg-foreground text-background text-xs font-mono font-bold cursor-pointer hover:bg-neutral-200 transition-colors shadow-xs focus-visible:ring-2 focus-visible:ring-gold"
               >
-                <RotateCcw size={12} />
+                <RotateCcw size={12} aria-hidden="true" />
                 <span>Reset Filters</span>
               </button>
             </motion.div>
@@ -275,31 +291,36 @@ export default function NoticesClientView({ initialNotices }: Props) {
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-border-strong pt-4 text-xs font-mono text-foreground-secondary">
+        <nav
+          aria-label="Pagination Navigation"
+          className="flex items-center justify-between border-t border-border-strong pt-4 text-xs font-mono text-foreground-secondary"
+        >
           <span>
             Page {page} of {totalPages}
           </span>
           <div className="flex items-center gap-2">
             <motion.button
               whileTap={{ scale: 0.96 }}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => handlePageChange(Math.max(1, page - 1))}
               disabled={page === 1}
-              className="flex items-center gap-1 px-3 py-1.5 rounded bg-surface border border-border-strong text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:border-gold transition-colors cursor-pointer shadow-xs"
+              aria-label="Go to previous page"
+              className="flex items-center gap-1 px-3.5 py-2 rounded bg-surface border border-border-strong text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:border-gold transition-colors cursor-pointer shadow-xs focus-visible:ring-2 focus-visible:ring-gold"
             >
-              <ChevronLeft size={13} />
+              <ChevronLeft size={13} aria-hidden="true" />
               <span>Previous</span>
             </motion.button>
             <motion.button
               whileTap={{ scale: 0.96 }}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
               disabled={page === totalPages}
-              className="flex items-center gap-1 px-3 py-1.5 rounded bg-surface border border-border-strong text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:border-gold transition-colors cursor-pointer shadow-xs"
+              aria-label="Go to next page"
+              className="flex items-center gap-1 px-3.5 py-2 rounded bg-surface border border-border-strong text-foreground disabled:opacity-40 disabled:cursor-not-allowed hover:border-gold transition-colors cursor-pointer shadow-xs focus-visible:ring-2 focus-visible:ring-gold"
             >
               <span>Next</span>
-              <ChevronRight size={13} />
+              <ChevronRight size={13} aria-hidden="true" />
             </motion.button>
           </div>
-        </div>
+        </nav>
       )}
     </div>
   );

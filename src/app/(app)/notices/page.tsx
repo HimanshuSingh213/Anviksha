@@ -36,16 +36,39 @@ export default async function NoticesPage() {
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    "name": "Live GGSIPU Result Circulars, Date-Sheets & Notices",
-    "url": `${appUrl}/notices`,
-    "description":
-      "Official GGSIPU examination notices, declared results circulars, date-sheets, and evaluated answer sheet schedules with direct PDF links.",
-    "publisher": {
-      "@type": "Organization",
-      "name": "Anviksha",
-      "url": appUrl,
-    },
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": `${appUrl}/notices#collection`,
+        "name": "Live GGSIPU Result Circulars, Date-Sheets & Notices",
+        "url": `${appUrl}/notices`,
+        "description":
+          "Official GGSIPU examination notices, declared results circulars, date-sheets, and evaluated answer sheet schedules with direct PDF links.",
+        "inLanguage": "en",
+        "publisher": {
+          "@type": "Organization",
+          "name": "Anviksha",
+          "url": appUrl,
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": appUrl,
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Exam Circulars",
+            "item": `${appUrl}/notices`,
+          },
+        ],
+      },
+    ],
   };
 
   return (
@@ -113,7 +136,7 @@ export default async function NoticesPage() {
           <div className="flex items-center gap-2.5">
             <RefreshCw size={14} className="text-gold shrink-0 animate-spin" style={{ animationDuration: "6s" }} />
             <span>
-              <strong className="text-foreground">Live Synchronization:</strong> Fetched & updated directly from the university portal every <strong>15 minutes</strong> via server ISR caching.
+              <strong className="text-foreground">Live Synchronization: </strong>Fetched & updated directly from the university portal every <strong>15 minutes</strong> via server ISR caching.
             </span>
           </div>
           <span className="text-[11px] text-foreground-muted shrink-0">

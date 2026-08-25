@@ -274,13 +274,13 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                         </div>
                         <ul className="list-disc pl-4 space-y-0.5 leading-tight">
                             <li>
-                                <strong>Percentage Formula:</strong> Per GGSIPU Examination Gazette (Ordinance 11), equivalent percentage is computed as <code>Percentage = CGPA × 10.0</code>.
+                                <strong>Percentage Formula: </strong>Per GGSIPU Examination Gazette (Ordinance 11), equivalent percentage is computed as <code>Percentage = CGPA × 10.0</code>.
                             </li>
                             <li>
-                                <strong>Credit Allocation:</strong> Theory papers carry 3–4 credits, practical/laboratory sessions carry 1 credit per approved scheme.
+                                <strong>Credit Allocation: </strong>Theory papers carry 3–4 credits, practical/laboratory sessions carry 1 credit per approved scheme.
                             </li>
                             <li>
-                                <strong>Passing Threshold:</strong> Ordinance 11 baseline passing grade is Grade P (40% aggregate marks) in each individual subject paper.
+                                <strong>Passing Threshold: </strong>Ordinance 11 baseline passing grade is Grade P (40% aggregate marks) in each individual subject paper.
                             </li>
                         </ul>
                     </div>

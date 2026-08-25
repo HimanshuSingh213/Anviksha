@@ -34,9 +34,49 @@ export const metadata: Metadata = {
   },
 };
 
+const REPORT_JSON_LD = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "ContactPage",
+      "name": "Report a Problem — Anviksha Support & Feedback",
+      "url": `${appUrl}/report`,
+      "description":
+        "Report bugs, calculation discrepancies, or syllabus feedback for Anviksha GGSIPU academic results engine.",
+      "inLanguage": "en-IN",
+      "publisher": {
+        "@type": "Person",
+        "name": "Himanshu Singh",
+        "url": "https://himanshusinghdangi.vercel.app",
+      },
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": appUrl,
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Report a Problem",
+          "item": `${appUrl}/report`,
+        },
+      ],
+    },
+  ],
+};
+
 export default function ReportPage() {
   return (
     <div className="relative flex min-h-screen flex-col bg-background text-foreground">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(REPORT_JSON_LD) }}
+      />
       {/* Ambient background glows */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         <div className="absolute -top-32 -left-20 h-96 w-96 rounded-full bg-gold opacity-10 blur-3xl" />
