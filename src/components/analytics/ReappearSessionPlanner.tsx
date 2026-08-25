@@ -13,6 +13,7 @@ import {
     BookOpenCheck,
     HelpCircle,
 } from "lucide-react";
+import { track } from "@vercel/analytics";
 import {
     getReappearSessionPlan,
     ReappearSubject,
@@ -153,7 +154,10 @@ export default function ReappearSessionPlanner({
                                 <button
                                     key={value}
                                     type="button"
-                                    onClick={() => setSelectedTab(value)}
+                                    onClick={() => {
+                                        track("toggle_reappear_tab", { tab: value });
+                                        setSelectedTab(value);
+                                    }}
                                     className={`flex-1 sm:flex-initial text-center rounded px-2.5 sm:px-3 py-1.5 text-[10px] font-semibold transition-colors cursor-pointer ${
                                         selectedTab === value
                                             ? "bg-foreground text-background"

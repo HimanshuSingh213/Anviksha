@@ -11,6 +11,7 @@ import {
   Info,
   Calculator,
   ShieldCheck,
+  Bell,
 } from "lucide-react";
 import { LoginForm } from "@/components/login/LoginForm";
 
@@ -100,9 +101,20 @@ export default function LoginPage() {
             </div>
           </Link>
 
-          <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-foreground-muted">
-            <ShieldCheck size={14} className="text-positive" />
-            <span className="font-mono text-[11px]">Secure Access</span>
+          <div className="flex items-center gap-2.5">
+            <Link
+              href="/notices"
+              title="Live GGSIPU Result Circulars & Date-Sheets"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors shadow-xs"
+            >
+              <Bell size={13} className="text-gold" />
+              <span className="hidden sm:inline">Exam Circulars</span>
+            </Link>
+
+            <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-foreground-muted">
+              <ShieldCheck size={14} className="text-positive" />
+              <span className="font-mono text-[11px]">Secure Access</span>
+            </div>
           </div>
         </div>
       </header>
@@ -222,12 +234,16 @@ export default function LoginPage() {
       <footer className="relative z-10 border-t border-border py-4 text-center text-xs text-foreground-muted flex flex-wrap items-center justify-center gap-3">
         <span>Anviksha · Unofficial GGSIPU Results Portal</span>
         <span className="text-border-strong">·</span>
+        <Link href="/notices" className="hover:text-gold transition-colors">
+          Live Circulars & Notices
+        </Link>
+        <span className="text-border-strong">·</span>
         <Link href="/calculations" className="hover:text-gold transition-colors">
           How Calculations Work
         </Link>
         <span className="text-border-strong">·</span>
-        <Link href="/report?from=/login" className="hover:text-gold transition-colors">
-          Report a Problem
+        <Link href="/" className="hover:text-gold transition-colors">
+          Home
         </Link>
       </footer>
     </div>

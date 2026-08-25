@@ -4,6 +4,7 @@ import { KeyboardEvent, useEffect, useState, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { TrendingUp, ShieldCheck, Briefcase, Layers } from "lucide-react";
+import { track } from "@vercel/analytics";
 import useResultStore from "@/store/result-store";
 import { getFallbackCredit, getGradeAndPoints, getResultState } from "@/helpers/grade-system";
 import Skeleton from "@/components/dashboard/Skeleton";
@@ -175,7 +176,10 @@ export default function AnalyticsPage() {
                                 aria-controls={`panel-${tab.id}`}
                                 tabIndex={isActive ? 0 : -1}
                                 type="button"
-                                onClick={() => setActiveView(tab.id)}
+                                onClick={() => {
+                                    track("switch_analytics_view", { view: tab.id });
+                                    setActiveView(tab.id);
+                                }}
                                 onKeyDown={(event) => handleViewKeyDown(event, index)}
                                 className={`relative flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 sm:py-1.5 rounded text-xs font-mono font-bold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-gold focus-visible:outline-none ${
                                     isActive

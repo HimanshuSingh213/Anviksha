@@ -7,6 +7,7 @@ import html2canvas from "html2canvas-pro";
 import jsPDF from "jspdf";
 import useResultStore from "@/store/result-store";
 import { toast } from "sonner";
+import { track } from "@vercel/analytics";
 import { ResultGradeSheet } from "../export/ResultGradeSheet";
 import { ConsolidatedMasterTranscript } from "../export/ConsolidatedMasterTranscript";
 
@@ -114,6 +115,12 @@ export default function SemesterSelector({
             }
 
             pdf.save(fileName);
+
+            if (isMaster) {
+                track("export_master_transcript");
+            } else {
+                track("export_marksheet", { semester: downloadSem });
+            }
 
             toast.success(
                 isMaster
@@ -236,7 +243,10 @@ export default function SemesterSelector({
                                 key={sem.value}
                                 role="tab"
                                 aria-selected={active}
-                                onClick={() => onSelectSem(sem.value)}
+                                onClick={() => {
+                                    track("filter_semester", { semester: sem.value });
+                                    onSelectSem(sem.value);
+                                }}
                                 className={`relative flex-1 sm:flex-none min-w-[28px] sm:min-w-0 text-center px-1.5 sm:px-3 py-1.5 rounded-sm text-[11px] sm:text-xs font-mono font-semibold transition-colors duration-150 cursor-pointer focus-visible:ring-2 focus-visible:ring-gold ${
                                     active ? "text-background font-bold" : "text-foreground-muted hover:text-foreground"
                                 }`}

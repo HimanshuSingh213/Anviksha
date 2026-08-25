@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
 import {
-  ArrowLeft,
   GraduationCap,
   BookOpen,
   Award,
@@ -13,6 +12,8 @@ import {
   Briefcase,
   Layers,
   HelpCircle,
+  Bell,
+  Home,
 } from "lucide-react";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.vercel.app";
@@ -95,13 +96,30 @@ export default function CalculationsPage() {
             />
           </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
-              href="/dashboard"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors"
+              href="/notices"
+              title="Live GGSIPU Result Circulars & Date-Sheets"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors shadow-xs"
             >
-              <ArrowLeft size={13} />
-              <span>Back to Dashboard</span>
+              <Bell size={13} className="text-gold" />
+              <span className="hidden sm:inline">Exam Circulars</span>
+            </Link>
+
+            <Link
+              href="/"
+              title="Go to Homepage"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors shadow-xs"
+            >
+              <Home size={13} />
+              <span className="hidden sm:inline">Home</span>
+            </Link>
+
+            <Link
+              href="/login"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-black text-xs font-mono font-bold hover:bg-neutral-200 transition-colors uppercase tracking-wider shadow-xs"
+            >
+              <span>Student Login</span>
             </Link>
           </div>
         </div>
@@ -454,8 +472,8 @@ export default function CalculationsPage() {
       <footer className="border-t border-border-strong bg-surface py-8 px-4 sm:px-6 text-center text-xs font-mono text-foreground-muted flex flex-wrap items-center justify-center gap-3">
         <span>Anviksha · Built for GGSIPU Students · Independent & Privacy-First</span>
         <span className="text-border-strong">·</span>
-        <Link href="/report" className="hover:text-gold transition-colors">
-          Report a Problem
+        <Link href="/notices" className="hover:text-gold transition-colors">
+          Live Circulars & Notices
         </Link>
         <span className="text-border-strong">·</span>
         <Link href="/" className="hover:text-gold transition-colors">

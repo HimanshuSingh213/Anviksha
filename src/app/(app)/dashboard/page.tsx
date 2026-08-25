@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Percent, BarChart2, BookOpen, Pencil, ArrowRight, FileDown } from "lucide-react";
 import { toast } from "sonner";
+import { track } from "@vercel/analytics";
 import Skeleton from "@/components/dashboard/Skeleton";
 import AppNavbar from "@/components/common/AppNavbar";
 import useResultStore from "@/store/result-store";
@@ -304,7 +305,10 @@ export default function DashboardPage() {
                         {SEMESTERS.map((sem) => (
                             <button
                                 key={sem.value}
-                                onClick={() => setActiveSem(sem.value)}
+                                onClick={() => {
+                                    track("filter_semester", { semester: sem.value });
+                                    setActiveSem(sem.value);
+                                }}
                                 disabled={loading}
                                 className={`relative flex-1 sm:flex-none text-center px-1.5 sm:px-3.5 py-1.5 text-[11px] sm:text-xs font-mono font-semibold transition-colors duration-100 disabled:opacity-40 rounded-sm cursor-pointer ${activeSem === sem.value
                                     ? "text-background font-bold"
@@ -434,7 +438,10 @@ export default function DashboardPage() {
                                                                     }
                                                                 }}
                                                                 onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                                                                onChange={(e) => setCustomCredit(paperCode, Number(e.target.value))}
+                                                                onChange={(e) => {
+                                                                    track("edit_custom_credit", { paperCode });
+                                                                    setCustomCredit(paperCode, Number(e.target.value));
+                                                                }}
                                                                 className="w-10 text-center bg-surface-deep border border-border-strong hover:border-gold/60 focus:border-gold focus:ring-1 focus:ring-gold/30 rounded-sm py-0.5 font-mono text-xs font-bold text-foreground outline-none transition-all cursor-pointer focus:cursor-text [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                                                             />
                                                             {!isPassed && (
@@ -599,7 +606,10 @@ export default function DashboardPage() {
                     <motion.button
                         whileHover={{ scale: 1.03, y: -1 }}
                         whileTap={{ scale: 0.97 }}
-                        onClick={() => router.push("/dashboard/analytics")}
+                        onClick={() => {
+                            track("click_view_analytics");
+                            router.push("/dashboard/analytics");
+                        }}
                         className="px-6 py-3 bg-white text-black font-mono text-xs font-bold rounded-sm shadow-[0_0_20px_rgba(255,255,255,0.2)] flex items-center justify-center gap-3 hover:bg-neutral-200 transition-all group cursor-pointer border border-white uppercase tracking-wider"
                     >
                         <BarChart2 size={15} />

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Metadata } from "next";
-import { ArrowLeft, MessageSquare, ShieldCheck, Home } from "lucide-react";
+import { MessageSquare, ShieldCheck, Home, Bell } from "lucide-react";
 import ReportForm from "@/components/report/ReportForm";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.vercel.app";
@@ -59,15 +59,26 @@ export default function ReportPage() {
 
           <div className="flex items-center gap-2">
             <Link
-              href="/dashboard"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-foreground hover:bg-surface-elevated transition-colors cursor-pointer shrink-0"
+              href="/notices"
+              title="Live GGSIPU Result Circulars & Date-Sheets"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors shadow-xs shrink-0"
             >
-              <ArrowLeft size={13} />
-              <span>Dashboard</span>
+              <Bell size={13} className="text-gold" />
+              <span className="hidden sm:inline">Exam Circulars</span>
             </Link>
+
+            <Link
+              href="/calculations"
+              title="How Calculations Work"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors shadow-xs shrink-0"
+            >
+              <span className="hidden sm:inline">Calculations</span>
+            </Link>
+
             <Link
               href="/"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors cursor-pointer shrink-0"
+              title="Go to Homepage"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors cursor-pointer shrink-0 shadow-xs"
             >
               <Home size={13} />
               <span className="hidden sm:inline">Home</span>
@@ -120,6 +131,10 @@ export default function ReportPage() {
       <footer className="relative z-10 border-t border-border py-6 text-center text-xs text-foreground-muted">
         <div className="max-w-5xl mx-auto px-4 flex flex-wrap items-center justify-center gap-3 font-mono">
           <span>Anviksha · Unofficial GGSIPU Results Portal</span>
+          <span className="text-border-strong">·</span>
+          <Link href="/notices" className="hover:text-gold transition-colors">
+            Live Circulars & Notices
+          </Link>
           <span className="text-border-strong">·</span>
           <Link href="/calculations" className="hover:text-gold transition-colors">
             How Calculations Work

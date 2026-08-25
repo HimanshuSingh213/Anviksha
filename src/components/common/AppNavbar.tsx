@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Home, HelpCircle } from "lucide-react";
+import { ArrowLeft, Home, HelpCircle, Bell } from "lucide-react";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
 import { StudentProfile } from "@/types/result";
 
@@ -64,6 +64,16 @@ export default function AppNavbar({ profile }: AppNavbarProps) {
                 </AnimatePresence>
 
                 <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                    {/* Live Exam Notices Link */}
+                    <Link
+                        href="/notices"
+                        title="Live GGSIPU Result Circulars & Date-Sheets"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors duration-200 shrink-0 shadow-xs"
+                    >
+                        <Bell size={13} className="text-gold" />
+                        <span className="hidden md:inline">Notices</span>
+                    </Link>
+
                     {/* How Calculations Work Link */}
                     <Link
                         href="/calculations"

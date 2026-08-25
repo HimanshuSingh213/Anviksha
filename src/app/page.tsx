@@ -13,16 +13,13 @@ import {
   FileDown,
   Briefcase,
   Calendar,
+  Bell,
+  RefreshCw,
+  ExternalLink,
 } from "lucide-react";
-import ResultPreviewCard from "@/components/home/ResultPreviewCard";
+import HeroFeatureGrid from "@/components/home/HeroFeatureGrid";
 
 /* ---------------------------------- data ---------------------------------- */
-
-const TRUST_ITEMS = [
-  { icon: ShieldCheck, text: "Zero-database architecture" },
-  { icon: Lock, text: "Credentials go straight to GGSIPU, never stored" },
-  { icon: Timer, text: "Session clears the moment you log out" },
-];
 
 type Accent = "blue" | "violet" | "teal" | "pink" | "gold" | "green";
 
@@ -148,7 +145,14 @@ export default async function Home() {
             />
           </Link>
 
-          <nav className="hidden items-center gap-8 font-mono text-xs text-foreground-secondary sm:flex">
+          <nav className="hidden items-center gap-7 font-mono text-xs text-foreground-secondary sm:flex">
+            <Link href="/notices" className="transition-colors hover:text-gold flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
+              <span>Exam Circulars</span>
+            </Link>
+            <Link href="/calculations" className="transition-colors hover:text-foreground">
+              Calculations
+            </Link>
             <a href="#features" className="transition-colors hover:text-foreground">Features</a>
             <a href="#how-it-works" className="transition-colors hover:text-foreground">How it works</a>
           </nav>
@@ -164,49 +168,68 @@ export default async function Home() {
 
       <main className="relative z-10 flex-1">
         {/* Hero */}
-        <section className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 pb-20 pt-16 lg:grid-cols-2 lg:pb-28 lg:pt-24">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 font-mono text-xs text-foreground-muted">
-              <span className="h-1.5 w-1.5 rounded-full bg-gold" />
-              Unofficial · GGSIPU Exam Portal
-            </span>
+        <section className="mx-auto max-w-6xl px-6 pb-16 pt-16 lg:pb-24 lg:pt-24">
+          <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-2">
+            {/* Left: Messaging */}
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 font-mono text-xs text-foreground-muted">
+                <span className="h-1.5 w-1.5 rounded-full bg-gold animate-pulse" />
+                Unofficial · GGSIPU Exam Portal
+              </span>
 
-            <h1 className="mt-5 max-w-lg text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl">
-              GGSIPU Results &amp; SGPA Calculator,{" "}
-              <span className="text-gold">made simple.</span>
-            </h1>
+              <h1 className="mt-5 max-w-lg text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl">
+                GGSIPU Results &amp; SGPA Calculator,{" "}
+                <span className="text-gold">made simple.</span>
+              </h1>
 
-            <p className="mt-5 max-w-md text-base leading-7 text-foreground-secondary">
-              A modern academic portal for GGSIPU students. View live semester results, automated Ordinance 11 SGPA/CGPA calculations, promotion standing, and consolidated transcript exports.
-            </p>
+              <p className="mt-5 max-w-md text-base leading-7 text-foreground-secondary">
+                A modern academic portal for GGSIPU students. Live semester results, automated Ordinance 11 SGPA/CGPA, promotion standing, placement cutoffs, and transcript exports — all in one place.
+              </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href={cta.href} className={ctaClasses}>
-                {cta.label}
-                <ArrowRight size={14} />
-              </Link>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link href={cta.href} className={ctaClasses}>
+                  {cta.label}
+                  <ArrowRight size={14} />
+                </Link>
+                <Link
+                  href="/notices"
+                  className="inline-flex items-center gap-2 rounded-md border border-gold-border bg-gold-surface px-5 py-3 font-mono text-xs font-bold uppercase tracking-wider text-gold transition-transform duration-150 hover:-translate-y-0.5 active:scale-95"
+                >
+                  <Bell size={13} className="animate-pulse" />
+                  Live Circulars
+                </Link>
+              </div>
+
+              <p className="mt-5 flex items-center gap-2 font-mono text-xs text-foreground-muted">
+                <ShieldCheck size={14} className="text-positive" />
+                {isAuthenticated
+                  ? "Welcome back — pick up right where you left off"
+                  : "No signup · Takes less than 10 seconds"}
+              </p>
             </div>
 
-            <p className="mt-5 flex items-center gap-2 font-mono text-xs text-foreground-muted">
-              <ShieldCheck size={14} className="text-positive" />
-              {isAuthenticated
-                ? "Welcome back — pick up right where you left off"
-                : "No signup · Takes less than 10 seconds"}
-            </p>
+            {/* Right: Feature Grid */}
+            <HeroFeatureGrid />
           </div>
-
-          <ResultPreviewCard />
         </section>
 
-        {/* Trust strip */}
+        {/* Privacy & Trust Strip */}
         <section className="border-y border-border bg-surface/60">
-          <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 px-6 py-5 sm:grid-cols-3">
-            {TRUST_ITEMS.map((item) => (
-              <div key={item.text} className="flex items-center gap-2.5 text-foreground-secondary">
-                <item.icon size={15} className="shrink-0 text-gold" />
-                <span className="text-xs">{item.text}</span>
+          <div className="mx-auto max-w-6xl px-6 py-5">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="flex items-center gap-2.5 text-foreground-secondary">
+                <ShieldCheck size={15} className="shrink-0 text-positive" />
+                <span className="text-xs"><strong className="text-foreground">Zero-database.</strong> Nothing is ever stored on our servers.</span>
               </div>
-            ))}
+              <div className="flex items-center gap-2.5 text-foreground-secondary">
+                <Lock size={15} className="shrink-0 text-gold" />
+                <span className="text-xs"><strong className="text-foreground">Direct proxy.</strong> Credentials go straight to GGSIPU, never cached.</span>
+              </div>
+              <div className="flex items-center gap-2.5 text-foreground-secondary">
+                <Timer size={15} className="shrink-0 text-chart-cyan" />
+                <span className="text-xs"><strong className="text-foreground">Session clears</strong> the moment you log out or close the tab.</span>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -284,6 +307,71 @@ export default async function Home() {
                   <p className="mt-1.5 text-sm leading-6 text-foreground-secondary">{step.desc}</p>
                 </div>
               ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Live Circulars & Notices — Prominent CTA */}
+        <section className="border-y border-border bg-surface/60">
+          <div className="mx-auto max-w-6xl px-6 py-16">
+            <div className="rounded-xl border border-gold-border bg-gradient-to-br from-gold-surface/80 via-surface to-surface p-6 sm:p-8 lg:p-10 shadow-sm">
+              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+                {/* Left: Content */}
+                <div className="space-y-4 flex-1 max-w-2xl">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gold/10 border border-gold-border text-gold font-mono text-[11px] font-bold uppercase tracking-wider">
+                      <Bell size={13} className="animate-pulse" />
+                      <span>Live Feed</span>
+                    </div>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface border border-border text-foreground-muted font-mono text-[10px]">
+                      <RefreshCw size={10} className="animate-spin" style={{ animationDuration: "6s" }} />
+                      <span>Updated every 15 min</span>
+                    </div>
+                  </div>
+
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                    GGSIPU Result Circulars, Date-Sheets & Notices
+                  </h2>
+
+                  <p className="text-sm leading-6 text-foreground-secondary">
+                    Stay ahead of your batch — browse every official GGSIPU examination circular, declared result notification, end-term date-sheet, and answer sheet inspection schedule in one feed. Direct PDF downloads, instant keyword search, and auto-categorized by type.
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-1 text-xs font-mono text-foreground-muted">
+                    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-grade-excellent-surface border border-grade-excellent-border text-grade-excellent">
+                      <span className="w-1.5 h-1.5 rounded-full bg-grade-excellent" />
+                      Results Declared
+                    </span>
+                    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-cat-blue-surface border border-cat-blue-border text-chart-cyan">
+                      <span className="w-1.5 h-1.5 rounded-full bg-chart-cyan" />
+                      Date Sheets
+                    </span>
+                    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-gold-surface border border-gold-border text-gold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+                      Inspection
+                    </span>
+                    <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-cat-violet-surface border border-cat-violet-border text-cat-violet">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cat-violet" />
+                      General Notices
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right: CTA Button */}
+                <div className="flex flex-col items-start lg:items-center gap-3 shrink-0">
+                  <Link
+                    href="/notices"
+                    className="inline-flex items-center gap-2.5 rounded-lg border border-gold bg-gold px-6 py-3.5 font-mono text-xs font-bold uppercase tracking-wider text-background shadow-[0_0_20px_rgba(234,179,8,0.15)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_0_30px_rgba(234,179,8,0.25)] active:scale-95"
+                  >
+                    <Bell size={14} />
+                    <span>Browse All Circulars</span>
+                    <ExternalLink size={12} className="opacity-70" />
+                  </Link>
+                  <span className="text-[10px] font-mono text-foreground-muted text-center">
+                    No login required · Direct from ipu.ac.in
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -371,6 +459,13 @@ export default async function Home() {
               Anviksha · GGSIPU Results, SGPA/CGPA Calculator & Transcript Portal · Unofficial, not affiliated with GGSIPU
             </span>
             <div className="flex flex-wrap items-center justify-center gap-3 font-mono text-xs text-foreground-muted">
+              <Link
+                href="/notices"
+                className="transition-colors hover:text-gold"
+              >
+                Live Circulars & Notices
+              </Link>
+              <span className="text-border-strong">·</span>
               <Link
                 href="/calculations"
                 className="transition-colors hover:text-gold"
