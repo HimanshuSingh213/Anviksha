@@ -142,19 +142,19 @@ export interface ProgrammeEntry {
 
 export const PROGRAMME_FAMILIES = [
   { family: "MTECH", ordinance: "ORD_11", system: "SEMESTER" as const, isTech: true,  keywords: ["master of technology", "m.tech", "mtech"] },
-  { family: "BTECH", ordinance: "ORD_11", system: "SEMESTER" as const, isTech: true,  keywords: ["bachelor of technology", "b.tech", "btech"] },
-  { family: "MCA",   ordinance: "ORD_11", system: "SEMESTER" as const, isTech: true,  keywords: ["master of computer applications", "mca"] },
-  { family: "BCA",   ordinance: "ORD_11", system: "SEMESTER" as const, isTech: true,  keywords: ["bachelor of computer applications", "bca"] },
-  { family: "MBA",   ordinance: "ORD_11", system: "SEMESTER" as const, isTech: false, keywords: ["master of business administration", "mba"] },
-  { family: "BBA",   ordinance: "ORD_11", system: "SEMESTER" as const, isTech: false, keywords: ["bachelor of business administration", "bba"] },
-  { family: "BCOM",  ordinance: "ORD_11", system: "SEMESTER" as const, isTech: false, keywords: ["bachelor of commerce", "b.com", "bcom"] },
-  { family: "LAW",   ordinance: "ORD_11", system: "SEMESTER" as const, isTech: false, keywords: ["bachelor of law", "bachelor of laws", "b.a.ll.b", "bba llb", "ll.b", "llb", "ballb", "bballb", "law"] },
-  { family: "BA",    ordinance: "ORD_11", system: "SEMESTER" as const, isTech: false, keywords: ["bachelor of arts", "bjmc", "b.a. (", "ba (", "b.a. jmc", "ba"] },
-  { family: "MBBS",  ordinance: "ORD_15", system: "ANNUAL" as const,   isTech: false, keywords: ["bachelor of medicine and bachelor of surgery", "bachelor of medicine", "mbbs"] },
-  { family: "BPT",   ordinance: "ORD_31", system: "ANNUAL" as const,   isTech: false, keywords: ["bachelor of physiotherapy", "physiotherapy", "bpt", "bot"] },
-  { family: "BHMS",  ordinance: "ORD_22", system: "ANNUAL" as const,   isTech: false, keywords: ["bachelor of homeopathic medicine", "homeopathic", "bhms"] },
-  { family: "BASLP", ordinance: "ORD_24", system: "SEMESTER" as const, isTech: false, keywords: ["bachelor of audiology and speech language pathology", "speech language", "baslp"] },
-  { family: "BAMS",  ordinance: "ORD_38", system: "ANNUAL" as const,   isTech: false, keywords: ["bachelor of ayurvedic medicine", "ayurvedic", "bams"] },
+  { family: "BTECH", ordinance: "ORD_11", system: "SEMESTER" as const, isTech: true,  keywords: ["bachelor of technology", "b.tech", "btech", "027"] },
+  { family: "MCA",   ordinance: "ORD_11", system: "SEMESTER" as const, isTech: true,  keywords: ["master of computer applications", "mca", "045"] },
+  { family: "BCA",   ordinance: "ORD_11", system: "SEMESTER" as const, isTech: true,  keywords: ["bachelor of computer applications", "bca", "020"] },
+  { family: "MBA",   ordinance: "ORD_11", system: "SEMESTER" as const, isTech: false, keywords: ["master of business administration", "mba", "039"] },
+  { family: "BBA",   ordinance: "ORD_11", system: "SEMESTER" as const, isTech: false, keywords: ["bachelor of business administration", "bba", "017"] },
+  { family: "BCOM",  ordinance: "ORD_11", system: "SEMESTER" as const, isTech: false, keywords: ["bachelor of commerce", "b.com", "bcom", "888"] },
+  { family: "LAW",   ordinance: "ORD_11", system: "SEMESTER" as const, isTech: false, keywords: ["bachelor of law", "bachelor of laws", "master of law", "master of laws", "b.a.ll.b", "b.a. ll.b", "ba llb", "ballb", "b.b.a.ll.b", "b.b.a. ll.b", "bba llb", "bballb", "ll.b", "llb", "ll.m", "llm", "law", "038", "035", "037", "040"] },
+  { family: "BA",    ordinance: "ORD_11", system: "SEMESTER" as const, isTech: false, keywords: ["bachelor of arts", "bjmc", "b.a. (", "ba (", "b.a. jmc", "bajmc", "ba", "024"] },
+  { family: "MBBS",  ordinance: "ORD_15", system: "ANNUAL" as const,   isTech: false, keywords: ["bachelor of medicine and bachelor of surgery", "bachelor of medicine", "mbbs", "001"] },
+  { family: "BPT",   ordinance: "ORD_31", system: "ANNUAL" as const,   isTech: false, keywords: ["bachelor of physiotherapy", "physiotherapy", "bpt", "bot", "025"] },
+  { family: "BHMS",  ordinance: "ORD_22", system: "ANNUAL" as const,   isTech: false, keywords: ["bachelor of homeopathic medicine", "homeopathic", "bhms", "053"] },
+  { family: "BASLP", ordinance: "ORD_24", system: "SEMESTER" as const, isTech: false, keywords: ["bachelor of audiology and speech language pathology", "speech language", "baslp", "090"] },
+  { family: "BAMS",  ordinance: "ORD_38", system: "ANNUAL" as const,   isTech: false, keywords: ["bachelor of ayurvedic medicine", "ayurvedic", "bams", "054"] },
 ];
 
 export const ORD_11_GRADE_BANDS: GradeBand[] = [
@@ -327,6 +327,18 @@ export const ORDINANCES: Record<string, OrdinanceDefinition> = {
         minimumPercentExclusive: 75,
         label: "Distinction",
         sources: ["GGSIPU Ordinance 15"],
+      },
+      subjectMaxMarks: {
+        "HUMAN ANATOMY": 200,
+        "HUMAN PHYSIOLOGY": 200,
+        "BIOCHEMISTRY": 200,
+        "PATHOLOGY": 200,
+        "MICROBIOLOGY": 200,
+        "PHARMACOLOGY": 200,
+        "FORENSIC MEDICINE": 100,
+        "OPHTHALMOLOGY": 200,
+        "OTO-RHINO-LARYNGOLOGY": 100,
+        "COMMUNITY MEDICINE": 200,
       },
     },
   },
@@ -593,48 +605,37 @@ export const ACADEMIC_DB = {
   statuses: STATUSES,
 };
 
+const GENERIC_TITLES = new Set([
+  "ba",
+  "bachelor of arts",
+  "law",
+  "bachelor of law",
+  "bachelor of laws",
+]);
+
 export function findProgramme(degreeOrFamilyName?: string | null): ProgrammeEntry | null {
   const searchQuery = String(degreeOrFamilyName ?? "").trim().toLowerCase();
   if (!searchQuery) return null;
+
+  const words = searchQuery.split(/[^a-z0-9]+/);
 
   let matchedFamily = PROGRAMME_FAMILIES.find((family) => searchQuery === family.family.toLowerCase());
 
   if (!matchedFamily) {
     matchedFamily = PROGRAMME_FAMILIES.find((family) =>
       family.keywords.some((keyword) => {
-        const index = searchQuery.indexOf(keyword);
-        if (index === -1) return false;
-        if (keyword.length <= 5) {
-          const charBefore = index > 0 ? searchQuery[index - 1] : " ";
-          const charAfter = index + keyword.length < searchQuery.length ? searchQuery[index + keyword.length] : " ";
-          const isBoundaryBefore = /[\s(.,\-_/]/.test(charBefore);
-          const isBoundaryAfter = /[\s).,\-_/]/.test(charAfter);
-          return isBoundaryBefore && isBoundaryAfter;
+        const kw = keyword.toLowerCase();
+        if (kw.length <= 4 && !kw.includes(" ")) {
+          return words.includes(kw);
         }
-        return true;
+        return searchQuery.includes(kw);
       })
     );
   }
 
   if (!matchedFamily) return null;
 
-  // Audit over-broad mappings: generic degree names like "BA" or "LAW" without
-  // specific discipline evidence (e.g. Journalism, Economics, BA LLB, BBA LLB)
-  // must not be marked VERIFIED. They are INFERRED and treated as AMBIGUOUS by the engine.
-  let verification: Verification = "VERIFIED";
-
-  if (matchedFamily.family === "BA") {
-    const hasSpecificDiscipline = /(journalism|jmc|bjmc|economics|english|psychology)/i.test(searchQuery);
-    if (!hasSpecificDiscipline) {
-      verification = "INFERRED";
-    }
-  } else if (matchedFamily.family === "LAW") {
-    const hasSpecificDiscipline = /(ba\s*ll\.?b|bba\s*ll\.?b|ballb|bballb|integrated)/i.test(searchQuery);
-    if (!hasSpecificDiscipline) {
-      verification = "INFERRED";
-    }
-  }
-
+  const verification: Verification = GENERIC_TITLES.has(searchQuery) ? "INFERRED" : "VERIFIED";
   const ordinance = ORDINANCES[matchedFamily.ordinance] ?? null;
 
   return {
@@ -671,7 +672,7 @@ export function findOrdinance(identifier?: ProgrammeEntry | string | null): Ordi
   }
 
   const matchedFamily = PROGRAMME_FAMILIES.find((family) =>
-    family.family === query || query.includes(family.family)
+    family.family === query
   );
   if (matchedFamily && ORDINANCES[matchedFamily.ordinance]) {
     return ORDINANCES[matchedFamily.ordinance];
@@ -683,25 +684,18 @@ export function findOrdinance(identifier?: ProgrammeEntry | string | null): Ordi
 export function getSubjectMaxMarks(subjectName?: string, programmeFamily?: string): number | null {
   if (!programmeFamily) return null;
 
-  if (programmeFamily === "MBBS") {
-    const cleanSubjectName = String(subjectName ?? "").toUpperCase().trim();
-    return COURSE_MAX_MARKS[cleanSubjectName] ?? null;
-  }
-
-  // Ordinance 31 Clause 18 and Ordinance 24 standard courses have maximum marks of 100
-  if (programmeFamily === "BPT" || programmeFamily === "BOT" || programmeFamily === "BASLP") {
-    return 100;
-  }
-
   const ordinance = findOrdinance(programmeFamily);
-  if (ordinance?.ordinanceCode === "ORD_31") {
-    return 100;
-  }
-  if (ordinance?.rules?.standardMaxMarks) {
-    return ordinance.rules.standardMaxMarks;
+  if (!ordinance?.rules) return null;
+
+  const subjectMap = ordinance.rules.subjectMaxMarks as Record<string, number> | undefined;
+  if (subjectMap && subjectName) {
+    const clean = String(subjectName).toUpperCase().trim();
+    if (subjectMap[clean] !== undefined) {
+      return subjectMap[clean];
+    }
   }
 
-  return null;
+  return (ordinance.rules.standardMaxMarks as number | undefined) ?? null;
 }
 
 export function isVerified(item?: unknown): boolean {

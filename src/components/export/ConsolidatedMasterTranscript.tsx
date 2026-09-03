@@ -2,13 +2,40 @@
 
 import React, { forwardRef, useMemo } from "react";
 import { StudentProfile } from "@/types/result";
-import { getFallbackCredit, getGradeAndPoints, getResultState, getDivisionClassification } from "@/helpers/grade-system";
+import { decodeStatus } from "@/lib/academic/academic-engine";
 import { AnvikshaWatermark } from "./AnvikshaWatermark";
+
+function getGradeAndPoints(rawTotal: string | number | undefined) {
+    const total = Number(rawTotal);
+    if (isNaN(total)) return { grade: "F", points: 0, pass: false };
+    if (total >= 90) return { grade: "O", points: 10, pass: true };
+    if (total >= 75) return { grade: "A+", points: 9, pass: true };
+    if (total >= 65) return { grade: "A", points: 8, pass: true };
+    if (total >= 55) return { grade: "B+", points: 7, pass: true };
+    if (total >= 50) return { grade: "B", points: 6, pass: true };
+    if (total >= 45) return { grade: "C", points: 5, pass: true };
+    if (total >= 40) return { grade: "P", points: 4, pass: true };
+    return { grade: "F", points: 0, pass: false };
+}
+
+function getFallbackCredit(subjectTitle: string): number {
+    const title = (subjectTitle || "").toUpperCase();
+    if (title.includes("LAB") || title.includes("PRACTICAL") || title.includes("STUDIO")) return 1;
+    return 3;
+}
+
+function getDivision(cgpa: number, backlogs: number): string {
+    if (cgpa >= 10.0 && backlogs === 0) return "Exemplary Performance";
+    if (cgpa >= 6.50) return "First Division";
+    if (cgpa >= 5.00) return "Second Division";
+    if (cgpa >= 4.00) return "Third Division";
+    return "Unqualified for Degree (< 4.00)";
+}
 
 interface Props {
     profile?: StudentProfile | null;
     allResults: any[][];
-    customCredits?: Record<string, number>;
+    customCredits?: Record<string, number | null>;
 }
 
 export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
@@ -54,12 +81,14 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                     const statusCode = row[6];
                     const paperCode = row[1];
                     const subjectTitle = row[2];
-                    const credit = customCredits[paperCode] ?? getFallbackCredit(subjectTitle);
+                    const hasCustom = paperCode in customCredits || (typeof paperCode === "string" && paperCode.toUpperCase() in customCredits);
+                    const customVal = customCredits[paperCode] !== undefined ? customCredits[paperCode] : (typeof paperCode === "string" ? customCredits[paperCode.toUpperCase()] : undefined);
+                    const credit = hasCustom ? (customVal ?? 0) : getFallbackCredit(subjectTitle);
 
-                    const resultState = getResultState(statusCode, rawTotal);
+                    const semantic = decodeStatus(statusCode, rawTotal);
                     const { grade, points, pass } = getGradeAndPoints(rawTotal);
 
-                    const isPassed = resultState === "CLEARED" || (resultState !== "BACK" && resultState !== "ABSENT" && resultState !== "DETAINED" && pass && grade !== "F");
+                    const isPassed = (semantic === "PASS" || semantic === "CREDIT_SECURED" || semantic === "ALREADY_PASSED") || (pass && grade !== "F" && semantic !== "NOT_CLEARED" && semantic !== "ABSENT" && semantic !== "DETAINED");
 
                     semCredits += credit;
                     const numTot = Number(rawTotal);
@@ -96,8 +125,7 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
 
             const cgpa = totalCreds > 0 ? (weightedPts / totalCreds).toFixed(2) : "0.00";
             const percent = (Number(cgpa) * 10).toFixed(2);
-            const divClassification = getDivisionClassification(Number(cgpa), activeBacks);
-            const division = divClassification.division;
+            const division = getDivision(Number(cgpa), activeBacks);
 
             const date = new Date().toLocaleDateString("en-IN", {
                 day: "2-digit",

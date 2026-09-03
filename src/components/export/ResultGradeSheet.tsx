@@ -2,14 +2,33 @@
 
 import React, { forwardRef } from "react";
 import { StudentProfile } from "@/types/result";
-import { getFallbackCredit, getGradeAndPoints, getResultState } from "@/helpers/grade-system";
+import { decodeStatus } from "@/lib/academic/academic-engine";
 import { AnvikshaWatermark } from "./AnvikshaWatermark";
+
+function getGradeAndPoints(rawTotal: string | number | undefined) {
+    const total = Number(rawTotal);
+    if (isNaN(total)) return { grade: "F", points: 0, pass: false };
+    if (total >= 90) return { grade: "O", points: 10, pass: true };
+    if (total >= 75) return { grade: "A+", points: 9, pass: true };
+    if (total >= 65) return { grade: "A", points: 8, pass: true };
+    if (total >= 55) return { grade: "B+", points: 7, pass: true };
+    if (total >= 50) return { grade: "B", points: 6, pass: true };
+    if (total >= 45) return { grade: "C", points: 5, pass: true };
+    if (total >= 40) return { grade: "P", points: 4, pass: true };
+    return { grade: "F", points: 0, pass: false };
+}
+
+function getFallbackCredit(subjectTitle: string): number {
+    const title = (subjectTitle || "").toUpperCase();
+    if (title.includes("LAB") || title.includes("PRACTICAL") || title.includes("STUDIO")) return 1;
+    return 3;
+}
 
 interface ResultGradeSheetProps {
     profile?: StudentProfile | null;
     results: any[][];
     activeSem: string;
-    customCredits?: Record<string, number>;
+    customCredits?: Record<string, number | null>;
 }
 
 export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps>(
@@ -27,11 +46,13 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
             const rawTotal = row[5];
             const statusCode = row[6];
 
-            const credit = customCredits[paperCode] ?? getFallbackCredit(subjectTitle);
-            const resultState = getResultState(statusCode, rawTotal);
+            const hasCustom = paperCode in customCredits || (typeof paperCode === "string" && paperCode.toUpperCase() in customCredits);
+            const customVal = customCredits[paperCode] !== undefined ? customCredits[paperCode] : (typeof paperCode === "string" ? customCredits[paperCode.toUpperCase()] : undefined);
+            const credit = hasCustom ? (customVal ?? 0) : getFallbackCredit(subjectTitle);
+            const semantic = decodeStatus(statusCode, rawTotal);
             const { grade, points, pass } = getGradeAndPoints(rawTotal);
 
-            const isPassed = resultState === "CLEARED" || (resultState !== "BACK" && resultState !== "ABSENT" && resultState !== "DETAINED" && pass && grade !== "F");
+            const isPassed = (semantic === "PASS" || semantic === "CREDIT_SECURED" || semantic === "ALREADY_PASSED") || (pass && grade !== "F" && semantic !== "NOT_CLEARED" && semantic !== "ABSENT" && semantic !== "DETAINED");
 
             totalCredits += credit;
             if (isPassed) {

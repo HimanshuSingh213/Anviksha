@@ -6,6 +6,7 @@ import {
   isVerified,
   getSubjectMaxMarks,
 } from "./academic-db";
+import { DUMMY_PROFILES } from "@/app/(app)/preview/dummy-data";
 
 // The real 498 payload shape (spec §37 fixtures)
 const REAL_498 = {
@@ -51,13 +52,12 @@ describe("CASE 1 — 498 + 2025 identifies B.Tech CSE-DS, raw result visible", (
   });
 });
 
-describe("CASE 2 — no user credits ⇒ no guessed credits: SGPA/CGPA stay UNAVAILABLE", () => {
-  const r = analyzeResult(REAL_498);
+describe("CASE 2 — strict mode without user credits ⇒ no guessed credits: SGPA/CGPA stay UNAVAILABLE", () => {
+  const r = analyzeResult(REAL_498, {}, { allowFallbackCredits: false });
   it("grades calculate (ORD_11 rule verified) but credit GPA is withheld without credits", () => {
     expect(r.analytics.grade.value).toBe(true);
     expect(r.analytics.grade.status).toBe("RESULT_DERIVED");
-    // The engine never invents credits (spec: DEFAULT ≠ VERIFIED). With no
-    // user-edited and no scheme credits, GPA analytics are UNAVAILABLE, null.
+    // When allowFallbackCredits is false and no user credits are provided, GPA analytics are UNAVAILABLE, null.
     expect(r.analytics.sgpa.status).toBe("UNAVAILABLE");
     expect(r.analytics.sgpa.value).toBeNull();
     expect(r.analytics.cgpa.status).toBe("UNAVAILABLE");
@@ -79,6 +79,21 @@ describe("CASE 2 — no user credits ⇒ no guessed credits: SGPA/CGPA stay UNAV
     expect(r.analytics.averageMarks.value).not.toBeNull();
     expect(r.analytics.highestMarks.value).toBe(86);
     expect(r.analytics.lowestMarks.value).toBe(26);
+  });
+});
+
+describe("CASE 2b — default mode with fallback credits ⇒ SGPA/CGPA calculate out-of-the-box", () => {
+  const r = analyzeResult(REAL_498);
+  it("calculates SGPA and CGPA with RESULT_DERIVED status using fallback heuristic credits", () => {
+    expect(r.analytics.sgpa.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.sgpa.value).not.toBeNull();
+    expect(r.analytics.cgpa.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.cgpa.value).not.toBeNull();
+    expect(r.analytics.percentage.status).toBe("RESULT_DERIVED");
+  });
+  it("calculates promotion with fallback credits", () => {
+    expect(r.analytics.promotion.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.promotion.value).not.toBeNull();
   });
 });
 
@@ -104,6 +119,32 @@ describe("CASE 3 — user-edited credits calculate SGPA/CGPA with RESULT_DERIVED
     expect(r.analytics.promotion.status).toBe("RESULT_DERIVED");
     expect(r.analytics.promotion.value).not.toBeNull();
     expect(r.analytics.promotion.value?.length).toBeGreaterThan(0);
+  });
+});
+
+describe("CASE 3b — user removes credit (null) or sets to 0 ⇒ calculation done without it", () => {
+  it("calculates SGPA and CGPA excluding the course with null credit", () => {
+    const r = analyzeResult(REAL_498, { ICT101: null });
+    const course101 = r.courses.find((c) => c.rawCode === "ICT101");
+    expect(course101?.credits.value).toBeNull();
+    expect(course101?.credits.source).toBe("USER");
+
+    expect(r.analytics.sgpa.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.sgpa.value).not.toBeNull();
+    expect(r.analytics.cgpa.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.cgpa.value).not.toBeNull();
+  });
+
+  it("calculates SGPA and CGPA with credit reset to zero (old method)", () => {
+    const r = analyzeResult(REAL_498, { ICT101: 0 });
+    const course101 = r.courses.find((c) => c.rawCode === "ICT101");
+    expect(course101?.credits.value).toBe(0);
+    expect(course101?.credits.source).toBe("USER");
+
+    expect(r.analytics.sgpa.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.sgpa.value).not.toBeNull();
+    expect(r.analytics.cgpa.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.cgpa.value).not.toBeNull();
   });
 });
 
@@ -642,10 +683,91 @@ describe("Targeted Audit — Division Capabilities & Generic Mappings", () => {
     expect(specificBA?.verification).toBe("VERIFIED");
     expect(isVerified(specificBA)).toBe(true);
 
-    // And specific verified LAW programmes (e.g. BA LLB) become VERIFIED
     const specificLaw = findProgramme("BA LLB");
     expect(specificLaw?.verification).toBe("VERIFIED");
+    expect(specificLaw?.ordinanceCode).toBe("ORD_11");
     expect(isVerified(specificLaw)).toBe(true);
+
+    const fullLawName = findProgramme("BACHELOR OF LAWS (B.A. LL.B)");
+    expect(fullLawName?.verification).toBe("VERIFIED");
+    expect(fullLawName?.ordinanceCode).toBe("ORD_11");
+    expect(isVerified(fullLawName)).toBe(true);
+
+    const rLaw = analyzeResult({
+      stprofile: {
+        nrollno: "01816503822",
+        stname: "PRANAV DIXIT",
+        byoa: 2022,
+        yoa: 2022,
+        prgcode: "038",
+        prgname: "BACHELOR OF LAWS (B.A. LL.B)",
+        icode: "165",
+        iname: "USLLS",
+      },
+      stresult: [
+        [1, "LLB-101", "LEGAL METHOD", "30", "46", "76", "08", "12,2022", "2023-02-15"],
+        [1, "LLB-103", "LAW OF CONTRACT-I", "28", "42", "70", "08", "12,2022", "2023-02-15"],
+      ],
+    }, { "LLB-101": 4, "LLB-103": 4 });
+
+    expect(rLaw.programme.ordinance).toBe("ORD_11");
+    expect(rLaw.programme.dbVerification).toBe("VERIFIED");
+    expect(rLaw.analytics.cgpa.value).toBe(8.5);
+    expect(rLaw.analytics.percentage.value).toBe(85);
+    expect(rLaw.analytics.division.value).toBe("First Division");
+  });
+
+  it("BASLP dummy profile evaluates to Ordinance 24 with percentage division and no 0.00 CGPA", () => {
+    const baslpResult = DUMMY_PROFILES.baslp.result;
+    const r = analyzeResult(baslpResult);
+    expect(r.programme.ordinance).toBe("ORD_24");
+    expect(r.analytics.cgpa.value).toBeNull();
+    expect(r.analytics.percentage.value).toBeCloseTo(75.69, 2);
+    expect(r.analytics.division.value).toBe("First Division with Distinction");
+    expect(r.analytics.division.status).toBe("RESULT_DERIVED");
+  });
+
+  it("correctly handles 08 (pass) and 09 (not cleared / absent / detained) status codes", () => {
+    const payload = {
+      stprofile: {
+        nrollno: "04016449825",
+        stname: "GARV ARORA",
+        byoa: 2025,
+        yoa: 2025,
+        prgcode: "498",
+        prgname: "BACHELOR OF TECHNOLOGY (COMPUTER SCIENCE AND ENGINEERING - DATA SCIENCE) ",
+        icode: "164",
+        iname: "UNIVERSITY SCHOOL OF INFORMATION, COMMUNICATION & TECHNOLOGY",
+      },
+      stresult: [
+        [1, "ICT101", "PROGRAMMING FOR PROBLEM SOLVING", "34", "8", "42", "08", "12,2025", "2026-02-03"],
+        [1, "ICT103", "BASICS OF ELECTRICAL ENGINEERING", "8", "14", "22", "09", "12,2025", "2026-02-03"],
+        [1, "ICT105", "SYSTEM MODELING TECHNIQUES- I", "18", "ABS", "ABS", "09", "12,2025", "2026-02-03"],
+        [1, "ICT107", "ENGINEERING MECHANICS", "17", "37", "54", "08", "12,2025", "2026-02-03"],
+        [1, "ICT109", "COMMUNICATION SKILLS", "14", "16", "30", "09", "12,2025", "2026-02-03"],
+        [1, "HVEE113", "HUMAN VALUES AND ETHICS", "-", "45", "45", "08", "12,2025", "2026-02-03"],
+        [1, "ICT121", "INTRODUCTION TO MANUFACTURING PROCESS", "14", "0", "14", "09", "12,2025", "2026-02-03"],
+        [1, "ICT151", "PROGRAMMING FOR PROBLEM SOLVING LAB", "35", "52", "87", "08", "12,2025", "2026-02-03"],
+        [1, "ICT153", "BASICS OF ELECTRICAL ENGINEERING LAB", "16", "34", "50", "08", "12,2025", "2026-02-03"],
+        [2, "ICT102", "DATA STRUCTURES", "DET", "DET", "DET", "09", "5,2026", "2026-07-16"],
+      ],
+    };
+
+    const r = analyzeResult(payload);
+    expect(r.programme.ordinance).toBe("ORD_11");
+
+    // Check pass/fail semantics
+    const ict101 = r.courses.find((c) => c.rawCode === "ICT101");
+    expect(ict101?.semantic).toBe("PASS");
+
+    const ict103 = r.courses.find((c) => c.rawCode === "ICT103");
+    expect(ict103?.semantic).toBe("NOT_CLEARED");
+
+    const ict105 = r.courses.find((c) => c.rawCode === "ICT105");
+    expect(ict105?.semantic).toBe("ABSENT");
+
+    const ict102 = r.courses.find((c) => c.rawCode === "ICT102");
+    expect(ict102?.semantic).toBe("DETAINED");
   });
 });
 

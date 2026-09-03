@@ -13,10 +13,9 @@ import {
     Lock,
     HelpCircle,
 } from "lucide-react";
-import {
-    getPlacementEligibility,
-    PlacementTier,
-} from "@/helpers/grade-system";
+import { getPlacementEligibility, type PlacementTier } from "@/lib/academic/academic-engine";
+
+export type { PlacementTier };
 
 interface Props {
     cgpa: number;
@@ -41,13 +40,13 @@ export default function PlacementEligibilityCard({
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className="analytics-panel space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8"
+            className="analytics-panel space-y-4 sm:space-y-5 p-3.5 sm:p-5 lg:p-6"
         >
-            <header className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-3xl space-y-3 sm:space-y-4">
+            <header className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl space-y-2 sm:space-y-2.5">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-md border border-accent-copper-border bg-accent-copper-surface text-accent-copper shrink-0">
-                            <BriefcaseBusiness size={18} strokeWidth={1.8} />
+                        <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-md border border-accent-copper-border bg-accent-copper-surface text-accent-copper shrink-0">
+                            <BriefcaseBusiness size={16} strokeWidth={1.8} />
                         </div>
                         <div>
                             <div className="flex flex-wrap items-center gap-2">
@@ -66,42 +65,42 @@ export default function PlacementEligibilityCard({
                                     <span className="hidden sm:inline">How is this calculated?</span>
                                 </Link>
                             </div>
-                            <h2 className="mt-0.5 text-base sm:text-xl font-semibold tracking-tight text-foreground">
+                            <h2 className="mt-0.5 text-base sm:text-lg font-semibold tracking-tight text-foreground">
                                 Anviksha Placement Benchmarks
                             </h2>
                         </div>
                     </div>
-                    <p className="max-w-2xl text-xs sm:text-sm leading-5 sm:leading-6 text-foreground-secondary">
+                    <p className="max-w-2xl text-xs leading-5 text-foreground-secondary">
                         Application benchmarks modeled on common recruitment brackets. These are not universal GGSIPU rules — actual criteria depend on the specific employer, role, and drive.
                     </p>
                 </div>
 
                 <div
-                    className={`inline-flex w-fit items-center gap-2 rounded-md border px-3 py-1.5 sm:py-2 text-[10px] sm:text-[11px] font-semibold ${
+                    className={`inline-flex w-fit items-center gap-2 rounded-md border px-2.5 py-1.5 text-[10px] sm:text-[11px] font-semibold ${
                         gateOpen
                             ? "border-grade-excellent-border bg-grade-excellent-surface text-grade-excellent"
                             : "border-grade-fail-border bg-grade-fail-surface text-grade-fail"
                     }`}
                 >
-                    {gateOpen ? <ShieldCheck size={14} /> : <Lock size={14} />}
+                    {gateOpen ? <ShieldCheck size={13} /> : <Lock size={13} />}
                     {gateOpen ? "0-backlog gate open" : "Backlog gate locked"}
                 </div>
             </header>
 
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-                <div className="analytics-card p-5">
+            <div className="grid grid-cols-1 gap-2.5 sm:gap-3 lg:grid-cols-3">
+                <div className="analytics-card p-3 sm:p-3.5">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
                         Current aggregate
                     </p>
-                    <div className="mt-3 flex items-end gap-2">
-                        <span className="font-mono text-3xl font-semibold leading-none text-foreground">
+                    <div className="mt-1.5 flex items-end gap-2">
+                        <span className="font-mono text-xl sm:text-2xl font-semibold leading-none text-foreground">
                             {summary.cgpa.toFixed(2)}
                         </span>
-                        <span className="pb-0.5 text-sm text-foreground-muted">
+                        <span className="pb-0.5 text-xs sm:text-sm text-foreground-muted">
                             CGPA / {summary.percentage}%
                         </span>
                     </div>
-                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-surface">
+                    <div className="mt-2.5 h-1.5 sm:h-2 overflow-hidden rounded-full bg-surface">
                         <div
                             className="h-full rounded-full bg-accent-copper"
                             style={{ width: `${Math.min(100, Math.max(0, summary.percentage))}%` }}
@@ -110,7 +109,7 @@ export default function PlacementEligibilityCard({
                 </div>
 
                 <div
-                    className={`rounded-lg border p-5 ${
+                    className={`rounded-lg border p-3 sm:p-3.5 ${
                         gateOpen
                             ? "border-grade-excellent-border bg-grade-excellent-surface/25"
                             : "border-grade-fail-border bg-grade-fail-surface/25"
@@ -119,18 +118,18 @@ export default function PlacementEligibilityCard({
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
                         Backlog gate
                     </p>
-                    <div className="mt-3 flex items-end gap-2">
+                    <div className="mt-1.5 flex items-end gap-2">
                         <span
-                            className={`font-mono text-3xl font-semibold leading-none ${
+                            className={`font-mono text-xl sm:text-2xl font-semibold leading-none ${
                                 gateOpen ? "text-grade-excellent" : "text-grade-fail"
                             }`}
                         >
                             {summary.activeBacklogs}
                         </span>
-                        <span className="pb-0.5 text-sm text-foreground-muted">active</span>
+                        <span className="pb-0.5 text-xs sm:text-sm text-foreground-muted">active</span>
                     </div>
                     <p
-                        className={`mt-3 text-[11px] leading-5 ${
+                        className={`mt-2 text-[10px] sm:text-[11px] leading-4 sm:leading-5 ${
                             gateOpen ? "text-grade-excellent" : "text-grade-fail"
                         }`}
                     >
@@ -140,16 +139,16 @@ export default function PlacementEligibilityCard({
                     </p>
                 </div>
 
-                <div className="analytics-card p-5">
+                <div className="analytics-card p-3 sm:p-3.5">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
                         Next milestone
                     </p>
-                    <p className="mt-3 text-base font-semibold text-foreground">
+                    <p className="mt-1.5 text-sm sm:text-base font-semibold text-foreground">
                         {summary.nextTargetTier
                             ? summary.nextTargetTier.name
                             : "All benchmarks met"}
                     </p>
-                    <p className="mt-2 text-[11px] leading-5 text-foreground-secondary">
+                    <p className="mt-1 text-[10px] sm:text-[11px] leading-4 sm:leading-5 text-foreground-secondary">
                         {summary.nextTargetTier
                             ? summary.nextTargetTier.statusReason
                             : "Highest available benchmark bracket is cleared."}
@@ -157,7 +156,7 @@ export default function PlacementEligibilityCard({
                 </div>
             </div>
 
-            <div className="rounded-lg border border-border bg-surface-deep/75 p-3.5 sm:p-4">
+            <div className="rounded-lg border border-border bg-surface-deep/75 p-3 sm:p-3.5">
                 <div className="flex items-center justify-between gap-3">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
                         Cutoff track
@@ -190,31 +189,31 @@ export default function PlacementEligibilityCard({
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-2">
                 {summary.tiers.map((tier: PlacementTier) => {
                     const isEligible = tier.isEligible;
 
                     return (
                         <article
                             key={tier.id}
-                            className={`rounded-lg border p-5 transition-colors hover:border-border-strong ${
+                            className={`rounded-lg border p-3.5 sm:p-4 transition-colors hover:border-border-strong ${
                                 isEligible
                                     ? "border-grade-excellent-border/70 bg-grade-excellent-surface/15"
                                     : "border-border bg-surface-deep/80"
                             }`}
                         >
-                            <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                    <p className="text-sm font-semibold text-foreground">
+                                    <p className="text-xs sm:text-sm font-semibold text-foreground">
                                         {tier.name}
                                     </p>
-                                    <p className="mt-1 font-mono text-[11px] text-accent-copper">
+                                    <p className="mt-0.5 font-mono text-[10px] sm:text-[11px] text-accent-copper">
                                         {tier.benchmarkLabel}
                                     </p>
                                 </div>
 
                                 <span
-                                    className={`inline-flex shrink-0 items-center gap-1.5 rounded-md border px-2.5 py-1 text-[10px] font-semibold ${
+                                    className={`inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-semibold ${
                                         isEligible
                                             ? "border-grade-excellent-border bg-grade-excellent-surface text-grade-excellent"
                                             : "border-accent-copper-border bg-accent-copper-surface text-accent-copper"
@@ -234,12 +233,12 @@ export default function PlacementEligibilityCard({
                                 </span>
                             </div>
 
-                            <p className="mt-3 text-[12px] leading-5 text-foreground-secondary">
+                            <p className="mt-2 text-[11px] sm:text-[12px] leading-4.5 sm:leading-5 text-foreground-secondary">
                                 {tier.description}
                             </p>
 
                             {tier.exampleCompanies && tier.exampleCompanies.length > 0 && (
-                                <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                                <div className="mt-2 flex flex-wrap items-center gap-1.5">
                                     <span className="text-[9px] font-mono uppercase tracking-wider text-foreground-muted mr-1 font-semibold">
                                         Typical Recruiters:
                                     </span>
@@ -254,8 +253,8 @@ export default function PlacementEligibilityCard({
                                 </div>
                             )}
 
-                            <div className="mt-5 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
-                                <span className="inline-flex items-start gap-2 text-[11px] leading-5">
+                            <div className="mt-3.5 flex flex-col gap-2 border-t border-border pt-2.5 sm:flex-row sm:items-center sm:justify-between">
+                                <span className="inline-flex items-start gap-1.5 text-[10px] sm:text-[11px] leading-4.5">
                                     {isEligible ? (
                                         <>
                                             <CheckCircle2 size={12} className="mt-0.5 shrink-0 text-grade-excellent" />
@@ -274,7 +273,7 @@ export default function PlacementEligibilityCard({
                                 </span>
 
                                 {!isEligible && tier.cgpaDeficit > 0 && (
-                                    <span className="inline-flex w-fit items-center gap-1 rounded-md border border-gold-border bg-gold-surface px-2 py-1 font-mono text-[10px] font-bold text-gold">
+                                    <span className="inline-flex w-fit items-center gap-1 rounded-md border border-gold-border bg-gold-surface px-2 py-0.5 font-mono text-[10px] font-bold text-gold">
                                         +{tier.cgpaDeficit} CGPA
                                         <ArrowUpRight size={10} />
                                     </span>

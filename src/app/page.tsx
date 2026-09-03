@@ -1,7 +1,34 @@
 import Link from "next/link";
 import Image from "next/image";
 import { cookies } from "next/headers";
-import LandingPageView, { FAQS } from "@/components/home/LandingPageView";
+import LandingPageView from "@/components/home/LandingPageView";
+
+const FAQS = [
+  {
+    q: "How can I check my GGSIPU Semester Results on Anviksha?",
+    a: "Simply enter your GGSIPU student enrollment number and password. Anviksha securely connects to the official university exam servers via direct proxy to fetch your complete semester marks, grade points, and academic standing instantly.",
+  },
+  {
+    q: "Does Anviksha work for all GGSIPU programmes and streams?",
+    a: "Yes! Anviksha supports every programme offered by Guru Gobind Singh Indraprastha University (GGSIPU), including B.Tech (all engineering branches), BCA, BBA, MBA, BA LLB, BBA LLB, B.Sc Nursing, B.Pharm, BJMC, B.Ed, and allied medical sciences across all 50+ affiliated institutes.",
+  },
+  {
+    q: "How is SGPA and CGPA calculated in GGSIPU under Ordinance 11?",
+    a: "Under GGSIPU Ordinance 11, SGPA is calculated as the sum of (Subject Credits × Grade Points) divided by total semester credits. CGPA is the cumulative credit-weighted average across all completed semesters. Equivalent percentage is computed as CGPA × 10.0.",
+  },
+  {
+    q: "What is the GGSIPU 50% Credit Rule for Academic Promotion?",
+    a: "Under GGSIPU academic regulations, a student must clear at least 50% of the total credits offered across both semesters of an academic year (e.g. Sem 1 + Sem 2) to be eligible for promotion to the next academic year without facing year-back detention.",
+  },
+  {
+    q: "How does the Live GGSIPU Exam Circulars and Date-Sheets feed work?",
+    a: "The Notices feed on Anviksha is synchronized directly with the official university portal (ipu.ac.in/exam_notices.php) every 15 minutes using server ISR caching. Students can search circulars by keyword, filter by category (Results, Date Sheets, Inspection), and download official PDFs directly.",
+  },
+  {
+    q: "Is my student data and login password safe on Anviksha?",
+    a: "Yes, 100%. Anviksha operates on a zero-database architecture. Your credentials and marks are proxied directly to the university's official server during your active session and are never saved or recorded on any server.",
+  },
+];
 
 export default async function Home() {
   const cookieStore = await cookies();

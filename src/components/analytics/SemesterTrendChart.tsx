@@ -14,12 +14,23 @@ import {
     CartesianGrid,
     Tooltip,
 } from "recharts";
-import { getFallbackCredit, getGradeAndPoints, getResultState } from "@/helpers/grade-system";
+import { decodeStatus } from "@/lib/academic/academic-engine";
+
+function getGradePoints(total: number): number {
+    if (total >= 90) return 10;
+    if (total >= 75) return 9;
+    if (total >= 65) return 8;
+    if (total >= 55) return 7;
+    if (total >= 50) return 6;
+    if (total >= 45) return 5;
+    if (total >= 40) return 4;
+    return 0;
+}
 
 interface Props {
     allResults: any[][];
     filteredResults: any[][];
-    customCredit: Record<string, number>;
+    customCredit: Record<string, number | null>;
 }
 
 export default function SemesterTrendChart({ allResults, filteredResults, customCredit }: Props) {
@@ -31,7 +42,7 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
 
     // Memoize SGPA semester curve calculation
     const { semData, bestSem } = useMemo(() => {
-        const semMap: Record<number, any[]> = {};
+        const semMap: Record<number, any[][]> = {};
         allResults.forEach((row) => {
             const sem = Number(row[0]);
             if (sem >= 1 && sem <= 8) {
@@ -52,12 +63,19 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
                 const statusCode = row[6];
                 const paperCode = row[1];
                 const subjectTitle = row[2];
-                const credit = customCredit[paperCode] ?? getFallbackCredit(subjectTitle);
+                const title = String(subjectTitle || "").toUpperCase();
+                const defaultCredit = title.includes("LAB") || title.includes("PRACTICAL") || title.includes("STUDIO") ? 1 : 3;
+                
+                const hasCustom = paperCode in customCredit || (typeof paperCode === "string" && paperCode.toUpperCase() in customCredit);
+                const customVal = customCredit[paperCode] !== undefined ? customCredit[paperCode] : (typeof paperCode === "string" ? customCredit[paperCode.toUpperCase()] : undefined);
+                const credit = hasCustom ? (customVal ?? 0) : defaultCredit;
+                
+                if (credit <= 0) return;
 
-                const resultState = getResultState(statusCode, rawTotal);
-                const { points, pass } = getGradeAndPoints(rawTotal);
-
-                const isPassed = resultState === "CLEARED" || (resultState !== "BACK" && resultState !== "ABSENT" && resultState !== "DETAINED" && pass);
+                const semantic = decodeStatus(statusCode, rawTotal);
+                const totalNum = Number(rawTotal);
+                const points = !isNaN(totalNum) ? getGradePoints(totalNum) : 0;
+                const isPassed = semantic === "PASS" || semantic === "CREDIT_SECURED" || semantic === "ALREADY_PASSED";
 
                 weighted += credit * (isPassed ? points : 0);
                 credits += credit;

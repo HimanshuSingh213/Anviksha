@@ -14,52 +14,65 @@ interface Props {
     totalMaxMarks: number;
     percentage: string;
     backlogsCount: number;
+    percentSub?: string;
 }
 
-const getCards = (props: Props) => [
-    {
-        label: props.gpaLabel,
-        value: props.gpa,
-        sub: "out of 10.0 scale",
-        icon: Award,
-        accent: "text-cat-violet",
-        border: "border-cat-violet-border",
-        bg: "bg-cat-violet-surface",
-        href: "/calculations#sgpa",
-    },
-    {
-        label: "Credits Earned",
-        value: `${props.earnedCredits}/${props.totalCredits}`,
-        sub: `${props.totalCredits - props.earnedCredits} credits pending`,
-        icon: BookOpen,
-        accent: "text-cat-teal",
-        border: "border-cat-teal-border",
-        bg: "bg-cat-teal-surface",
-        href: "/calculations#credits",
-    },
-    {
-        label: "Marks Obtained",
-        value: `${props.obtainedMarks}/${props.totalMaxMarks}`,
-        sub: props.totalMaxMarks > 0
-            ? `${((props.obtainedMarks / props.totalMaxMarks) * 100).toFixed(1)}% raw score`
-            : "—",
-        icon: FileText,
-        accent: "text-cat-pink",
-        border: "border-cat-pink-border",
-        bg: "bg-cat-pink-surface",
-        href: "/calculations#grades",
-    },
-    {
-        label: "Equivalent %",
-        value: `${props.percentage}%`,
-        sub: "CGPA × 10 (Ordinance 11)",
-        icon: Percent,
-        accent: "text-cat-blue",
-        border: "border-cat-blue-border",
-        bg: "bg-cat-blue-surface",
-        href: "/calculations#percentage",
-    },
-];
+const formatPercentage = (val: string) => {
+    if (!val || val === "—") return "—";
+    return val.endsWith("%") ? val : `${val}%`;
+};
+
+const getCards = (props: Props) => {
+    const isGpaApplicable = props.gpa !== "N/A" && props.gpa !== "—";
+    const hasCredits = props.totalCredits > 0;
+
+    return [
+        {
+            label: props.gpaLabel,
+            value: props.gpa,
+            sub: isGpaApplicable ? "out of 10.0 scale" : "Percentage scheme",
+            icon: Award,
+            accent: "text-cat-violet",
+            border: "border-cat-violet-border",
+            bg: "bg-cat-violet-surface",
+            href: "/calculations#sgpa",
+        },
+        {
+            label: hasCredits ? "Credits Earned" : "Credits Status",
+            value: hasCredits ? `${props.earnedCredits}/${props.totalCredits}` : "Non-credit",
+            sub: hasCredits
+                ? `${props.totalCredits - props.earnedCredits} credits pending`
+                : "Evaluated by course marks",
+            icon: BookOpen,
+            accent: "text-cat-teal",
+            border: "border-cat-teal-border",
+            bg: "bg-cat-teal-surface",
+            href: "/calculations#credits",
+        },
+        {
+            label: "Marks Obtained",
+            value: props.totalMaxMarks > 0 ? `${props.obtainedMarks}/${props.totalMaxMarks}` : `${props.obtainedMarks}`,
+            sub: props.totalMaxMarks > 0
+                ? `${((props.obtainedMarks / props.totalMaxMarks) * 100).toFixed(1)}% raw score`
+                : "—",
+            icon: FileText,
+            accent: "text-cat-pink",
+            border: "border-cat-pink-border",
+            bg: "bg-cat-pink-surface",
+            href: "/calculations#grades",
+        },
+        {
+            label: isGpaApplicable ? "Equivalent %" : "Aggregate %",
+            value: formatPercentage(props.percentage),
+            sub: props.percentSub ?? (props.gpaLabel.includes("SGPA") ? "SGPA × 10 (Ordinance 11)" : "CGPA × 10 (Ordinance 11)"),
+            icon: Percent,
+            accent: "text-cat-blue",
+            border: "border-cat-blue-border",
+            bg: "bg-cat-blue-surface",
+            href: "/calculations#percentage",
+        },
+    ];
+};
 
 export default function AnalyticsOverview(props: Props) {
     const metricCards = useMemo(() => getCards(props), [props]);

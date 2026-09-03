@@ -3,9 +3,9 @@ import { create } from "zustand";
 
 interface ResultStore {
     result: ResultData | null;
-    customCredits: Record<string, number>;
+    customCredits: Record<string, number | null>;
     setResult: (data: ResultData) => void;
-    setCustomCredit: (paperCode: string, credits: number) => void;
+    setCustomCredit: (paperCode: string, credits: number | null) => void;
     clearResult: () => void;
 }
 

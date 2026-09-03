@@ -3,12 +3,15 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { getGradeAndPoints } from "@/helpers/grade-system";
-
-interface Props {
-    rows: any[][];
-    totalCredits: number;
-    earnedCredits: number;
+function getGrade(total: number) {
+    if (total >= 90) return { grade: "O", pass: true };
+    if (total >= 75) return { grade: "A+", pass: true };
+    if (total >= 65) return { grade: "A", pass: true };
+    if (total >= 55) return { grade: "B+", pass: true };
+    if (total >= 50) return { grade: "B", pass: true };
+    if (total >= 45) return { grade: "C", pass: true };
+    if (total >= 40) return { grade: "P", pass: true };
+    return { grade: "F", pass: false };
 }
 
 const GRADE_COLORS: Record<string, string> = {
@@ -21,6 +24,12 @@ const GRADE_COLORS: Record<string, string> = {
     P: "var(--grade-pass)",
     F: "var(--grade-fail)",
 };
+
+interface Props {
+    rows: any[][];
+    totalCredits: number;
+    earnedCredits: number;
+}
 
 export default function QuickStatsDistribution({ rows, totalCredits, earnedCredits }: Props) {
     const [mounted, setMounted] = useState(false);
@@ -43,7 +52,7 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
 
         rows.forEach((row) => {
             const total = isNaN(Number(row[5])) ? 0 : Number(row[5]);
-            const { pass, grade } = getGradeAndPoints(total);
+            const { pass, grade } = getGrade(total);
 
             if (grade in counts) counts[grade]++;
             else counts["F"]++;
@@ -57,7 +66,7 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
             }
         });
 
-        const passedRows = rows.filter((r) => getGradeAndPoints(Number(r[5])).pass);
+        const passedRows = rows.filter((r) => getGrade(Number(r[5])).pass);
         const hiSubject = passedRows.find((r) => Number(r[5]) === hi);
         const loSubject = passedRows.find((r) => Number(r[5]) === lo);
 

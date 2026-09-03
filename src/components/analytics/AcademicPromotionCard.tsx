@@ -12,14 +12,13 @@ import {
     GraduationCap,
     HelpCircle,
 } from "lucide-react";
-import {
-    getAcademicPromotionStatus,
-    AcademicYearStatus,
-} from "@/helpers/grade-system";
+import { getAcademicPromotionStatus, type AcademicYearStatus } from "@/lib/academic/academic-engine";
+
+export type { AcademicYearStatus };
 
 interface Props {
     allResults: any[][];
-    customCredit: Record<string, number>;
+    customCredit: Record<string, number | null>;
 }
 
 const statusTone = {
@@ -70,7 +69,7 @@ export default function AcademicPromotionCard({
         const evaluatedYears = promotion.years.filter((year) => year.status !== "UPCOMING");
         const totalCredits = evaluatedYears.reduce((sum, year) => sum + year.totalCredits, 0);
         const earnedCredits = evaluatedYears.reduce((sum, year) => sum + year.earnedCredits, 0);
-        const deficit = evaluatedYears.reduce((sum, year) => sum + year.creditsDeficit, 0);
+        const deficit = evaluatedYears.reduce((sum, year) => sum + year.creditsDeficit + year.priorYearsDeficit, 0);
 
         return {
             evaluatedYears: evaluatedYears.length,
@@ -93,13 +92,13 @@ export default function AcademicPromotionCard({
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className="analytics-panel space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8"
+            className="analytics-panel space-y-4 sm:space-y-5 p-3.5 sm:p-5 lg:p-6"
         >
-            <header className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-3xl space-y-3 sm:space-y-4">
+            <header className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl space-y-2 sm:space-y-2.5">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-md border border-gold-border bg-gold-surface text-gold shrink-0">
-                            <GraduationCap size={18} strokeWidth={1.8} aria-hidden="true" />
+                        <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-md border border-gold-border bg-gold-surface text-gold shrink-0">
+                            <GraduationCap size={16} strokeWidth={1.8} aria-hidden="true" />
                         </div>
                         <div>
                             <div className="flex items-center gap-2">
@@ -117,66 +116,66 @@ export default function AcademicPromotionCard({
                             </div>
                             <h2
                                 id="academic-promotion-heading"
-                                className="mt-0.5 text-base sm:text-xl font-semibold tracking-tight text-foreground"
+                                className="mt-0.5 text-base sm:text-lg font-semibold tracking-tight text-foreground"
                             >
                                 Promotion & Year-Back Assessment
                             </h2>
                         </div>
                     </div>
-                    <p className="max-w-2xl text-xs sm:text-sm leading-5 sm:leading-6 text-foreground-secondary">
-                        Ordinance 11 promotion baseline: student must obtain at least 50% of the existing academic year&apos;s credits. Additional programme or statutory body requirements may apply.
+                    <p className="max-w-2xl text-xs leading-5 text-foreground-secondary">
+                        Ordinance 11 Clause 12 baseline: student must obtain at least 50% credits in the ensuing academic year, plus at least 90% cumulative credits across all prior academic years taken together. Additional statutory body requirements may apply.
                     </p>
                 </div>
 
                 <div
-                    className={`inline-flex w-fit items-center gap-2 rounded-md border px-3 py-1.5 sm:py-2 text-[10px] sm:text-[11px] font-semibold ${
+                    className={`inline-flex w-fit items-center gap-2 rounded-md border px-2.5 py-1.5 text-[10px] sm:text-[11px] font-semibold ${
                         hasDetentionRisk
                             ? "border-grade-fail-border bg-grade-fail-surface text-grade-fail"
                             : "border-grade-excellent-border bg-grade-excellent-surface text-grade-excellent"
                     }`}
                 >
                     {hasDetentionRisk ? (
-                        <AlertTriangle size={14} aria-hidden="true" />
+                        <AlertTriangle size={13} aria-hidden="true" />
                     ) : (
-                        <ShieldCheck size={14} aria-hidden="true" />
+                        <ShieldCheck size={13} aria-hidden="true" />
                     )}
                     {hasDetentionRisk ? "Action required" : "Standing clear"}
                 </div>
             </header>
 
-            <div className="grid gap-3 sm:grid-cols-3">
-                <div className="analytics-card p-4">
+            <div className="grid gap-2.5 sm:grid-cols-3">
+                <div className="analytics-card p-3 sm:p-3.5">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
                         Credit progress
                     </p>
-                    <p className="mt-2 font-mono text-2xl font-semibold text-foreground">
+                    <p className="mt-1 font-mono text-xl sm:text-2xl font-semibold text-foreground">
                         {summary.earnedCredits}
                         <span className="text-sm font-normal text-foreground-muted">
                             /{summary.totalCredits}
                         </span>
                     </p>
-                    <p className="mt-1 text-[11px] text-foreground-secondary">
+                    <p className="mt-0.5 text-[10px] sm:text-[11px] text-foreground-secondary">
                         {summary.overallPercent}% credit completion
                     </p>
                 </div>
 
-                <div className="analytics-card p-4">
+                <div className="analytics-card p-3 sm:p-3.5">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
                         Promoted years
                     </p>
-                    <p className="mt-2 font-mono text-2xl font-semibold text-foreground">
+                    <p className="mt-1 font-mono text-xl sm:text-2xl font-semibold text-foreground">
                         {summary.promotedYears}
                         <span className="text-sm font-normal text-foreground-muted">
                             /{summary.evaluatedYears || 0}
                         </span>
                     </p>
-                    <p className="mt-1 text-[11px] text-foreground-secondary">
+                    <p className="mt-0.5 text-[10px] sm:text-[11px] text-foreground-secondary">
                         Completed annual checkpoints
                     </p>
                 </div>
 
                 <div
-                    className={`rounded-lg border p-4 ${
+                    className={`rounded-lg border p-3 sm:p-3.5 ${
                         summary.deficit > 0
                             ? "border-grade-fail-border bg-grade-fail-surface/25"
                             : "border-accent-mint-border bg-accent-mint-surface"
@@ -186,19 +185,19 @@ export default function AcademicPromotionCard({
                         Recovery deficit
                     </p>
                     <p
-                        className={`mt-2 font-mono text-2xl font-semibold ${
+                        className={`mt-1 font-mono text-xl sm:text-2xl font-semibold ${
                             summary.deficit > 0 ? "text-grade-fail" : "text-accent-mint"
                         }`}
                     >
                         {summary.deficit} cr
                     </p>
-                    <p className="mt-1 text-[11px] text-foreground-secondary">
+                    <p className="mt-0.5 text-[10px] sm:text-[11px] text-foreground-secondary">
                         Credits needed to restore promotion safety
                     </p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-2 xl:grid-cols-4">
                 {years.map((year: AcademicYearStatus) => {
                     const tone = statusTone[year.status];
                     const StatusIcon = tone.icon;
@@ -209,59 +208,59 @@ export default function AcademicPromotionCard({
                         <article
                             key={year.yearNumber}
                             aria-label={`${year.yearLabel} promotion status: ${tone.label}`}
-                            className={`flex min-h-fit sm:min-h-67 flex-col justify-between rounded-lg border p-4 sm:p-5 transition-colors hover:border-border-strong ${tone.card}`}
+                            className={`flex min-h-fit flex-col justify-between rounded-lg border p-3.5 sm:p-4 transition-colors hover:border-border-strong ${tone.card}`}
                         >
-                            <div className="space-y-4 sm:space-y-5">
-                                <div className="flex items-start justify-between gap-4">
+                            <div className="space-y-3 sm:space-y-3.5">
+                                <div className="flex items-start justify-between gap-3">
                                     <div>
                                         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
                                             Year {year.yearNumber}
                                         </p>
-                                        <h3 className="mt-1 text-base font-semibold text-foreground">
+                                        <h3 className="mt-0.5 text-sm sm:text-base font-semibold text-foreground">
                                             {year.yearLabel}
                                         </h3>
-                                        <p className="mt-1 font-mono text-[11px] text-foreground-muted">
+                                        <p className="mt-0.5 font-mono text-[10px] sm:text-[11px] text-foreground-muted">
                                             Sem {year.semesters[0]} / Sem {year.semesters[1]}
                                         </p>
                                     </div>
 
                                     {isActive && (
-                                        <span className="rounded-md border border-gold-border bg-gold-surface px-2 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-gold">
+                                        <span className="rounded-md border border-gold-border bg-gold-surface px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-gold">
                                             Current
                                         </span>
                                     )}
                                 </div>
 
                                 <span
-                                    className={`inline-flex w-fit items-center gap-1.5 rounded-md border px-2.5 py-1 text-[10px] font-semibold ${tone.soft}`}
+                                    className={`inline-flex w-fit items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-semibold ${tone.soft}`}
                                 >
                                     <StatusIcon size={12} aria-hidden="true" />
                                     {tone.label}
                                 </span>
 
                                 {isUpcoming ? (
-                                    <div className="rounded-md border border-dashed border-border-strong bg-surface/60 px-4 py-5 text-center">
-                                        <Clock size={16} className="mx-auto text-foreground-muted" aria-hidden="true" />
-                                        <p className="mt-2 text-[11px] text-foreground-muted">
+                                    <div className="rounded-md border border-dashed border-border-strong bg-surface/60 px-3 py-4 text-center">
+                                        <Clock size={15} className="mx-auto text-foreground-muted" aria-hidden="true" />
+                                        <p className="mt-1.5 text-[11px] text-foreground-muted">
                                             Awaiting semester results
                                         </p>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4">
-                                        <div className="flex items-end justify-between gap-4">
+                                    <div className="space-y-2.5">
+                                        <div className="flex items-end justify-between gap-3">
                                             <div>
                                                 <p className="text-[10px] uppercase tracking-[0.14em] text-foreground-muted">
                                                     Earned
                                                 </p>
-                                                <p className="mt-1 font-mono text-2xl font-semibold leading-none text-foreground">
+                                                <p className="mt-0.5 font-mono text-xl sm:text-2xl font-semibold leading-none text-foreground">
                                                     {year.earnedCredits}
-                                                    <span className="text-sm font-normal text-foreground-muted">
+                                                    <span className="text-xs sm:text-sm font-normal text-foreground-muted">
                                                         /{year.totalCredits}
                                                     </span>
                                                 </p>
                                             </div>
                                             <div className="text-right">
-                                                <p className={`font-mono text-lg font-semibold ${tone.text}`}>
+                                                <p className={`font-mono text-base sm:text-lg font-semibold ${tone.text}`}>
                                                     {year.percentage}%
                                                 </p>
                                                 <p className="text-[10px] text-foreground-muted">
@@ -287,43 +286,65 @@ export default function AcademicPromotionCard({
                                             <span className="absolute inset-y-0 left-1/2 w-px bg-foreground/70" aria-hidden="true" title="50% Annual Credit Threshold" />
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-2 text-[10px]">
-                                            <div className="rounded-md border border-border bg-surface/70 px-3 py-2">
-                                                <p className="text-foreground-muted">Required</p>
+                                        <div className="grid grid-cols-2 gap-1.5 text-[10px]">
+                                            <div className="rounded-md border border-border bg-surface/70 px-2.5 py-1.5">
+                                                <p className="text-foreground-muted">Annual (50%)</p>
                                                 <p className="mt-0.5 font-mono font-semibold text-foreground">
                                                     {year.requiredCredits} cr
                                                 </p>
                                             </div>
-                                            <div className="rounded-md border border-border bg-surface/70 px-3 py-2">
-                                                <p className="text-foreground-muted">Deficit</p>
+                                            <div className="rounded-md border border-border bg-surface/70 px-2.5 py-1.5">
+                                                <p className="text-foreground-muted">Annual Deficit</p>
                                                 <p className={`mt-0.5 font-mono font-semibold ${year.creditsDeficit > 0 ? "text-grade-fail" : "text-grade-excellent"}`}>
                                                     {year.creditsDeficit} cr
                                                 </p>
                                             </div>
+                                            {year.priorYearsTotalCredits > 0 && (
+                                                <>
+                                                    <div className="rounded-md border border-border bg-surface/70 px-2.5 py-1.5">
+                                                        <p className="text-foreground-muted">Prior (90%)</p>
+                                                        <p className="mt-0.5 font-mono font-semibold text-foreground">
+                                                            {year.priorYearsRequiredCredits} cr
+                                                        </p>
+                                                    </div>
+                                                    <div className="rounded-md border border-border bg-surface/70 px-2.5 py-1.5">
+                                                        <p className="text-foreground-muted">Prior Deficit</p>
+                                                        <p className={`mt-0.5 font-mono font-semibold ${year.priorYearsDeficit > 0 ? "text-grade-fail" : "text-grade-excellent"}`}>
+                                                            {year.priorYearsDeficit} cr
+                                                        </p>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 )}
                             </div>
 
                             {!isUpcoming && (
-                                <div className="mt-6 flex items-start gap-2 border-t border-border pt-4 text-[11px] leading-5">
+                                <div className="mt-4 flex items-start gap-1.5 border-t border-border pt-2.5 text-[10px] sm:text-[11px] leading-4.5">
                                     {year.status === "PROMOTED" ? (
                                         <>
-                                            <CheckCircle2 size={13} className="mt-0.5 shrink-0 text-grade-excellent" aria-hidden="true" />
+                                            <CheckCircle2 size={12} className="mt-0.5 shrink-0 text-grade-excellent" aria-hidden="true" />
                                             <span className="text-foreground-secondary">
-                                                Ordinance 11 50% baseline cleared for this academic year.
+                                                Ordinance 11 Clause 12 cleared (≥50% annual credits{year.priorYearsTotalCredits > 0 ? " & ≥90% prior credits" : ""}).
                                             </span>
                                         </>
                                     ) : year.status === "YEAR_BACK_RISK" ? (
                                         <>
-                                            <AlertTriangle size={13} className="mt-0.5 shrink-0 text-grade-fail" aria-hidden="true" />
+                                            <AlertTriangle size={12} className="mt-0.5 shrink-0 text-grade-fail" aria-hidden="true" />
                                             <span className="text-foreground-secondary">
-                                                Clear <strong className="font-mono text-grade-fail">{year.creditsDeficit} credits</strong> through re-appear.
+                                                {!year.meetsCurrentYearRule && !year.meetsPriorYearsRule ? (
+                                                    <>Year-back risk: Need <strong className="font-mono text-grade-fail">{year.creditsDeficit} cr</strong> in current year (50%) & <strong className="font-mono text-grade-fail">{year.priorYearsDeficit} cr</strong> in prior years (90%).</>
+                                                ) : !year.meetsCurrentYearRule ? (
+                                                    <>Annual credit deficit: Clear <strong className="font-mono text-grade-fail">{year.creditsDeficit} credits</strong> through re-appear to meet 50% rule.</>
+                                                ) : (
+                                                    <>Prior backlog deficit: Clear <strong className="font-mono text-grade-fail">{year.priorYearsDeficit} credits</strong> in prior years to meet 90% rule.</>
+                                                )}
                                             </span>
                                         </>
                                     ) : (
                                         <>
-                                            <ArrowUpRight size={13} className="mt-0.5 shrink-0 text-cat-blue" aria-hidden="true" />
+                                            <ArrowUpRight size={12} className="mt-0.5 shrink-0 text-cat-blue" aria-hidden="true" />
                                             <span className="text-foreground-secondary">
                                                 Partial year evaluated. Final standing updates after Sem {year.semesters[1]}.
                                             </span>
