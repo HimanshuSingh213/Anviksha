@@ -34,7 +34,7 @@ export default function AppNavbar({ profile }: AppNavbarProps) {
                             exit={{ opacity: 0, x: -8 }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
                         >
-                            <Link href="/" title="Go to Homepage" className="flex items-center gap-2 shrink-0 group">
+                            <Link href="/" title="Go to Homepage" aria-label="Anviksha home" className="flex items-center gap-2 shrink-0 group">
                                 <Image
                                     src="/navbar-logo.png"
                                     alt="Anviksha"
@@ -57,20 +57,20 @@ export default function AppNavbar({ profile }: AppNavbarProps) {
                             onClick={() => router.push("/dashboard")}
                             className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-mono font-semibold text-foreground-secondary hover:text-foreground hover:bg-surface-elevated transition-colors cursor-pointer shrink-0"
                         >
-                            <ArrowLeft size={14} />
+                            <ArrowLeft size={14} aria-hidden="true" />
                             <span>Back to Dashboard</span>
                         </motion.button>
                     )}
                 </AnimatePresence>
 
-                <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                <nav aria-label="Dashboard navigation" className="flex items-center gap-2 sm:gap-2.5 shrink-0">
                     {/* Live Exam Notices Link */}
                     <Link
                         href="/notices"
                         title="Live GGSIPU Result Circulars & Date-Sheets"
                         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors duration-200 shrink-0 shadow-xs"
                     >
-                        <Bell size={13} className="text-gold" />
+                        <Bell size={13} className="text-gold" aria-hidden="true" />
                         <span className="hidden md:inline">Notices</span>
                     </Link>
 
@@ -80,7 +80,7 @@ export default function AppNavbar({ profile }: AppNavbarProps) {
                         title="How Calculations Work"
                         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors duration-200 shrink-0 shadow-xs"
                     >
-                        <HelpCircle size={13} />
+                        <HelpCircle size={13} aria-hidden="true" />
                         <span className="hidden md:inline">How Calculations Work</span>
                         <span className="md:hidden">Guide</span>
                     </Link>
@@ -90,20 +90,20 @@ export default function AppNavbar({ profile }: AppNavbarProps) {
                         title="Go to Homepage"
                         className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors duration-200 shrink-0 shadow-xs"
                     >
-                        <Home size={13} />
+                        <Home size={13} aria-hidden="true" />
                         <span className="hidden sm:inline">Home</span>
                     </Link>
 
                     {profile?.stname && (
                         <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-md bg-surface border border-border-strong text-xs font-mono shadow-xs">
-                            <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" />
+                            <span className="w-1.5 h-1.5 rounded-full bg-gold shrink-0" aria-hidden="true" />
                             <span className="font-semibold text-foreground-secondary truncate max-w-36">
                                 {profile.stname}
                             </span>
                         </div>
                     )}
                     <LogoutButton />
-                </div>
+                </nav>
             </div>
         </motion.header>
     );

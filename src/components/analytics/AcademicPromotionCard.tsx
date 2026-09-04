@@ -66,19 +66,32 @@ export default function AcademicPromotionCard({
     );
 
     const summary = useMemo(() => {
-        const evaluatedYears = promotion.years.filter((year) => year.status !== "UPCOMING");
-        const totalCredits = evaluatedYears.reduce((sum, year) => sum + year.totalCredits, 0);
-        const earnedCredits = evaluatedYears.reduce((sum, year) => sum + year.earnedCredits, 0);
-        const deficit = evaluatedYears.reduce((sum, year) => sum + year.creditsDeficit + year.priorYearsDeficit, 0);
+        let evaluatedYears = 0;
+        let promotedYears = 0;
+        let totalCredits = 0;
+        let earnedCredits = 0;
+
+        for (const year of promotion.years) {
+            if (year.status === "UPCOMING") continue;
+            evaluatedYears++;
+            if (year.status === "PROMOTED") promotedYears++;
+            totalCredits += year.totalCredits;
+            earnedCredits += year.earnedCredits;
+        }
+
+        const requiredCredits = Math.ceil(totalCredits * 0.5);
+        const deficit = Math.max(0, requiredCredits - earnedCredits);
+        const overallPercent = totalCredits > 0
+            ? Number(((earnedCredits / totalCredits) * 100).toFixed(1))
+            : 0;
 
         return {
-            evaluatedYears: evaluatedYears.length,
-            promotedYears: promotion.years.filter((year) => year.status === "PROMOTED").length,
+            evaluatedYears,
+            promotedYears,
             totalCredits,
             earnedCredits,
             deficit,
-            overallPercent:
-                totalCredits > 0 ? Number(((earnedCredits / totalCredits) * 100).toFixed(1)) : 0,
+            overallPercent,
         };
     }, [promotion.years]);
 
@@ -122,8 +135,8 @@ export default function AcademicPromotionCard({
                             </h2>
                         </div>
                     </div>
-                    <p className="max-w-2xl text-xs leading-5 text-foreground-secondary">
-                        Ordinance 11 Clause 12 baseline: student must obtain at least 50% credits in the ensuing academic year, plus at least 90% cumulative credits across all prior academic years taken together. Additional statutory body requirements may apply.
+                    <p className="max-w-2xl text-xs sm:text-sm leading-5 text-foreground-secondary">
+                        Annual standing based on the 50% credit threshold, with current academic year and recovery deficit surfaced separately.
                     </p>
                 </div>
 
@@ -326,7 +339,7 @@ export default function AcademicPromotionCard({
                                         <>
                                             <CheckCircle2 size={12} className="mt-0.5 shrink-0 text-grade-excellent" aria-hidden="true" />
                                             <span className="text-foreground-secondary">
-                                                Ordinance 11 Clause 12 cleared (≥50% annual credits{year.priorYearsTotalCredits > 0 ? " & ≥90% prior credits" : ""}).
+                                                Promotion threshold cleared for this academic year.
                                             </span>
                                         </>
                                     ) : year.status === "YEAR_BACK_RISK" ? (

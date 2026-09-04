@@ -82,14 +82,17 @@ describe("CASE 2 — strict mode without user credits ⇒ no guessed credits: SG
   });
 });
 
-describe("CASE 2b — default mode with fallback credits ⇒ SGPA/CGPA calculate out-of-the-box", () => {
+describe("CASE 2b — default mode with fallback credits ⇒ SGPA/CGPA calculate out-of-the-box as ESTIMATES", () => {
   const r = analyzeResult(REAL_498);
-  it("calculates SGPA and CGPA with RESULT_DERIVED status using fallback heuristic credits", () => {
-    expect(r.analytics.sgpa.status).toBe("RESULT_DERIVED");
+  it("calculates SGPA and CGPA with WARNING status using fallback heuristic credits", () => {
+    // Fallback credits are guesses (lab 1 / theory 3), not scheme credits —
+    // every GPA metric built on them must badge as WARNING (estimate).
+    expect(r.analytics.sgpa.status).toBe("WARNING");
     expect(r.analytics.sgpa.value).not.toBeNull();
-    expect(r.analytics.cgpa.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.cgpa.status).toBe("WARNING");
     expect(r.analytics.cgpa.value).not.toBeNull();
-    expect(r.analytics.percentage.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.percentage.status).toBe("WARNING");
+    expect(r.analytics.sgpa.reason).toContain("estimated credits");
   });
   it("calculates promotion with fallback credits", () => {
     expect(r.analytics.promotion.status).toBe("RESULT_DERIVED");
@@ -97,7 +100,7 @@ describe("CASE 2b — default mode with fallback credits ⇒ SGPA/CGPA calculate
   });
 });
 
-describe("CASE 3 — user-edited credits calculate SGPA/CGPA with RESULT_DERIVED status", () => {
+describe("CASE 3 — user-edited credits calculate SGPA/CGPA as WARNING estimates", () => {
   const userCredits = {
     ICT101: 4,
     ICT151: 1,
@@ -106,16 +109,19 @@ describe("CASE 3 — user-edited credits calculate SGPA/CGPA with RESULT_DERIVED
   };
   const r = analyzeResult(REAL_498, userCredits);
 
-  it("calculates SGPA and CGPA with RESULT_DERIVED status when using user credits", () => {
-    expect(r.analytics.sgpa.status).toBe("RESULT_DERIVED");
+  it("calculates SGPA and CGPA with WARNING status when using user credits", () => {
+    // User-provided credits are honest inputs but not scheme-authoritative,
+    // so GPA metrics stay WARNING with a user-credit reason.
+    expect(r.analytics.sgpa.status).toBe("WARNING");
     expect(r.analytics.sgpa.value).not.toBeNull();
-    expect(r.analytics.cgpa.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.cgpa.status).toBe("WARNING");
     expect(r.analytics.cgpa.value).not.toBeNull();
-    expect(r.analytics.percentage.status).toBe("RESULT_DERIVED");
-    expect(r.analytics.division.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.percentage.status).toBe("WARNING");
+    expect(r.analytics.division.status).toBe("WARNING");
+    expect(r.analytics.cgpa.reason).toContain("user-provided credits");
   });
 
-  it("calculates promotion with 50% baseline under RESULT_DERIVED", () => {
+  it("calculates promotion with 50% baseline", () => {
     expect(r.analytics.promotion.status).toBe("RESULT_DERIVED");
     expect(r.analytics.promotion.value).not.toBeNull();
     expect(r.analytics.promotion.value?.length).toBeGreaterThan(0);
@@ -129,9 +135,9 @@ describe("CASE 3b — user removes credit (null) or sets to 0 ⇒ calculation do
     expect(course101?.credits.value).toBeNull();
     expect(course101?.credits.source).toBe("USER");
 
-    expect(r.analytics.sgpa.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.sgpa.status).toBe("WARNING");
     expect(r.analytics.sgpa.value).not.toBeNull();
-    expect(r.analytics.cgpa.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.cgpa.status).toBe("WARNING");
     expect(r.analytics.cgpa.value).not.toBeNull();
   });
 
@@ -141,9 +147,9 @@ describe("CASE 3b — user removes credit (null) or sets to 0 ⇒ calculation do
     expect(course101?.credits.value).toBe(0);
     expect(course101?.credits.source).toBe("USER");
 
-    expect(r.analytics.sgpa.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.sgpa.status).toBe("WARNING");
     expect(r.analytics.sgpa.value).not.toBeNull();
-    expect(r.analytics.cgpa.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.cgpa.status).toBe("WARNING");
     expect(r.analytics.cgpa.value).not.toBeNull();
   });
 });
@@ -305,16 +311,18 @@ describe("multi-period separation — SGPA vs CGPA decoupling", () => {
     const sem1 = r.analytics.sgpaByPeriod.find((p) => p.period === 1);
     expect(sem1?.sgpa.value).toBe(8.2);
 
-    // Period 2: ICT104 (26 -> F, GP 0, cr 4) + ICT110 (ABS -> F, GP 0, cr 4)
-    // Sem 2 SGPA = 0 / 8 = 0.00
+    // Period 2: ICT104 (26 -> F, GP 0, cr 4) + ICT110 (ABS, excluded from GPA
+    // because a non-numeric legend carries no grade point)
+    // Sem 2 SGPA = 0 / 4 = 0.00
     const sem2 = r.analytics.sgpaByPeriod.find((p) => p.period === 2);
     expect(sem2?.sgpa.value).toBe(0);
 
     // Latest period SGPA = Sem 2 SGPA = 0
     expect(r.analytics.sgpa.value).toBe(0);
 
-    // Cumulative CGPA across all periods = 41 / 13 = 3.15
-    expect(r.analytics.cgpa.value).toBe(3.15);
+    // Cumulative CGPA = 41 points / 9 counted credits = 4.56
+    // (ICT110's ABS legend contributes credits neither to points nor to the sum)
+    expect(r.analytics.cgpa.value).toBe(4.56);
 
     // SGPA and CGPA must be distinct values, never hard-coded duplicates
     expect(r.analytics.sgpa.value).not.toBe(r.analytics.cgpa.value);
@@ -385,7 +393,7 @@ describe("Requirement 15 — Statutory Verification Suite", () => {
     expect(r.courses[1].grade?.point).toBe(9);
     const sem1 = r.analytics.sgpaByPeriod.find((p) => p.period === 1);
     expect(sem1?.sgpa.value).toBe(8.2);
-    expect(r.analytics.cgpa.value).toBe(3.15);
+    expect(r.analytics.cgpa.value).toBe(4.56);
   });
 
   it("b) Ordinance 11: incomplete promotion inputs yield WARNING instead of confident promotion", () => {
@@ -398,7 +406,7 @@ describe("Requirement 15 — Statutory Verification Suite", () => {
     };
     const r = analyzeResult(singleSemResult, { ICT101: 4, ICT151: 1 });
     expect(r.analytics.promotion.status).toBe("WARNING");
-    expect(r.analytics.promotion.reason).toContain("Clause 12");
+    expect(r.analytics.promotion.reason).toContain("50% credit baseline");
   });
 
   it("c) Ordinance 31: calculates weighted CPI from passed courses with credits", () => {
@@ -486,9 +494,9 @@ describe("Requirement 15 — Statutory Verification Suite", () => {
     };
     const r = analyzeResult(allFailResult, { ICT101: 4, ICT151: 1 });
     expect(r.analytics.sgpa.value).toBe(0);
-    expect(r.analytics.sgpa.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.sgpa.status).toBe("WARNING");
     expect(r.analytics.cgpa.value).toBe(0);
-    expect(r.analytics.cgpa.status).toBe("RESULT_DERIVED");
+    expect(r.analytics.cgpa.status).toBe("WARNING");
   });
 
   it("h) Unknown programme preserves raw results without crashing", () => {
@@ -512,7 +520,6 @@ describe("Requirement 15 — Statutory Verification Suite", () => {
     expect(r.courses).toHaveLength(1);
     expect(r.courses[0].rawCode).toBe("PAP01");
     expect(r.courses[0].total).toBe(50);
-    expect(r.courses[0].rawResultUsable).toBe(true);
     expect(r.analytics.paperCount.value).toBe(1);
   });
 
@@ -669,14 +676,13 @@ describe("Targeted Audit — Division Capabilities & Generic Mappings", () => {
         [1, "BA101", "GENERAL ENGLISH", "25", "45", "70", "08", "12,2023", "2024-02-01"],
       ],
     });
-    expect(rBA.programme.dbVerification).toBe("INFERRED");
+    expect(rBA.programme.dbVerification).toBe("AMBIGUOUS");
     expect(rBA.analytics.framework.status).toBe("AMBIGUOUS");
     expect(rBA.analytics.division.status).toBe("AMBIGUOUS");
     expect(rBA.analytics.grade.status).toBe("AMBIGUOUS");
     expect(rBA.courses).toHaveLength(1);
     expect(rBA.courses[0].rawCode).toBe("BA101");
     expect(rBA.courses[0].total).toBe(70);
-    expect(rBA.courses[0].rawResultUsable).toBe(true);
 
     // But specific verified BA disciplines (e.g. Journalism) become VERIFIED
     const specificBA = findProgramme("BACHELOR OF ARTS (JOURNALISM AND MASS COMMUNICATION)");

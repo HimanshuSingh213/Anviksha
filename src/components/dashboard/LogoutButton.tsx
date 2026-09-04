@@ -4,6 +4,7 @@ import axios from "axios";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { track } from "@vercel/analytics";
 import useResultStore from "@/store/result-store";
 
 export function LogoutButton() {
@@ -11,6 +12,7 @@ export function LogoutButton() {
     const clearResult = useResultStore((state) => state.clearResult);
 
     const handleLogout = async () => {
+        track("user_logout");
         try {
             await axios.post("/api/logout");
             toast.success("Logged out successfully");

@@ -128,7 +128,7 @@ export default function ReportPage() {
       </header>
 
       {/* Main Content Area */}
-      <main className="relative z-10 flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
+      <main id="main-content" className="relative z-10 flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">
         
         {/* Page Header */}
         <div className="space-y-3">

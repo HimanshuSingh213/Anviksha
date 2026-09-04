@@ -28,11 +28,11 @@ export const FAQS = [
   },
   {
     q: "Does Anviksha work for all GGSIPU programmes and streams?",
-    a: "Yes! Anviksha supports every programme offered by Guru Gobind Singh Indraprastha University (GGSIPU), including B.Tech (all engineering branches), BCA, BBA, MBA, BA LLB, BBA LLB, B.Sc Nursing, B.Pharm, BJMC, B.Ed, and allied medical sciences across all 50+ affiliated institutes.",
+    a: "Anviksha shows your result for any programme declared on GGSIPU's ExamWeb server — every affiliated institute is supported. Deep analytics are computed under each programme's own ordinance: Ordinance 11 for B.Tech, BCA, BBA, MBA, BA LLB, BBA LLB and other semester degrees, with separate verified frameworks for MBBS, BPT, BHMS, BAMS and BASLP. Where a rule isn't verified yet, we show the raw marks and say so instead of guessing.",
   },
   {
     q: "How is SGPA and CGPA calculated in GGSIPU under Ordinance 11?",
-    a: "Under GGSIPU Ordinance 11, SGPA is calculated as the sum of (Subject Credits × Grade Points) divided by total semester credits. CGPA is the cumulative credit-weighted average across all completed semesters. Equivalent percentage is computed as CGPA × 10.0.",
+    a: "Under GGSIPU Ordinance 11 (Clause 13), SGPA is the credit-weighted average: the sum of (Subject Credits × Grade Points) divided by total semester credits. CGPA is the cumulative credit-weighted average across all completed semesters. Equivalent percentage is computed as CGPA × 10.",
   },
   {
     q: "What is the GGSIPU 50% Credit Rule for Academic Promotion?",
@@ -180,7 +180,7 @@ export default function LandingPageView({ isAuthenticated, cta }: LandingPageVie
               transition={{ duration: 0.4, delay: 0.15 }}
               className="max-w-lg text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl"
             >
-              Your GGSIPU result,{" "}
+              GGSIPU result &amp; SGPA/CGPA calculator,{" "}
               <span className="text-gold">actually explained.</span>
             </motion.h1>
 
@@ -297,7 +297,7 @@ export default function LandingPageView({ isAuthenticated, cta }: LandingPageVie
               Works for Every Programme, Stream &amp; Affiliated College
             </h2>
             <p className="text-sm leading-6 text-foreground-secondary">
-              Whether you&apos;re studying computer science, corporate law, business administration, physiotherapy, or journalism — if your results are declared on GGSIPU&apos;s server, Anviksha processes your complete marks, credits, and Ordinance 11 calculations seamlessly.
+              Whether you&apos;re studying computer science, corporate law, business administration, physiotherapy, or medicine — if your results are declared on GGSIPU&apos;s server, Anviksha shows your complete marks and applies the right ordinance for your programme: Ordinance 11 for semester degrees, with dedicated frameworks for MBBS, BPT, and other professional courses.
             </p>
           </motion.div>
 
@@ -532,11 +532,12 @@ export default function LandingPageView({ isAuthenticated, cta }: LandingPageVie
         >
           <div>
             <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              Built exactly to Ordinance 11
+              Built on the actual ordinances
             </h2>
             <p className="mt-3 max-w-md text-sm leading-6 text-foreground-secondary">
-              Every grade, credit, and division follows GGSIPU&apos;s official
-              credit-based semester system — no approximations.
+              Grades, SGPA, CGPA, and divisions follow GGSIPU&apos;s official
+              Ordinance 11 semester framework — no approximations, with every
+              number badged as verified or estimated.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -84,10 +84,11 @@ export const metadata: Metadata = {
       "GGSIPU results, SGPA/CGPA calculations, promotion standing, and academic analytics for IPU students. Check semester marks and generate consolidated transcripts.",
     images: [
       {
-        url: "/favicon.png",
-        width: 512,
-        height: 512,
-        alt: "Anviksha Logo",
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        type: "image/png",
+        alt: "Anviksha — GGSIPU Results & Academic Analytics",
       },
     ],
   },
@@ -96,7 +97,7 @@ export const metadata: Metadata = {
     title: "Anviksha — GGSIPU Results, SGPA/CGPA Calculator & Academic Analytics",
     description:
       "GGSIPU results, SGPA/CGPA calculations, promotion standing, and academic analytics for IPU students. Check semester marks and generate consolidated transcripts.",
-    images: ["/favicon.png"],
+    images: ["/og-image.png"],
     creator: "@HimanshuSingh",
   },
   robots: {
@@ -123,11 +124,10 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport = {
+export const viewport: Viewport = {
   themeColor: "#060608",
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5,
 };
 
 export default function RootLayout({
@@ -137,7 +137,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="en-IN"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
@@ -145,6 +145,13 @@ export default function RootLayout({
         <link rel="preconnect" href="https://examweb.ggsipu.ac.in" crossOrigin="" />
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
+        {/* Keyboard users can jump straight past the navigation */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:rounded-md focus:bg-white focus:px-4 focus:py-2 focus:text-xs focus:font-mono focus:font-bold focus:text-black"
+        >
+          Skip to main content
+        </a>
         <StructuredData />
         <ErrorBoundary>{children}</ErrorBoundary>
         <FloatingReportButton />

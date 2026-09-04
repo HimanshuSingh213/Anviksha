@@ -171,10 +171,10 @@ export default function NoticesClientView({ initialNotices }: Props) {
         </div>
       </motion.div>
 
-      {/* Counter */}
-      <div className="flex items-center justify-between text-xs font-mono text-foreground-secondary px-1">
+      {/* Counter — aria-live so screen readers hear result-count changes */}
+      <div aria-live="polite" className="flex items-center justify-between text-xs font-mono text-foreground-secondary px-1">
         <span className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-grade-excellent animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-grade-excellent animate-pulse" aria-hidden="true" />
           Showing {filteredNotices.length} circulars
           {search && ` for "${search}"`}
         </span>

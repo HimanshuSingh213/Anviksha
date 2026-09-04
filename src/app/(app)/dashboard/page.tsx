@@ -50,23 +50,23 @@ function CreditInputCell({
     onSetCredit,
 }: CreditInputCellProps) {
     const [localValue, setLocalValue] = useState<string>(
-        creditValue !== null && creditValue !== undefined ? String(creditValue) : ""
+        creditValue != null ? String(creditValue) : ""
     );
     const [isFocused, setIsFocused] = useState(false);
 
     // Synchronize from store/props ONLY when user is not actively typing/focused
     useEffect(() => {
         if (!isFocused) {
-            setLocalValue(creditValue !== null && creditValue !== undefined ? String(creditValue) : "");
+            setLocalValue(creditValue != null ? String(creditValue) : "");
         }
     }, [creditValue, isFocused]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value.trim();
-        track("edit_custom_credit", { paperCode });
 
         // When user clears the field with backspace / delete:
         if (val === "") {
+            track("clear_custom_credit", { paperCode });
             setLocalValue("");
             onSetCredit(paperCode, null);
             return;
@@ -76,6 +76,7 @@ function CreditInputCell({
         if (/^\d{1,2}$/.test(val)) {
             const num = parseInt(val, 10);
             if (num <= 20) {
+                track("edit_custom_credit", { paperCode, credits: num });
                 setLocalValue(val);
                 onSetCredit(paperCode, num);
             }
@@ -219,6 +220,14 @@ export default function DashboardPage() {
         }
     }, [fullResult, fetchResults]);
 
+    useEffect(() => {
+        if (fullResult?.stprofile?.prgname || fullResult?.stprofile?.prgcode) {
+            track("view_dashboard", {
+                programme: fullResult.stprofile.prgname || String(fullResult.stprofile.prgcode),
+            });
+        }
+    }, [fullResult?.stprofile?.prgname, fullResult?.stprofile?.prgcode]);
+
     const engine = useMemo(
         () => analyzeResult(fullResult, customCredit),
         [fullResult, customCredit]
@@ -347,7 +356,7 @@ export default function DashboardPage() {
             <AppNavbar profile={profile} />
             <CreditTipModal />
 
-            <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+            <main id="main-content" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
 
                 {/* Error Banner */}
                 <AnimatePresence>
@@ -819,10 +828,7 @@ export default function DashboardPage() {
                     <motion.button
                         whileHover={{ scale: 1.03, y: -1 }}
                         whileTap={{ scale: 0.97 }}
-                        onClick={() => {
-                            track("click_view_analytics");
-                            router.push("/dashboard/analytics");
-                        }}
+                        onClick={() => router.push("/dashboard/analytics")}
                         className="px-6 py-3 bg-white text-black font-mono text-xs font-bold rounded-sm shadow-[0_0_20px_rgba(255,255,255,0.2)] flex items-center justify-center gap-3 hover:bg-neutral-200 transition-all group cursor-pointer border border-white uppercase tracking-wider"
                     >
                         <BarChart2 size={15} />

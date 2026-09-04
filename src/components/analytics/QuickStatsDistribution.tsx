@@ -3,16 +3,21 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-function getGrade(total: number) {
-    if (total >= 90) return { grade: "O", pass: true };
-    if (total >= 75) return { grade: "A+", pass: true };
-    if (total >= 65) return { grade: "A", pass: true };
-    if (total >= 55) return { grade: "B+", pass: true };
-    if (total >= 50) return { grade: "B", pass: true };
-    if (total >= 45) return { grade: "C", pass: true };
-    if (total >= 40) return { grade: "P", pass: true };
-    return { grade: "F", pass: false };
-}
+import type { EngineCourse } from "@/lib/academic/academic-engine";
+
+// Quick Stats + Grade Distribution donut chart
+
+const STATUS_COLORS: Record<string, string> = {
+    PASS: "var(--grade-excellent)",
+    CREDIT_SECURED: "var(--grade-excellent)",
+    ALREADY_PASSED: "var(--grade-excellent)",
+    NOT_CLEARED: "var(--grade-fail)",
+    ABSENT: "var(--cat-slate)",
+    DETAINED: "var(--grade-fail)",
+    CANCELLED: "var(--cat-slate)",
+    RESULT_LATER: "var(--cat-blue)",
+    UNKNOWN: "var(--cat-slate)",
+};
 
 const GRADE_COLORS: Record<string, string> = {
     O: "var(--grade-excellent)",
@@ -23,74 +28,114 @@ const GRADE_COLORS: Record<string, string> = {
     C: "var(--grade-average)",
     P: "var(--grade-pass)",
     F: "var(--grade-fail)",
+    ABS: "var(--cat-slate)",
+    DET: "var(--grade-fail)",
 };
 
+const GRADE_ORDER = ["O", "A+", "A", "B+", "B", "C", "P", "F", "ABS", "DET"];
+
+interface DistributionSlice {
+    label: string;
+    grade?: string;
+    value: number;
+    color: string;
+}
+
 interface Props {
-    rows: any[][];
+    courses: EngineCourse[];
     totalCredits: number;
     earnedCredits: number;
 }
 
-export default function QuickStatsDistribution({ rows, totalCredits, earnedCredits }: Props) {
+export default function QuickStatsDistribution({ courses, totalCredits, earnedCredits }: Props) {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
-    // Memoize stats and grade donut data for 0ms latency
-    const { totalSubjects, totalMarks, highest, lowest, backlogs, highestSubject, lowestSubject, chartData } = useMemo(() => {
-        const totalSub = rows.length;
-        let hi = -Infinity;
-        let lo = Infinity;
-        let bl = 0;
-        let totalM = 0;
+    const { totalSubjects, totalMarks, totalMaxMarks, highest, lowest, backlogs, highestCourse, lowestCourse, chartData } = useMemo(() => {
+        // Distribution = one bucket per course: engine letter grade when the
+        // programme has one, official result status otherwise.
+        const gradeBuckets = new Map<string, DistributionSlice>();
+        const statusBuckets = new Map<string, DistributionSlice>();
+        let marksSum = 0;
+        let maxMarksSum = 0;
+        let highestValue = -Infinity;
+        let lowestValue = Infinity;
+        let highestItem: EngineCourse | null = null;
+        let lowestItem: EngineCourse | null = null;
+        let backlogCount = 0;
 
-        const counts: Record<string, number> = {
-            O: 0, "A+": 0, A: 0, "B+": 0, B: 0, C: 0, P: 0, F: 0
-        };
-
-        rows.forEach((row) => {
-            const total = isNaN(Number(row[5])) ? 0 : Number(row[5]);
-            const { pass, grade } = getGrade(total);
-
-            if (grade in counts) counts[grade]++;
-            else counts["F"]++;
-
-            if (pass) {
-                totalM += total;
-                if (total > hi) hi = total;
-                if (total < lo) lo = total;
+        for (const course of courses) {
+            if (course.grade) {
+                const gradeValue = course.grade.value;
+                const label = `Grade ${gradeValue}`;
+                const slice = gradeBuckets.get(label) ?? {
+                    label,
+                    grade: gradeValue,
+                    value: 0,
+                    color: GRADE_COLORS[gradeValue] ?? "var(--cat-slate)",
+                };
+                slice.value += 1;
+                gradeBuckets.set(label, slice);
             } else {
-                bl++;
+                const label = course.semantic.replace(/_/g, " ");
+                const slice = statusBuckets.get(label) ?? {
+                    label,
+                    grade: label,
+                    value: 0,
+                    color: STATUS_COLORS[course.semantic] ?? "var(--cat-slate)",
+                };
+                slice.value += 1;
+                statusBuckets.set(label, slice);
             }
+
+            if (course.total !== undefined) {
+                marksSum += course.total;
+                if (highestValue < course.total) {
+                    highestValue = course.total;
+                    highestItem = course;
+                }
+                if (lowestValue > course.total) {
+                    lowestValue = course.total;
+                    lowestItem = course;
+                }
+            }
+            if (course.maxMarks !== null) maxMarksSum += course.maxMarks;
+            if (course.semantic === "NOT_CLEARED" || course.semantic === "ABSENT" || course.semantic === "DETAINED") {
+                backlogCount += 1;
+            }
+        }
+
+        const totalCount = courses.length;
+        const withGrades = [...gradeBuckets.values()].sort((a, b) => {
+            const indexA = GRADE_ORDER.indexOf(a.grade ?? "");
+            const indexB = GRADE_ORDER.indexOf(b.grade ?? "");
+            const orderA = indexA === -1 ? 999 : indexA;
+            const orderB = indexB === -1 ? 999 : indexB;
+            return orderA - orderB;
         });
-
-        const passedRows = rows.filter((r) => getGrade(Number(r[5])).pass);
-        const hiSubject = passedRows.find((r) => Number(r[5]) === hi);
-        const loSubject = passedRows.find((r) => Number(r[5]) === lo);
-
-        const data = Object.entries(counts)
-            .filter(([, count]) => count > 0)
-            .map(([grade, count]) => ({
-                name: `Grade ${grade}`,
-                grade,
-                value: count,
-                percentage: totalSub > 0 ? ((count / totalSub) * 100).toFixed(1) : "0",
-                color: GRADE_COLORS[grade] || "var(--cat-slate)",
-            }));
+        const slices = withGrades.length > 0 ? withGrades : [...statusBuckets.values()];
+        const chartSlices = slices.map((slice) => ({
+            ...slice,
+            percentage: totalCount > 0 ? ((slice.value / totalCount) * 100).toFixed(1) : "0",
+        }));
 
         return {
-            totalSubjects: totalSub,
-            totalMarks: totalM,
-            highest: hi,
-            lowest: lo,
-            backlogs: bl,
-            highestSubject: hiSubject,
-            lowestSubject: loSubject,
-            chartData: data,
+            totalSubjects: totalCount,
+            totalMarks: marksSum,
+            totalMaxMarks: maxMarksSum,
+            highest: highestItem ? (highestItem.total as number) : null,
+            lowest: lowestItem ? (lowestItem.total as number) : null,
+            backlogs: backlogCount,
+            highestCourse: highestItem,
+            lowestCourse: lowestItem,
+            chartData: chartSlices,
         };
-    }, [rows]);
+    }, [courses]);
+
+    const passedCount = totalSubjects - backlogs;
 
     return (
         <motion.div
@@ -100,7 +145,7 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
             className="p-5 bg-surface border border-border-strong rounded-md shadow-xs"
         >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
-                
+
                 {/* Left: Quick Performance Stats */}
                 <div className="space-y-4">
                     <div>
@@ -118,7 +163,9 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
                             <span className="text-xs font-medium text-foreground-secondary">Total Marks</span>
                             <div className="text-right">
                                 <span className="text-xs font-bold text-cat-teal">{totalMarks}</span>
-                                <span className="text-[11px] text-foreground-muted"> / {totalSubjects * 100}</span>
+                                {totalMaxMarks > 0 && (
+                                    <span className="text-[11px] text-foreground-muted"> / {totalMaxMarks}</span>
+                                )}
                             </div>
                         </div>
 
@@ -135,12 +182,12 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
                         <div className="flex items-center justify-between gap-3 py-1.5 border-b border-border-strong">
                             <div className="min-w-0 flex-1">
                                 <div className="text-xs font-medium text-foreground-secondary">Highest Score</div>
-                                <div className="text-[10px] text-foreground-muted leading-tight font-mono truncate" title={highestSubject ? String(highestSubject[2]) : undefined}>
-                                    {highestSubject ? String(highestSubject[2]) : "N/A"}
+                                <div className="text-[10px] text-foreground-muted leading-tight font-mono truncate" title={highestCourse?.name}>
+                                    {highestCourse?.name ?? "N/A"}
                                 </div>
                             </div>
                             <span className="text-xs font-bold text-gold shrink-0">
-                                {highest > -Infinity ? `${highest} pts` : "—"}
+                                {highest !== null ? `${highest} pts` : "—"}
                             </span>
                         </div>
 
@@ -148,20 +195,20 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
                         <div className="flex items-center justify-between gap-3 py-1.5 border-b border-border-strong">
                             <div className="min-w-0 flex-1">
                                 <div className="text-xs font-medium text-foreground-secondary">Lowest Score</div>
-                                <div className="text-[10px] text-foreground-muted leading-tight font-mono truncate" title={lowestSubject ? String(lowestSubject[2]) : undefined}>
-                                    {lowestSubject ? String(lowestSubject[2]) : "N/A"}
+                                <div className="text-[10px] text-foreground-muted leading-tight font-mono truncate" title={lowestCourse?.name}>
+                                    {lowestCourse?.name ?? "N/A"}
                                 </div>
                             </div>
                             <span className="text-xs font-bold text-cat-blue shrink-0">
-                                {lowest < Infinity ? `${lowest} pts` : "—"}
+                                {lowest !== null ? `${lowest} pts` : "—"}
                             </span>
                         </div>
 
-                        {/* Backlogs */}
+                        {/* Cleared / Backlogs */}
                         <div className="flex items-center justify-between py-1.5">
-                            <span className="text-xs font-medium text-foreground-secondary">Backlogs</span>
+                            <span className="text-xs font-medium text-foreground-secondary">Cleared</span>
                             <span className={`text-xs font-bold ${backlogs > 0 ? "text-grade-fail" : "text-grade-excellent"}`}>
-                                {backlogs} {backlogs === 1 ? "subject" : "subjects"}
+                                {passedCount}/{totalSubjects} · {backlogs} backlog{backlogs === 1 ? "" : "s"}
                             </span>
                         </div>
                     </div>
@@ -171,7 +218,7 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
                 <div className="space-y-3 lg:border-l lg:border-border-strong lg:pl-6">
                     <div className="flex items-center justify-between">
                         <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">
-                            Grade Distribution
+                            {chartData.some((slice) => slice.label.startsWith("Grade")) ? "Grade Distribution" : "Result Status"}
                         </h3>
                         <span className="text-[10px] font-mono text-foreground-secondary px-2 py-0.5 rounded-sm bg-surface-deep border border-border-strong">
                             {totalSubjects} Subjects
@@ -181,7 +228,7 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
                     {mounted && chartData.length > 0 ? (
                         <div
                             role="img"
-                            aria-label={`Grade distribution donut chart showing breakdown across ${totalSubjects} subjects`}
+                            aria-label={`Distribution donut chart showing breakdown across ${totalSubjects} subjects`}
                             className="relative h-44 w-full flex items-center justify-center"
                         >
                             <ResponsiveContainer width="100%" height="100%">
@@ -198,10 +245,10 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
                                         strokeWidth={2}
                                     >
                                         {chartData.map((entry) => (
-                                            <Cell key={entry.grade} fill={entry.color} />
+                                            <Cell key={entry.label} fill={entry.color} />
                                         ))}
                                     </Pie>
-                                    
+
                                     <Tooltip
                                         wrapperStyle={{ zIndex: 50 }}
                                         content={({ active, payload }) => {
@@ -214,7 +261,7 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
                                                                 className="w-2 h-2 rounded-full inline-block"
                                                                 style={{ backgroundColor: data.color }}
                                                             />
-                                                            {data.name}
+                                                            {data.label}
                                                         </div>
                                                         <div className="text-xs text-foreground-secondary font-medium">
                                                             {data.value} {data.value === 1 ? "subject" : "subjects"} ({data.percentage}%)
@@ -240,21 +287,21 @@ export default function QuickStatsDistribution({ rows, totalCredits, earnedCredi
                         </div>
                     ) : (
                         <div className="h-44 rounded-sm bg-surface-deep border border-dashed border-border-strong flex items-center justify-center text-xs font-mono text-foreground-muted">
-                            No grade data available
+                            No result data available
                         </div>
                     )}
 
                     <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
                         {chartData.map((item) => (
                             <div
-                                key={item.grade}
+                                key={item.label}
                                 className="flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-surface-deep border border-border-strong text-[11px] font-mono"
                             >
                                 <span
                                     className="w-2 h-2 rounded-full inline-block"
                                     style={{ backgroundColor: item.color }}
                                 />
-                                <span className="font-bold text-foreground">{item.grade}</span>
+                                <span className="font-bold text-foreground">{item.grade ?? item.label}</span>
                                 <span className="text-foreground-muted">({item.value})</span>
                             </div>
                         ))}

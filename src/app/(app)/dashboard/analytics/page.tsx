@@ -66,6 +66,10 @@ export default function AnalyticsPage() {
         }
     }, [isTech, activeView]);
 
+    useEffect(() => {
+        track("view_analytics_hub");
+    }, []);
+
     const handleViewKeyDown = useCallback((
         event: KeyboardEvent<HTMLButtonElement>,
         currentIndex: number,
@@ -124,7 +128,7 @@ export default function AnalyticsPage() {
     const gpaLabel = activeSem === "100" ? "Overall CGPA" : `Semester ${activeSem} SGPA`;
     const isOverall = activeSem === "100";
 
-    const backlogs = courses.filter(
+    const backlogs = visibleCourses.filter(
         (c) => c.semantic === "NOT_CLEARED" || c.semantic === "ABSENT" || c.semantic === "DETAINED"
     );
 
@@ -154,9 +158,21 @@ export default function AnalyticsPage() {
         };
     }, [activeSem, analytics.cgpa.value, perSemesterSgpa, visibleCourses, backlogs.length]);
 
-    const percentage = analytics.percentage.value ?? (isAnnual ? analytics.averagePercentage.value : null);
-
     const isOrd11 = programme.ordinance === "ORD_11";
+
+    // Percentage follows the selected scope: overall = CGPA × 10 (Ordinance 11)
+    // or the annual average; a single semester = that semester's own numbers.
+    const percentage = useMemo(() => {
+        if (activeSem === "100") {
+            return analytics.percentage.value ?? (isAnnual ? analytics.averagePercentage.value : null);
+        }
+        const semPercentMetric = analytics.sgpaByPeriod?.find((p) => String(p.period) === activeSem)?.sgpa;
+        if (isOrd11 && semPercentMetric?.value !== null && semPercentMetric?.value !== undefined) {
+            return Math.round(semPercentMetric.value * 10 * 100) / 100;
+        }
+        const periodSummary = analytics.periodSummaries.value?.find((p) => String(p.period) === activeSem);
+        return periodSummary?.averagePercentage ?? null;
+    }, [activeSem, analytics, isAnnual, isOrd11]);
     const isPromotionVerified = isOrd11 && (engine.analytics.promotion.status === "VERIFIED" || engine.analytics.promotion.status === "RESULT_DERIVED");
     const isDivisionVerified = (engine.analytics.division.status === "VERIFIED" || engine.analytics.division.status === "RESULT_DERIVED") && engine.analytics.division.value !== null;
     const percentSub = isOrd11
@@ -169,7 +185,7 @@ export default function AnalyticsPage() {
         <div className="min-h-screen bg-background text-foreground">
             <AppNavbar profile={profile} />
 
-            <main className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 sm:py-10 lg:space-y-10">
+            <main id="main-content" className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 sm:py-10 lg:space-y-10">
 
                 {/* HIGH-severity warning notice */}
                 {highWarnings.length > 0 && showHighWarning && (
@@ -276,7 +292,7 @@ export default function AnalyticsPage() {
                                     />
 
                                     <QuickStatsDistribution
-                                        rows={filteredResults}
+                                        courses={visibleCourses}
                                         totalCredits={stats.totalCredits}
                                         earnedCredits={stats.earnedCredits}
                                     />
@@ -443,7 +459,7 @@ export default function AnalyticsPage() {
                             )}
 
                             <QuickStatsDistribution
-                                rows={filteredResults}
+                                courses={visibleCourses}
                                 totalCredits={stats.totalCredits}
                                 earnedCredits={stats.earnedCredits}
                             />

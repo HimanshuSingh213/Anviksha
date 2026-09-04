@@ -13,6 +13,16 @@ export type SupportState =
   | "UNAVAILABLE"
   | "AMBIGUOUS"
   | "NOT_APPLICABLE";
+
+// A metric's status is one of the runtime SupportStates; a programme's
+// verification uses the Verification scale. "UNKNOWN" only ever appears on
+// the verification scale, so map it to UNAVAILABLE when reused as a status.
+export function verificationAsStatus(verification: Verification | null): SupportState | null {
+  if (verification === null) return null;
+  if (verification === "UNKNOWN") return "UNAVAILABLE";
+  if (verification === "INFERRED") return "AMBIGUOUS";
+  return "VERIFIED";
+}
 export type ExaminationSystem = "ANNUAL" | "SEMESTER" | "TRIMESTER";
 
 export interface FrameworkCapabilities {

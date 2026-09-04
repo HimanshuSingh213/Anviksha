@@ -1,5 +1,7 @@
 export default function StructuredData() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.vercel.app";
+  // Keep in sync with package.json "version" — shown in WebApplication JSON-LD.
+  const version = "1.6.0";
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -13,9 +15,9 @@ export default function StructuredData() {
         "applicationSubCategory": "Academic Analytics & Grading System",
         "operatingSystem": "All",
         "browserRequirements": "Requires HTML5 and JavaScript",
-        "softwareVersion": "1.6.0",
+        "softwareVersion": version,
         "description":
-          "Modern, privacy-first academic intelligence and results analytics platform for Guru Gobind Singh Indraprastha University (GGSIPU) students. Features Ordinance 11 SGPA/CGPA calculations, 50% annual credit promotion monitoring, campus placement cutoff gatekeeper, and consolidated transcript generation.",
+          "Privacy-first academic results and analytics platform for Guru Gobind Singh Indraprastha University (GGSIPU) students. Ordinance-based SGPA/CGPA calculations with verification badges, promotion monitoring under each programme's own ordinance, campus placement cutoff gatekeeper, and consolidated transcript generation.",
         "inLanguage": "en-IN",
         "isAccessibleForFree": true,
         "offers": {
@@ -51,14 +53,14 @@ export default function StructuredData() {
           "educationalRole": "student",
         },
         "featureList": [
-          "GGSIPU Ordinance 11 SGPA and CGPA Calculator",
-          "Real-time GGSIPU Examination Circulars, Date-Sheets, and Result Notices Feed",
-          "50% Annual Credit Rule Promotion and Year-Back Standing Monitor",
-          "Campus Placement Eligibility and Recruiter Cutoff Matrix",
-          "Odd vs Even Re-appear Examination Session Planner",
-          "Consolidated Master Academic Transcript PDF Generation",
-          "Subject Grade Distribution and Internal vs External Marks Visualizer",
-          "Universal support for B.Tech, BCA, BBA, MBA, Law, Medical & Allied Sciences across all 50+ affiliated colleges",
+          "GGSIPU SGPA and CGPA calculator with verification badges",
+          "Ordinance-aware analytics: Ordinance 11 semester degrees, plus separate frameworks for MBBS, BPT, BHMS, BAMS, and BASLP",
+          "50% Annual Credit Rule promotion and year-back standing monitor",
+          "Campus placement eligibility and recruiter cutoff matrix",
+          "Odd vs Even re-appear examination session planner",
+          "Consolidated master academic transcript PDF generation",
+          "Subject grade distribution and internal vs external marks visualizer",
+          "Result access for every affiliated GGSIPU institute — raw marks always visible even where analytics are not yet verified",
         ],
       },
       {
@@ -78,14 +80,6 @@ export default function StructuredData() {
           "@type": "Person",
           "name": "Himanshu Singh",
           "url": "https://himanshusinghdangi.vercel.app",
-        },
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": `${appUrl}/notices?q={search_term_string}`,
-          },
-          "query-input": "required name=search_term_string",
         },
       },
     ],

@@ -169,14 +169,22 @@ html {
   --color-accent-mint-border: var(--accent-mint-border);
 
   --color-chart-cyan: var(--chart-cyan);
+  --color-chart-cyan-surface: rgba(56, 189, 248, 0.12);
+  --color-chart-cyan-border: rgba(56, 189, 248, 0.35);
   --color-chart-purple: var(--chart-purple);
   --color-chart-amber: var(--chart-amber);
   --color-chart-emerald: var(--chart-emerald);
   --color-chart-rose: var(--chart-rose);
 
   --color-positive: var(--positive);
+  --color-positive-surface: rgba(52, 179, 122, 0.12);
+  --color-positive-border: rgba(52, 179, 122, 0.35);
   --color-negative: var(--negative);
   --color-info: var(--info);
+
+  --color-warning: var(--grade-average);
+  --color-warning-surface: var(--grade-average-surface);
+  --color-warning-border: var(--grade-average-border);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -185,6 +193,22 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Accessibility: a single, consistent keyboard-focus ring everywhere.
+   `:focus-visible` only shows for keyboard users, never mouse clicks.
+   Elements that style their own focus ring (login inputs, etc.) opt out. */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Inputs with their own focus style (border + ring) get no extra outline. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
 }
 
 .analytics-panel {

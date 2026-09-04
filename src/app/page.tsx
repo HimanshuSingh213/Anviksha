@@ -1,7 +1,36 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { cookies } from "next/headers";
 import LandingPageView from "@/components/home/LandingPageView";
+
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.vercel.app";
+
+export const metadata: Metadata = {
+  title: "Anviksha — GGSIPU Results, SGPA/CGPA Calculator & Academic Analytics",
+  description:
+    "Check your GGSIPU result instantly and get SGPA/CGPA calculated under Ordinance 11, promotion standing, placement eligibility, and a consolidated transcript. Official ExamWeb data, nothing stored.",
+  alternates: {
+    canonical: appUrl,
+  },
+  openGraph: {
+    title: "Anviksha — GGSIPU Results, SGPA/CGPA Calculator & Academic Analytics",
+    description:
+      "Your GGSIPU result, actually explained. SGPA/CGPA under Ordinance 11, promotion standing, placement eligibility, and consolidated transcripts — instantly after login.",
+    url: appUrl,
+    type: "website",
+    siteName: "Anviksha",
+    locale: "en_IN",
+    images: [{ url: "/favicon.png", width: 512, height: 512, alt: "Anviksha — GGSIPU Results & Academic Analytics" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Anviksha — GGSIPU Results, SGPA/CGPA Calculator & Academic Analytics",
+    description:
+      "Your GGSIPU result, actually explained. SGPA/CGPA under Ordinance 11, promotion standing, placement eligibility, and consolidated transcripts — instantly after login.",
+    images: ["/favicon.png"],
+  },
+};
 
 const FAQS = [
   {
@@ -10,11 +39,11 @@ const FAQS = [
   },
   {
     q: "Does Anviksha work for all GGSIPU programmes and streams?",
-    a: "Yes! Anviksha supports every programme offered by Guru Gobind Singh Indraprastha University (GGSIPU), including B.Tech (all engineering branches), BCA, BBA, MBA, BA LLB, BBA LLB, B.Sc Nursing, B.Pharm, BJMC, B.Ed, and allied medical sciences across all 50+ affiliated institutes.",
+    a: "Anviksha shows your result for any programme declared on GGSIPU's ExamWeb server — every affiliated institute is supported. Deep academic analytics (SGPA/CGPA, promotion standing, divisions) are computed under each programme's own ordinance: Ordinance 11 for B.Tech, BCA, BBA, MBA, BA LLB, BBA LLB and other semester degrees, with separate verified frameworks for MBBS, BPT, BHMS, BAMS and BASLP. Where a rule isn't verified yet, we show the raw marks and say so instead of guessing.",
   },
   {
     q: "How is SGPA and CGPA calculated in GGSIPU under Ordinance 11?",
-    a: "Under GGSIPU Ordinance 11, SGPA is calculated as the sum of (Subject Credits × Grade Points) divided by total semester credits. CGPA is the cumulative credit-weighted average across all completed semesters. Equivalent percentage is computed as CGPA × 10.0.",
+    a: "Under GGSIPU Ordinance 11 (Clause 13), SGPA is calculated as the credit-weighted average: the sum of (Subject Credits × Grade Points) divided by total semester credits. CGPA is the cumulative credit-weighted average across all completed semesters. Equivalent percentage is computed as CGPA × 10.",
   },
   {
     q: "What is the GGSIPU 50% Credit Rule for Academic Promotion?",
@@ -68,7 +97,7 @@ export default async function Home() {
       {/* Header */}
       <header className="sticky top-0 z-30 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center shrink-0">
+          <Link href="/" className="flex items-center shrink-0" aria-label="Anviksha home">
             <Image
               src="/navbar-logo.png"
               alt="Anviksha"
@@ -79,9 +108,9 @@ export default async function Home() {
             />
           </Link>
 
-          <nav className="hidden items-center gap-7 font-mono text-xs text-foreground-secondary sm:flex">
+          <nav aria-label="Main navigation" className="hidden items-center gap-7 font-mono text-xs text-foreground-secondary sm:flex">
             <Link href="/notices" className="transition-colors hover:text-gold flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" aria-hidden="true" />
               <span>Circulars</span>
             </Link>
             <Link href="/calculations" className="transition-colors hover:text-foreground">
@@ -101,7 +130,9 @@ export default async function Home() {
       </header>
 
       {/* Animated Homepage Sections (Framer Motion) */}
-      <LandingPageView isAuthenticated={isAuthenticated} cta={cta} />
+      <main id="main-content" className="relative flex-1">
+        <LandingPageView isAuthenticated={isAuthenticated} cta={cta} />
+      </main>
 
       {/* Footer */}
       <footer className="relative z-10 border-t border-border bg-surface/30">
@@ -145,9 +176,7 @@ export default async function Home() {
           </div>
 
           <p className="text-center text-[11px] leading-relaxed text-foreground-secondary/80 sm:text-left max-w-4xl">
-            Anviksha is a modern, privacy-first academic intelligence and results analytics portal for students of Guru Gobind Singh Indraprastha University (GGSIPU).
-            Supports all affiliated colleges including USICT, MAIT, MSIT, BVCOE, BPIT, GTBIT, VIPS, ADGITM, JIMS, DTC, GNDIT, and 40+ more across Delhi NCR.
-            Compatible with B.Tech, BCA, BBA, MBA, BA LLB, B.Sc, B.Pharm, and all IPU schemes.
+            Anviksha is a privacy-first academic results and analytics portal for students of Guru Gobind Singh Indraprastha University (GGSIPU), covering every affiliated institute — USICT, MAIT, MSIT, BVCOE, BPIT, GTBIT, VIPS, ADGITM, JIMS, DTC, GNDIT, and the rest across Delhi NCR. Analytics are computed under each programme&apos;s own ordinance: Ordinance 11 for semester degrees, with separate frameworks for MBBS, BPT, BHMS, BAMS, and BASLP.
           </p>
 
           {/* Bottom Bar — Built by Himanshu Singh */}

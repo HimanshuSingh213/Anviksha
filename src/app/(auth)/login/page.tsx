@@ -9,7 +9,6 @@ import {
   KeyRound,
   ChevronDown,
   Info,
-  Calculator,
   ShieldCheck,
   Bell,
 } from "lucide-react";
@@ -25,18 +24,6 @@ const FLOATING_PILLS = [
   { label: "Rank #3", cls: "text-cat-violet bg-cat-violet-surface border-cat-violet-border top-[34%] right-[3%]", delay: 0.5 },
   { label: "9.1 CGPA", cls: "text-gold-bright bg-gold-surface border-gold-border top-[54%] right-[4%]", delay: 0.8 },
   { label: "0 Backlogs", cls: "text-grade-excellent bg-grade-excellent-surface border-grade-excellent-border top-[74%] right-[3%]", delay: 1.1 },
-];
-
-// Grade scale legend items
-const GRADE_BADGES = [
-  { label: "O", points: 10, cls: "text-grade-excellent bg-grade-excellent-surface border-grade-excellent-border" },
-  { label: "A+", points: 9, cls: "text-grade-excellent bg-grade-excellent-surface border-grade-excellent-border" },
-  { label: "A", points: 8, cls: "text-grade-good bg-grade-good-surface border-grade-good-border" },
-  { label: "B+", points: 7, cls: "text-grade-good bg-grade-good-surface border-grade-good-border" },
-  { label: "B", points: 6, cls: "text-grade-average bg-grade-average-surface border-grade-average-border" },
-  { label: "C", points: 5, cls: "text-grade-average bg-grade-average-surface border-grade-average-border" },
-  { label: "P", points: 4, cls: "text-grade-pass bg-grade-pass-surface border-grade-pass-border" },
-  { label: "F", points: 0, cls: "text-grade-fail bg-grade-fail-surface border-grade-fail-border" },
 ];
 
 export default function LoginPage() {
@@ -120,7 +107,7 @@ export default function LoginPage() {
       </header>
 
       {/* Main Container */}
-      <main className="relative z-10 flex flex-1 items-center justify-center px-4 py-10">
+      <main id="main-content" className="relative z-10 flex flex-1 items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
 
           {/* Title */}
@@ -181,50 +168,6 @@ export default function LoginPage() {
           {/* Login Card */}
           <div className="rounded-2xl border border-border-strong bg-surface p-8 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.45)]">
             <LoginForm/>
-          </div>
-
-          {/* Grades Section */}
-          <div className="mt-8 flex flex-col items-center gap-3">
-            <span className="font-mono text-xs uppercase tracking-widest text-foreground-muted">
-              GGSIPU Grading Scale
-            </span>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              {GRADE_BADGES.map((grade) => (
-                <span
-                  key={grade.label}
-                  className={`rounded-md border px-2.5 py-1 font-mono text-xs font-medium shadow-sm ${grade.cls}`}
-                >
-                  {grade.label} · {grade.points}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* SGPA & CGPA Calculation Formula Card */}
-          <div className="mt-6 rounded-xl border border-border bg-surface/80 p-4 text-xs backdrop-blur-md">
-            <div className="flex items-center gap-2 font-semibold text-gold mb-2">
-              <Calculator size={15} />
-              GGSIPU Calculation Formulas
-            </div>
-            <div className="flex flex-col gap-2 font-mono text-[11px] text-foreground-secondary">
-              <div className="rounded-lg border border-border-strong bg-background p-2.5">
-                <span className="text-foreground font-semibold">SGPA Formula: </span>Σ(Subject Credits × Grade Points) / Σ(Total Semester Credits)
-              </div>
-              <div className="rounded-lg border border-border-strong bg-background p-2.5">
-                <span className="text-foreground font-semibold">CGPA Formula: </span>Total Quality Points / Total Registered Credits
-              </div>
-              <div className="rounded-lg border border-border-strong bg-background p-2.5 text-gold">
-                <span className="text-foreground font-semibold">Percentage (%): </span>CGPA × 10.0 [Ordinance 11]
-              </div>
-            </div>
-            <div className="mt-2.5 pt-2 border-t border-border text-center">
-              <Link
-                href="/calculations"
-                className="text-[11px] font-mono text-gold hover:underline"
-              >
-                Learn how all calculations work →
-              </Link>
-            </div>
           </div>
 
         </div>

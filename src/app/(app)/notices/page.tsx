@@ -8,24 +8,27 @@ import NoticesClientView from "@/components/notices/NoticesClientView";
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.vercel.app";
 
 export const metadata: Metadata = {
-  title: "Live GGSIPU Result Circulars, Date-Sheets & Notices",
+  title: "GGSIPU Notices — Live Result Circulars, Date-Sheets & Exam Schedules",
   description:
-    "Live official GGSIPU examination notices, declared results circulars, date-sheets, and answer sheet inspection schedules with direct PDF downloads.",
+    "Live official GGSIPU examination notices: declared result circulars, end-term date-sheets, re-appear schedules, and answer-sheet inspection notices, updated every 15 minutes with direct PDF downloads.",
   alternates: {
     canonical: `${appUrl}/notices`,
   },
   openGraph: {
-    title: "Live GGSIPU Result Circulars, Date-Sheets & Notices — Anviksha",
+    title: "GGSIPU Notices — Live Result Circulars, Date-Sheets & Exam Schedules",
     description:
-      "Live official GGSIPU examination notices, declared results circulars, date-sheets, and answer sheet inspection schedules with direct PDF downloads.",
+      "Live official GGSIPU examination notices: declared result circulars, end-term date-sheets, re-appear schedules, and answer-sheet inspection notices, updated every 15 minutes with direct PDF downloads.",
     url: `${appUrl}/notices`,
     type: "website",
+    siteName: "Anviksha",
+    images: [{ url: "/favicon.png", width: 512, height: 512, alt: "Anviksha GGSIPU Notices Feed" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Live GGSIPU Result Circulars, Date-Sheets & Notices — Anviksha",
+    title: "GGSIPU Notices — Live Result Circulars, Date-Sheets & Exam Schedules",
     description:
-      "Live official GGSIPU examination notices, declared results circulars, date-sheets, and answer sheet inspection schedules with direct PDF downloads.",
+      "Live official GGSIPU examination notices: declared result circulars, end-term date-sheets, re-appear schedules, and answer-sheet inspection notices.",
+    images: ["/favicon.png"],
   },
 };
 
@@ -115,7 +118,7 @@ export default async function NoticesPage() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6">
+      <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6">
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-gold-surface border border-gold-border text-gold font-mono text-[11px]">
             <Bell size={12} className="animate-pulse shrink-0" />

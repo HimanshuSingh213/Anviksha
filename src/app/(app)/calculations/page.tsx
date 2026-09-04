@@ -14,29 +14,32 @@ import {
   HelpCircle,
   Bell,
   Home,
+  ShieldCheck,
 } from "lucide-react";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.vercel.app";
 
 export const metadata: Metadata = {
-  title: "How Calculations Work — GGSIPU Academic Rules & Grading Engine",
+  title: "GGSIPU SGPA/CGPA Calculator Formula — Ordinance 11 Grading Explained",
   description:
-    "Transparent explanation of SGPA/CGPA formulas, Ordinance 11 promotion rules, grade scales, divisions, and placement benchmarks used in Anviksha.",
+    "How GGSIPU SGPA and CGPA are calculated under Ordinance 11: grade points O to F, the SGPA = Σ(Ci×Gi)/ΣCi formula, CGPA × 10 percentage, 50% annual credit promotion rule, divisions, and placement cutoffs.",
   alternates: {
     canonical: `${appUrl}/calculations`,
   },
   openGraph: {
-    title: "How Calculations Work — GGSIPU Academic Rules & Grading Engine",
+    title: "GGSIPU SGPA/CGPA Calculator Formula — Ordinance 11 Grading Explained",
     description:
-      "Transparent explanation of SGPA/CGPA formulas, Ordinance 11 promotion rules, grade scales, divisions, and placement benchmarks used in Anviksha.",
+      "How GGSIPU SGPA and CGPA are calculated under Ordinance 11: grade points O to F, the SGPA = Σ(Ci×Gi)/ΣCi formula, CGPA × 10 percentage, 50% annual credit promotion rule, divisions, and placement cutoffs.",
     url: `${appUrl}/calculations`,
-    images: ["/favicon.png"],
+    type: "article",
+    siteName: "Anviksha",
+    images: [{ url: "/favicon.png", width: 512, height: 512, alt: "Anviksha GGSIPU Calculation Guide" }],
   },
   twitter: {
-    card: "summary",
-    title: "How Calculations Work — GGSIPU Academic Rules & Grading Engine",
+    card: "summary_large_image",
+    title: "GGSIPU SGPA/CGPA Calculator Formula — Ordinance 11 Grading Explained",
     description:
-      "Transparent explanation of SGPA/CGPA formulas, Ordinance 11 promotion rules, grade scales, divisions, and placement benchmarks used in Anviksha.",
+      "How GGSIPU SGPA and CGPA are calculated under Ordinance 11: grade points, SGPA/CGPA formulas, percentage conversion, promotion rule, and divisions.",
     images: ["/favicon.png"],
   },
   robots: {
@@ -54,6 +57,47 @@ const GRADE_TABLE = [
   { range: "45–49", grade: "C", points: 5, meaning: "Average" },
   { range: "40–44", grade: "P", points: 4, meaning: "Pass (Baseline)" },
   { range: "< 40", grade: "F", points: 0, meaning: "Fail / Backlog" },
+];
+
+// The verification badges shown next to every number in the app. One source
+// of truth here keeps this page in sync with the engine's actual behaviour.
+const VERIFICATION_STATES = [
+  {
+    badge: "VERIFIED",
+    style: "text-grade-excellent",
+    meaning:
+      "Calculated under a verified GGSIPU ordinance rule using only official marksheet data (e.g. letter grades on a verified 10-point scheme).",
+  },
+  {
+    badge: "RESULT DERIVED",
+    style: "text-chart-cyan",
+    meaning:
+      "Computed directly from your official ExamWeb marks — counts, averages, pass rates, and official result statuses.",
+  },
+  {
+    badge: "WARNING (Estimate)",
+    style: "text-gold",
+    meaning:
+      "The number depends on estimated or user-entered credits (official marksheets don't show credits). We show the estimate and label it — never present it as official.",
+  },
+  {
+    badge: "UNAVAILABLE",
+    style: "text-foreground-muted",
+    meaning:
+      "We could not calculate this without guessing, so we don't. Raw marks stay fully visible.",
+  },
+  {
+    badge: "AMBIGUOUS",
+    style: "text-gold",
+    meaning:
+      "The programme is identified only by a generic name, so the exact statutory framework is unclear. Official rules are withheld until verified.",
+  },
+  {
+    badge: "NOT APPLICABLE",
+    style: "text-foreground-muted",
+    meaning:
+      "The programme's verified ordinance does not define this metric at all (e.g. MBBS has no SGPA, CGPA, or divisions) — shown as N/A rather than wrongly calculated.",
+  },
 ];
 
 const CALCULATIONS_JSON_LD = {
@@ -165,12 +209,14 @@ export default function CalculationsPage() {
             How Calculations Work in Anviksha
           </h1>
           <p className="text-sm sm:text-base text-foreground-secondary leading-relaxed max-w-3xl">
-            Anviksha uses official GGSIPU ExamWeb result data and the current revised GGSIPU Ordinance 11 as the baseline. Here is exactly how every calculation, grade, and standing is computed.
+            Anviksha reads your official ExamWeb marksheet and applies the verified GGSIPU ordinance rules for your programme — Ordinance 11 for semester degrees, plus separate frameworks for MBBS, BPT, and more. Every number carries a verification badge so you always know what is official and what is an estimate.
           </p>
 
           {/* Quick Table of Contents */}
           <div className="pt-4 flex flex-wrap gap-2 text-xs font-mono">
             {[
+              { label: "Ordinances", href: "#ordinances" },
+              { label: "Verification Badges", href: "#verification" },
               { label: "Grades", href: "#grades" },
               { label: "SGPA", href: "#sgpa" },
               { label: "CGPA", href: "#cgpa" },
@@ -196,13 +242,94 @@ export default function CalculationsPage() {
       </section>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-12">
+      <main id="main-content" className="max-w-4xl mx-auto px-4 sm:px-6 py-10 space-y-12">
+
+        {/* Which ordinance applies */}
+        <section id="ordinances" className="scroll-mt-20 space-y-4 p-6 bg-surface border border-border-strong rounded-lg">
+          <div className="flex items-center gap-2.5 text-gold">
+            <BookOpen size={18} className="hidden sm:inline" />
+            <h2 className="text-lg font-bold text-foreground">1. Which Ordinance Governs Your Programme</h2>
+          </div>
+
+          <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">
+            <p>
+              GGSIPU does not use one universal rule. Anviksha identifies your programme family from the official programme name and applies the correct statutory framework — keeping your raw ExamWeb programme code untouched:
+            </p>
+            <div className="overflow-x-auto pt-1">
+              <table className="w-full text-xs font-mono border-collapse border border-border-strong text-center">
+                <thead>
+                  <tr className="bg-surface-deep border-b border-border-strong text-foreground">
+                    <th className="p-2 border border-border-strong">Programme Family</th>
+                    <th className="p-2 border border-border-strong">Framework</th>
+                    <th className="p-2 border border-border-strong">System</th>
+                    <th className="p-2 border border-border-strong">What You Get</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border-strong/60">
+                    <td className="p-2 border border-border-strong font-bold text-foreground">B.Tech / M.Tech / MCA / BCA / BBA / MBA / B.Com / Law (semester)</td>
+                    <td className="p-2 border border-border-strong font-bold text-gold">Ordinance 11</td>
+                    <td className="p-2 border border-border-strong">Semester</td>
+                    <td className="p-2 border border-border-strong text-left">Grades, SGPA, CGPA, percentage, division, promotion</td>
+                  </tr>
+                  <tr className="border-b border-border-strong/60">
+                    <td className="p-2 border border-border-strong font-bold text-foreground">MBBS</td>
+                    <td className="p-2 border border-border-strong font-bold text-gold">Ordinance 15</td>
+                    <td className="p-2 border border-border-strong">Annual</td>
+                    <td className="p-2 border border-border-strong text-left">Marks, pass/fail, subject distinction — no SGPA/divisions by rule</td>
+                  </tr>
+                  <tr className="border-b border-border-strong/60">
+                    <td className="p-2 border border-border-strong font-bold text-foreground">BPT / BOT</td>
+                    <td className="p-2 border border-border-strong font-bold text-gold">Ordinance 31</td>
+                    <td className="p-2 border border-border-strong">Annual</td>
+                    <td className="p-2 border border-border-strong text-left">Marks, CPI-based division, all-subjects promotion rule</td>
+                  </tr>
+                  <tr className="border-b border-border-strong/60">
+                    <td className="p-2 border border-border-strong font-bold text-foreground">BHMS / BAMS</td>
+                    <td className="p-2 border border-border-strong font-bold text-gold">Ordinance 22 / 38</td>
+                    <td className="p-2 border border-border-strong">Annual</td>
+                    <td className="p-2 border border-border-strong text-left">Percentage marks, pass/fail — no letter grades by rule</td>
+                  </tr>
+                  <tr className="border-b border-border-strong/60">
+                    <td className="p-2 border border-border-strong font-bold text-foreground">BASLP</td>
+                    <td className="p-2 border border-border-strong font-bold text-gold">Ordinance 24</td>
+                    <td className="p-2 border border-border-strong">Semester</td>
+                    <td className="p-2 border border-border-strong text-left">Percentage-based division classification</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
+              <strong className="text-foreground">Important: </strong>A programme whose exact name is not in our verified registry (e.g. a generic &quot;Bachelor of Arts&quot;) is handled honestly: raw marks stay fully visible, but statutory calculations are marked <span className="text-gold font-bold">AMBIGUOUS</span> instead of being guessed. Unrecognised degree names never silently inherit Ordinance 11.
+            </div>
+          </div>
+        </section>
+
+        {/* Verification badges */}
+        <section id="verification" className="scroll-mt-20 space-y-4 p-6 bg-surface border border-border-strong rounded-lg">
+          <div className="flex items-center gap-2.5 text-gold">
+            <ShieldCheck size={18} className="hidden sm:inline" />
+            <h2 className="text-lg font-bold text-foreground">2. Verification Badges — What Each Number Means</h2>
+          </div>
+
+          <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">
+            <p>Every calculated number in Anviksha carries a badge telling you how much to trust it. This is the core of how the engine works:</p>
+            <div className="space-y-2 pt-1">
+              {VERIFICATION_STATES.map((state) => (
+                <div key={state.badge} className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
+                  <span className={`${state.style} font-bold`}>{state.badge}</span>
+                  <p className="text-foreground-secondary leading-relaxed">{state.meaning}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* Grades & Grade Points */}
         <section id="grades" className="scroll-mt-20 space-y-4 p-6 bg-surface border border-border-strong rounded-lg">
           <div className="flex items-center gap-2.5 text-gold">
             <Award size={18} className="hidden sm:inline" />
-            <h2 className="text-lg font-bold text-foreground">1. Grade Scale & Grade Points</h2>
+            <h2 className="text-lg font-bold text-foreground">3. Grade Scale & Grade Points (Ordinance 11)</h2>
           </div>
 
           <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">
@@ -242,7 +369,7 @@ export default function CalculationsPage() {
         <section id="sgpa" className="scroll-mt-20 space-y-4 p-6 bg-surface border border-border-strong rounded-lg">
           <div className="flex items-center gap-2.5 text-cat-violet">
             <TrendingUp size={18} className="hidden sm:inline" />
-            <h2 className="text-lg font-bold text-foreground">2. SGPA (Semester Grade Point Average)</h2>
+            <h2 className="text-lg font-bold text-foreground">4. SGPA (Semester Grade Point Average)</h2>
           </div>
 
           <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">
@@ -251,7 +378,7 @@ export default function CalculationsPage() {
 
             <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground pt-1">How Anviksha calculates it</h3>
             <div className="p-3 bg-surface-deep rounded border border-border-strong font-mono text-xs text-foreground">
-              SGPA = Sum of (Subject Credits × Grade Points) / Total Registered Credits
+              SGPA = Σ (Ci × Gi) / Σ Ci   —  Ordinance 11 Clause 13
             </div>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1 font-mono">
@@ -263,7 +390,7 @@ export default function CalculationsPage() {
             </div>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
-              <strong className="text-foreground">Important: </strong>SGPA is always credit-weighted. It is not a simple average of subject grade points. Backlog papers (Grade F, ABS, DET) contribute 0 grade points to the numerator while still counting in the registered credit denominator.
+              <strong className="text-foreground">Important: </strong>SGPA is always credit-weighted. It is not a simple average of subject grade points. A failed paper (Grade F) contributes 0 grade points while still counting in the credit denominator. A course passed with a non-numeric legend (CS — Credit Secured, AP — Already Passed) carries no grade point at all, so it is excluded from the calculation rather than counted as zero.
             </div>
           </div>
         </section>
@@ -272,7 +399,7 @@ export default function CalculationsPage() {
         <section id="cgpa" className="scroll-mt-20 space-y-4 p-6 bg-surface border border-border-strong rounded-lg">
           <div className="flex items-center gap-2.5 text-cat-teal">
             <BookOpen size={18} className="hidden sm:inline" />
-            <h2 className="text-lg font-bold text-foreground">3. CGPA (Cumulative Grade Point Average)</h2>
+            <h2 className="text-lg font-bold text-foreground">5. CGPA (Cumulative Grade Point Average)</h2>
           </div>
 
           <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">
@@ -281,7 +408,7 @@ export default function CalculationsPage() {
 
             <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground pt-1">How Anviksha calculates it</h3>
             <div className="p-3 bg-surface-deep rounded border border-border-strong font-mono text-xs text-foreground">
-              CGPA = Total Quality Points Across All Semesters / Total Registered Credits Across All Semesters
+              CGPA = Σ (Cni × Gni) / Σ Cni   —  Ordinance 11 Clause 13 (cumulative, rounded to 2 decimals)
             </div>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
@@ -294,7 +421,7 @@ export default function CalculationsPage() {
         <section id="percentage" className="scroll-mt-20 space-y-4 p-6 bg-surface border border-border-strong rounded-lg">
           <div className="flex items-center gap-2.5 text-cat-blue">
             <Percent size={18} className="hidden sm:inline" />
-            <h2 className="text-lg font-bold text-foreground">4. Equivalent Percentage Formula</h2>
+            <h2 className="text-lg font-bold text-foreground">6. Equivalent Percentage Formula</h2>
           </div>
 
           <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">
@@ -302,7 +429,7 @@ export default function CalculationsPage() {
             <p>GGSIPU defines an official conversion formula to convert CGPA into an equivalent percentage for job applications and higher education admissions.</p>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong font-mono text-xs text-foreground">
-              Equivalent Percentage = CGPA × 10.0
+              Equivalent Percentage = CGPA × 10   —  Ordinance 11 Clause 13
             </div>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
@@ -315,20 +442,21 @@ export default function CalculationsPage() {
         <section id="credits" className="scroll-mt-20 space-y-4 p-6 bg-surface border border-border-strong rounded-lg">
           <div className="flex items-center gap-2.5 text-accent-copper">
             <Layers size={18} className="hidden sm:inline" />
-            <h2 className="text-lg font-bold text-foreground">5. Credits & Estimated Fallbacks</h2>
+            <h2 className="text-lg font-bold text-foreground">7. Credits & Estimated Fallbacks</h2>
           </div>
 
           <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">
             <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">How Anviksha handles credits</h3>
             <p>
-              When a course scheme does not provide explicit credit counts in the raw ExamWeb response, Anviksha applies standard Ordinance 11 fallback heuristics:
+              Official GGSIPU marksheets do not display per-course credits. Rather than pretending to know them, Anviksha applies a clearly-labelled estimate and tells you whenever it is used:
             </p>
             <ul className="list-disc pl-5 space-y-1 text-xs font-mono">
-              <li>Laboratory, Practical, or Studio courses: <strong>1 credit</strong></li>
-              <li>Theory lecture courses: <strong>3 credits</strong></li>
+              <li>Laboratory, Practical, or Studio courses: <strong>1 credit</strong> (estimated)</li>
+              <li>Project, Viva, or Dissertation courses: <strong>2 credits</strong> (estimated)</li>
+              <li>Theory lecture courses: <strong>3 credits</strong> (estimated)</li>
             </ul>
             <p>
-              You can click on any credit input on the dashboard to override it with your college syllabus value, and Anviksha will instantly recalculate your SGPA and CGPA in real-time.
+              Because these are estimates, every SGPA, CGPA, percentage, and division computed from them carries the gold <strong className="text-gold">WARNING (Estimate)</strong> badge — never presented as official. You can click any credit input on the dashboard to enter the exact value from your scheme/syllabus; the numbers recalculate instantly (and stay badged as user-provided estimates until scheme credits are loaded).
             </p>
           </div>
         </section>
@@ -337,19 +465,19 @@ export default function CalculationsPage() {
         <section id="promotion" className="scroll-mt-20 space-y-4 p-6 bg-surface border border-border-strong rounded-lg">
           <div className="flex items-center gap-2.5 text-gold">
             <CheckCircle2 size={18} className="hidden sm:inline" />
-            <h2 className="text-lg font-bold text-foreground">6. Annual Promotion Baseline (50% Rule)</h2>
+            <h2 className="text-lg font-bold text-foreground">8. Annual Promotion Baseline (50% Rule)</h2>
           </div>
 
           <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">
             <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground">What it means</h3>
-            <p>Under revised GGSIPU Ordinance 11, a student must secure passing grades in at least 50% of the total credits offered across both semesters of an academic year (e.g. Sem 1 + Sem 2) to be promoted to the next academic year without year-back detention.</p>
+            <p>Under GGSIPU Ordinance 11, a student must earn at least 50% of the total credits offered across both semesters of an academic year (e.g. Sem 1 + Sem 2) to be promoted to the next academic year without year-back detention.</p>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong font-mono text-xs text-foreground">
               Required Credits = ceil(Total Academic Year Credits × 0.50)
             </div>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
-              <strong className="text-foreground">Important: </strong>This represents the general University baseline. Statutory regulatory bodies (such as AICTE, BCI, or COA) or specific programme schemes may prescribe additional promotion criteria.
+              <strong className="text-foreground">Important: </strong>This 50% rule is the verified ordinance baseline. Statutory regulatory bodies (such as AICTE, BCI, or COA) or specific programme schemes may prescribe additional promotion criteria — Anviksha shows this as a note alongside the baseline rather than inventing extra conditions. For annual programmes like BPT, promotion follows the programme&apos;s own ordinance (e.g. Ordinance 31 requires passing all subjects).
             </div>
           </div>
         </section>
@@ -358,7 +486,7 @@ export default function CalculationsPage() {
         <section id="academic-break" className="scroll-mt-20 space-y-4 p-6 bg-surface border border-border-strong rounded-lg">
           <div className="flex items-center gap-2.5 text-grade-fail">
             <AlertTriangle size={18} className="hidden sm:inline" />
-            <h2 className="text-lg font-bold text-foreground">7. Academic Break Regulations</h2>
+            <h2 className="text-lg font-bold text-foreground">9. Academic Break Regulations</h2>
           </div>
 
           <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">
@@ -375,11 +503,11 @@ export default function CalculationsPage() {
         <section id="result-states" className="scroll-mt-20 space-y-4 p-6 bg-surface border border-border-strong rounded-lg">
           <div className="flex items-center gap-2.5 text-foreground">
             <GraduationCap size={18} className="hidden sm:inline" />
-            <h2 className="text-lg font-bold text-foreground">8. Official Result States</h2>
+            <h2 className="text-lg font-bold text-foreground">10. Official Result States</h2>
           </div>
 
           <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">
-            <p>Anviksha preserves the official status returned by GGSIPU ExamWeb without altering raw results:</p>
+            <p>Anviksha preserves the official status returned by GGSIPU ExamWeb without altering raw results. All official legend codes are decoded and shown in plain language:</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
               <div className="p-3 bg-surface-deep rounded border border-border-strong">
                 <span className="text-grade-excellent font-bold">CLEARED (08)</span>: Course passed with Grade P or above.
@@ -388,12 +516,27 @@ export default function CalculationsPage() {
                 <span className="text-grade-fail font-bold">BACK (09 + Numeric)</span>: Failed marks, subject eligible for re-appear.
               </div>
               <div className="p-3 bg-surface-deep rounded border border-border-strong">
-                <span className="text-foreground-muted font-bold">ABSENT (09 + ABS)</span>: Student was absent from semester examination.
+                <span className="text-foreground-muted font-bold">ABSENT (ABS)</span>: Student was absent from the examination.
               </div>
               <div className="p-3 bg-surface-deep rounded border border-border-strong">
-                <span className="text-grade-fail font-bold">DETAINED (09 + DET)</span>: Detained from examination due to attendance shortage.
+                <span className="text-grade-fail font-bold">DETAINED (DET)</span>: Detained from examination due to attendance shortage.
+              </div>
+              <div className="p-3 bg-surface-deep rounded border border-border-strong">
+                <span className="text-destructive font-bold">CANCELLED (CAN)</span>: Result cancelled by the university.
+              </div>
+              <div className="p-3 bg-surface-deep rounded border border-border-strong">
+                <span className="text-cat-blue font-bold">RESULT LATER (RL)</span>: Result withheld; check back later.
+              </div>
+              <div className="p-3 bg-surface-deep rounded border border-border-strong">
+                <span className="text-grade-excellent font-bold">CREDIT SECURED (CS)</span>: Credit already secured; excluded from GPA (no numeric marks).
+              </div>
+              <div className="p-3 bg-surface-deep rounded border border-border-strong">
+                <span className="text-grade-excellent font-bold">ALREADY PASSED (AP)</span>: Passed in a previous attempt; excluded from GPA.
               </div>
             </div>
+            <p className="text-xs text-foreground-muted">
+              An unknown or missing status code is never auto-converted into a pass or a fail — it is shown as &quot;Unknown&quot; until the official result is available.
+            </p>
           </div>
         </section>
 
@@ -401,7 +544,7 @@ export default function CalculationsPage() {
         <section id="division" className="scroll-mt-20 space-y-4 p-6 bg-surface border border-border-strong rounded-lg">
           <div className="flex items-center gap-2.5 text-gold">
             <Award size={18} className="hidden sm:inline" />
-            <h2 className="text-lg font-bold text-foreground">9. Ordinance 11 Division Classification</h2>
+            <h2 className="text-lg font-bold text-foreground">11. Ordinance 11 Division Classification</h2>
           </div>
 
           <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">
@@ -454,7 +597,7 @@ export default function CalculationsPage() {
         <section id="exemplary" className="scroll-mt-20 space-y-4 p-6 bg-surface border border-border-strong rounded-lg">
           <div className="flex items-center gap-2.5 text-gold">
             <Award size={18} className="hidden sm:inline" />
-            <h2 className="text-lg font-bold text-foreground">10. Exemplary Performance Requirements</h2>
+            <h2 className="text-lg font-bold text-foreground">12. Exemplary Performance Requirements</h2>
           </div>
 
           <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">
@@ -466,7 +609,7 @@ export default function CalculationsPage() {
               <li>No academic breaks or detentions during the programme.</li>
             </ul>
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
-              <strong className="text-foreground">Transparency Note: </strong>Because ExamWeb single marksheet responses do not contain historical first-attempt verification flags, Anviksha marks Exemplary eligibility as undetermined until complete attempt history is confirmed.
+              <strong className="text-foreground">Transparency Note: </strong>The ordinance awards Exemplary Performance only when every course was passed in the first chance with no academic break. Because a single ExamWeb marksheet does not contain first-attempt history, Anviksha shows CGPA 10.00 with that condition noted — your official marksheet remains the final word. Also note: professional programmes have their own classification rules (MBBS and BAMS award no divisions at all; BPT classifies by CPI on a percentage scale).
             </div>
           </div>
         </section>
@@ -475,7 +618,7 @@ export default function CalculationsPage() {
         <section id="placement" className="scroll-mt-20 space-y-4 p-6 bg-surface border border-border-strong rounded-lg">
           <div className="flex items-center gap-2.5 text-accent-copper">
             <Briefcase size={18} className="hidden sm:inline" />
-            <h2 className="text-lg font-bold text-foreground">11. Anviksha Placement Benchmarks</h2>
+            <h2 className="text-lg font-bold text-foreground">13. Anviksha Placement Benchmarks</h2>
           </div>
 
           <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">

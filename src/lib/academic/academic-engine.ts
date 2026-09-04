@@ -1,15 +1,14 @@
-import useResultStore from "@/store/result-store";
 import {
   ACADEMIC_DB,
   findOrdinance,
   findProgramme,
   getSubjectMaxMarks,
+  verificationAsStatus,
   type ExaminationSystem,
   type GradeBand,
   type OrdinanceEntry,
   type ProgrammeEntry,
   type SupportState,
-  type Verification,
 } from "./academic-db";
 
 export type StatusSemantic =
@@ -22,7 +21,6 @@ export interface Metric<T = number | string | boolean> {
   reason?: string;
   sources: string[];
 }
-export type MetricResult<T> = Metric<T>;
 
 export interface ExamWebProfile {
   nrollno?: string | number;
@@ -40,13 +38,6 @@ export interface ExamWebResult {
   stresult?: unknown[][];
 }
 
-export type ResultDeliverySource =
-  | "EXAMWEB"
-  | "STUDENT_PORTAL"
-  | "RESULT_PDF"
-  | "OTHER"
-  | "UNKNOWN";
-
 export interface EngineCourse {
   period: number | string;
   rawCode: string;
@@ -55,9 +46,6 @@ export interface EngineCourse {
   external?: number;
   total?: number;
   rawTotal: string;
-  rawStatus: string;
-  rawStatusCode: string;
-  normalizedStatus: StatusSemantic | null;
   examMonthYear: string;
   declaredDate: string;
   maxMarks: number | null;
@@ -65,15 +53,11 @@ export interface EngineCourse {
   semantic: StatusSemantic;
   credits: {
     value: number | null;
-    source: "SCHEME" | "USER" | "UNAVAILABLE" | "ESTIMATED";
-    status: SupportState;
-    verification: Verification | "USER_PROVIDED";
+    source: "USER" | "ESTIMATED" | "UNAVAILABLE";
   };
-  grade: { value: string; point: number; status: SupportState; sources: string[] } | null;
+  grade: { value: string; point: number } | null;
   gradePointUsedForGpa: number | null;
-  courseVerification: "UNKNOWN" | "RESULT_DERIVED" | "VERIFIED";
   ruleCheck: "PASS" | "FAIL" | "UNTESTABLE";
-  rawResultUsable: true;
 }
 
 export interface EnginePromotionYear {
@@ -82,7 +66,7 @@ export interface EnginePromotionYear {
   totalCredits: number;
   earnedCredits: number;
   requiredCredits: number;
-  standing: "PROMOTED" | "NOT_PROMOTED" | "ACADEMIC_BREAK" | "UNKNOWN";
+  standing: "PROMOTED" | "NOT_PROMOTED";
   progressPercent: number;
 }
 
@@ -101,11 +85,9 @@ export interface EngineResult {
     instituteName: string;
     cohort: number | null;
     ordinance: string | null;
-    scheme: string | null;
     known: boolean;
     isTech: boolean;
-    dbVerification: Verification | null;
-    resultDeliverySource: ResultDeliverySource;
+    dbVerification: SupportState | null;
   };
   courses: EngineCourse[];
   analytics: {
@@ -191,13 +173,16 @@ function getGradeFromMarks(totalMarks: number, gradeBands: GradeBand[]) {
 function calculateWeightedGpa(courses: EngineCourse[]): number | null {
   let totalWeightedPoints = 0;
   let totalCredits = 0;
+  let gradedCourseCount = 0;
   for (const course of courses) {
     if (course.credits.value === null || course.credits.value === undefined || course.credits.value <= 0) continue;
     if (course.gradePointUsedForGpa === null) continue;
     totalWeightedPoints += course.credits.value * course.gradePointUsedForGpa;
     totalCredits += course.credits.value;
+    gradedCourseCount += 1;
   }
-  return totalCredits > 0 ? Math.round((totalWeightedPoints / totalCredits) * 100) / 100 : null;
+  if (gradedCourseCount === 0) return null;
+  return Math.round((totalWeightedPoints / totalCredits) * 100) / 100;
 }
 
 function evaluatePromotion(courses: EngineCourse[], ordinance: OrdinanceEntry | null): Metric<EnginePromotionYear[] | null> {
@@ -252,31 +237,14 @@ function evaluatePromotion(courses: EngineCourse[], ordinance: OrdinanceEntry | 
 
   const sortedYears = [...academicYearsMap.entries()].sort(([a], [b]) => a - b);
   let hasIncompleteYear = false;
-  let hasMissingPriorYears = false;
-  let cumulativePriorEarned = 0;
-  let cumulativePriorTotal = 0;
 
   const promotionYears = sortedYears.map(([yearNumber, creditStats]) => {
     const isYearComplete = creditStats.hasOdd && creditStats.hasEven;
     if (!isYearComplete) hasIncompleteYear = true;
 
-    for (let y = 1; y < yearNumber; y++) {
-      const priorStats = academicYearsMap.get(y);
-      if (!priorStats || !priorStats.hasOdd || !priorStats.hasEven) {
-        hasMissingPriorYears = true;
-      }
-    }
-
     const requiredCredits = Math.ceil(creditStats.totalCredits * creditShareRule.minimumEarnedCreditShare);
     const meetsEnsuingYear = creditStats.earnedCredits >= requiredCredits;
-    const meetsPriorYears = cumulativePriorTotal > 0
-      ? cumulativePriorEarned >= Math.ceil(cumulativePriorTotal * 0.9)
-      : true;
-
-    const standing = (isYearComplete && meetsEnsuingYear && meetsPriorYears) ? ("PROMOTED" as const) : ("NOT_PROMOTED" as const);
-
-    cumulativePriorEarned += creditStats.earnedCredits;
-    cumulativePriorTotal += creditStats.totalCredits;
+    const standing = (isYearComplete && meetsEnsuingYear) ? ("PROMOTED" as const) : ("NOT_PROMOTED" as const);
 
     return {
       yearNumber,
@@ -289,10 +257,10 @@ function evaluatePromotion(courses: EngineCourse[], ordinance: OrdinanceEntry | 
     };
   });
 
-  const status: SupportState = (hasIncompleteYear || hasMissingPriorYears) ? "WARNING" : "RESULT_DERIVED";
-  const explanation = (hasIncompleteYear || hasMissingPriorYears)
-    ? "Evaluated with warning: Ordinance 11 Clause 12 requires completion of both semesters of the ensuing academic year (≥50% credits) and ≥90% credits across all prior academic years. Transcript contains incomplete year or missing prior semester data."
-    : "Derived under Ordinance 11 Clause 12: minimum 50% credits earned in ensuing academic year and 90% credits across all prior academic years.";
+  const status: SupportState = hasIncompleteYear ? "WARNING" : "RESULT_DERIVED";
+  const explanation = hasIncompleteYear
+    ? "Evaluated with warning: the transcript does not contain both semesters of every academic year, so the annual 50% credit baseline cannot be fully confirmed."
+    : `Derived under the applicable ordinance baseline: minimum ${Math.round(creditShareRule.minimumEarnedCreditShare * 100)}% of the academic year's credits must be earned. Additional programme-scheme promotion conditions may apply and are not verified.`;
 
   return createMetric(promotionYears, status, explanation, creditShareRule.sources);
 }
@@ -318,9 +286,7 @@ function buildCourses(
     const rawTotal = toCleanString(totalMarks);
     const numericTotal = toCleanNumber(totalMarks);
     const rawStatusCode = toCleanString(statusCode);
-    const rawStatus = rawStatusCode;
     const semantic = decodeStatus(rawStatusCode, rawTotal);
-    const normalizedStatus = semantic === "UNKNOWN" ? null : semantic;
 
     const maxMarks = getSubjectMaxMarks(name, programme?.programmeFamily);
     const isAmbiguous = programme?.verification === "INFERRED" || !programme;
@@ -339,50 +305,31 @@ function buildCourses(
       grade = {
         value: isCoursePassed(semantic) ? calculatedGrade.value : "F",
         point: isCoursePassed(semantic) ? calculatedGrade.point : 0,
-        status: "RESULT_DERIVED",
-        sources: gradeRule!.sources,
       };
     } else if (ordinance?.rules.noLetterGrades && numericTotal !== undefined && isCoursePassed(semantic) && ordinance.rules.courseDistinction && maxMarks) {
       const percentageScore = (numericTotal / maxMarks) * 100;
       if (percentageScore > ordinance.rules.courseDistinction.minimumPercentExclusive) {
-        grade = { value: ordinance.rules.courseDistinction.label, point: 0, status: "VERIFIED", sources: ordinance.rules.courseDistinction.sources };
+        grade = { value: ordinance.rules.courseDistinction.label, point: 0 };
       }
     }
 
-    const gradePointUsedForGpa = gradeRuleApplies ? (isCoursePassed(semantic) ? (calculatedGrade?.point ?? 0) : 0) : null;
+    const gradePointUsedForGpa = gradeRuleApplies
+      ? (calculatedGrade ? calculatedGrade.point : null)
+      : null;
 
     const defaultCredit = getDefaultCredit(name);
     const usesCredits = ordinance?.capabilities?.credits !== false;
 
     let credits: EngineCourse["credits"];
     if (hasExplicitCredit && userCredit === null) {
-      credits = {
-        value: null,
-        source: "USER" as const,
-        status: "RESULT_DERIVED" as const,
-        verification: "USER_PROVIDED" as const,
-      };
+      // User explicitly cleared this credit — exclude it from calculations.
+      credits = { value: null, source: "USER" };
     } else if (hasExplicitCredit && typeof userCredit === "number" && Number.isFinite(userCredit)) {
-      credits = {
-        value: Math.max(0, userCredit),
-        source: "USER" as const,
-        status: "RESULT_DERIVED" as const,
-        verification: "USER_PROVIDED" as const,
-      };
+      credits = { value: Math.max(0, userCredit), source: "USER" };
     } else if (allowFallbackCredits && usesCredits) {
-      credits = {
-        value: defaultCredit,
-        source: "ESTIMATED" as const,
-        status: "RESULT_DERIVED" as const,
-        verification: "INFERRED" as const,
-      };
+      credits = { value: defaultCredit, source: "ESTIMATED" };
     } else {
-      credits = {
-        value: null,
-        source: "UNAVAILABLE" as const,
-        status: usesCredits ? ("UNAVAILABLE" as const) : ("NOT_APPLICABLE" as const),
-        verification: "UNKNOWN" as const,
-      };
+      credits = { value: null, source: "UNAVAILABLE" };
     }
 
     return {
@@ -393,9 +340,6 @@ function buildCourses(
       external: toCleanNumber(externalMarks),
       total: numericTotal,
       rawTotal,
-      rawStatus,
-      rawStatusCode,
-      normalizedStatus,
       examMonthYear: toCleanString(examMonthYear),
       declaredDate: toCleanString(declaredDate),
       maxMarks,
@@ -404,9 +348,7 @@ function buildCourses(
       credits,
       grade,
       gradePointUsedForGpa,
-      courseVerification: "RESULT_DERIVED",
       ruleCheck,
-      rawResultUsable: true as const,
     };
   });
 }
@@ -527,6 +469,14 @@ export function analyzeResult(
   const sgpaApplicable = capabilities ? capabilities.sgpa : Boolean(generalGradeRule?.bands && ordinance?.rules.sgpa);
   const cgpaApplicable = capabilities ? capabilities.cgpa : Boolean(generalGradeRule?.bands && ordinance?.rules.cgpa);
 
+  const usesEstimatedCredits = courses.some((course) => course.credits.source === "ESTIMATED");
+  const usesUserCredits = courses.some((course) => course.credits.source === "USER");
+  const gpaStatus: SupportState =
+    (usesEstimatedCredits || usesUserCredits) ? "WARNING" : "RESULT_DERIVED";
+  const gpaReason = usesUserCredits && !usesEstimatedCredits
+    ? "Calculated with user-provided credits. Official scheme credits would change this number."
+    : "Calculated with estimated credits (theory 3 / practical 1 heuristic). Official scheme credits are not available on the marksheet.";
+
   const sgpaByPeriod = periodList.map((period) => {
     const periodCourses = courses.filter((course) => course.period === period);
     if (programme?.verification === "INFERRED") {
@@ -554,12 +504,19 @@ export function analyzeResult(
       };
     }
     const periodGpa = calculateWeightedGpa(periodCourses);
+    if (periodGpa === null) {
+      // Credits exist but no verified grade-point rule produced any points.
+      return {
+        period,
+        sgpa: createMetric<number>(null, "UNAVAILABLE", "No verified grade-point formula is loaded for this programme."),
+      };
+    }
     return {
       period,
       sgpa: createMetric(
         periodGpa,
-        "RESULT_DERIVED",
-        "Weighted GPA derived from semester course marks and credits using Ordinance 11 formula.",
+        gpaStatus,
+        gpaReason,
         ordinance?.rules.sgpa?.sources ?? ["GGSIPU Ordinance 11"]
       ),
     };
@@ -592,12 +549,13 @@ export function analyzeResult(
         )
       : !hasAnyCredits
         ? createMetric<number>(null, "UNAVAILABLE", "Authoritative course credits are not available across all periods.")
-        : createMetric(
-            calculateWeightedGpa(courses),
-            "RESULT_DERIVED",
-            "Cumulative GPA derived across all completed periods using Ordinance 11 formula.",
-            ordinance?.rules.cgpa?.sources ?? ["GGSIPU Ordinance 11"]
-          );
+        : (() => {
+            const cgpaValue = calculateWeightedGpa(courses);
+            if (cgpaValue === null) {
+              return createMetric<number>(null, "UNAVAILABLE", "No verified grade-point formula is loaded for this programme.");
+            }
+            return createMetric(cgpaValue, gpaStatus, gpaReason, ordinance?.rules.cgpa?.sources ?? ["GGSIPU Ordinance 11"]);
+          })();
 
   let percentage: Metric<number | null>;
   if (programme?.verification === "INFERRED") {
@@ -607,8 +565,8 @@ export function analyzeResult(
   } else if (ordinance?.rules.percentageFromCGPA && cgpa.value !== null) {
     percentage = createMetric(
       Math.round(cgpa.value * 10 * 100) / 100,
-      "RESULT_DERIVED",
-      "Equivalent percentage derived from CGPA × 10 under Ordinance 11.",
+      gpaStatus,
+      gpaReason,
       ordinance.rules.percentageFromCGPA.sources
     );
   } else if (percentages.length === courses.length && courses.length > 0 && courses.every((course) => course.maxMarks !== null)) {
@@ -661,7 +619,7 @@ export function analyzeResult(
     }
   } else if (ordinance?.rules.divisionFromCGPA && cgpa.value !== null) {
     const band = ordinance.rules.divisionFromCGPA.bands.find((b: any) => cgpa.value! >= b.minimumCGPA && (b.maximumCGPA === null || cgpa.value! <= b.maximumCGPA));
-    division = createMetric(band?.division ?? null, "RESULT_DERIVED", band?.note, ordinance.rules.divisionFromCGPA.sources);
+    division = createMetric(band?.division ?? null, gpaStatus, band?.note ?? gpaReason, ordinance.rules.divisionFromCGPA.sources);
   } else if (ordinance?.rules.divisionFromCGPA) {
     division = createMetric(null, "VERIFIED", "Exemplary: 10.00 (1st attempt) · First Div: ≥6.50 · Second Div: 5.00–6.49 · Third Div: 4.00–4.99", ordinance.rules.divisionFromCGPA.sources);
   } else {
@@ -712,14 +670,11 @@ export function analyzeResult(
       instituteName: toCleanString(studentProfile?.iname),
       cohort,
       ordinance: programme?.ordinanceCode ?? null,
-      scheme: null,
       known: Boolean(programme),
       isTech: programme?.isTech ?? false,
-      dbVerification: programme?.verification ?? null,
-      resultDeliverySource: marksheetRows.length > 0 ? "EXAMWEB" as const : "UNKNOWN" as const,
+      dbVerification: verificationAsStatus(programme?.verification ?? null),
     },
-    courses,
-    analytics: {
+    courses,    analytics: {
       paperCount: createMetric(courses.length, "RESULT_DERIVED", undefined, marksheetSources),
       numericMarksCount: createMetric(numericTotals.length, "RESULT_DERIVED", undefined, marksheetSources),
       averageMarks: createMetric(average(numericTotals), "RESULT_DERIVED", undefined, marksheetSources),
@@ -752,11 +707,6 @@ export function analyzeResult(
     },
     warnings,
   };
-}
-
-export function analyzeCurrentResult(): EngineResult {
-  const storeState = useResultStore.getState();
-  return analyzeResult(storeState.result as ExamWebResult | null, storeState.customCredits ?? {});
 }
 
 // ==========================================
@@ -968,23 +918,28 @@ export function getAcademicPromotionStatus(
   hasDetentionRisk: boolean;
   activeYear: number;
 } {
-  const yearPairs: [number, number][] = [
-    [1, 2],
-    [3, 4],
-    [5, 6],
-    [7, 8],
-  ];
+  // Find the highest semester number present in the results
+  let maxSemester = 8;
+  for (const row of allResults) {
+    const sem = Number(row[0]);
+    if (Number.isInteger(sem) && sem > maxSemester) {
+      maxSemester = sem;
+    }
+  }
+  const yearCount = Math.max(4, Math.ceil(maxSemester / 2));
 
-  const yearLabels = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
+  const yearLabels = ["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "6th Year"];
   let hasDetentionRisk = false;
   let maxSemFound = 0;
 
   let cumulativePriorTotal = 0;
   let cumulativePriorEarned = 0;
 
-  const years: AcademicYearStatus[] = yearPairs.map(([oddSem, evenSem], index) => {
+  const years: AcademicYearStatus[] = Array.from({ length: yearCount }, (_, index) => {
     const yearNumber = index + 1;
-    const yearLabel = yearLabels[index];
+    const oddSem = index * 2 + 1;
+    const evenSem = oddSem + 1;
+    const yearLabel = yearLabels[index] ?? `${yearNumber}th Year`;
 
     const oddRows = allResults.filter((r) => Number(r[0]) === oddSem);
     const evenRows = allResults.filter((r) => Number(r[0]) === evenSem);
@@ -1027,15 +982,23 @@ export function getAcademicPromotionStatus(
     let earnedCredits = 0;
 
     const allYearRows = [...oddRows, ...evenRows];
-    allYearRows.forEach((row) => {
+    for (const row of allYearRows) {
       const rawTotal = row[5];
       const statusCode = row[6];
       const paperCode = String(row[1] ?? "");
       const subjectTitle = String(row[2] ?? "");
-      const hasCustom = paperCode in customCredit || paperCode.toUpperCase() in customCredit;
-      const customVal = customCredit[paperCode] !== undefined ? customCredit[paperCode] : customCredit[paperCode.toUpperCase()];
-      const credit = hasCustom ? (customVal ?? 0) : getDefaultCredit(subjectTitle);
-      if (credit <= 0) return;
+
+      // Check if user set custom credits
+      let credit = 0;
+      if (paperCode in customCredit) {
+        credit = customCredit[paperCode] ?? 0;
+      } else if (paperCode.toUpperCase() in customCredit) {
+        credit = customCredit[paperCode.toUpperCase()] ?? 0;
+      } else {
+        credit = getDefaultCredit(subjectTitle);
+      }
+
+      if (credit <= 0) continue;
 
       const semantic = decodeStatus(statusCode, rawTotal);
       const isPassed = semantic === "PASS" || semantic === "CREDIT_SECURED" || semantic === "ALREADY_PASSED";
@@ -1044,7 +1007,7 @@ export function getAcademicPromotionStatus(
       if (isPassed) {
         earnedCredits += credit;
       }
-    });
+    }
 
     const percentage = totalCredits > 0 ? (earnedCredits / totalCredits) * 100 : 0;
     const requiredCredits = Math.ceil(totalCredits * 0.5);
@@ -1259,14 +1222,14 @@ export function getReappearSessionPlan(
   let maxSemEvaluated = 0;
   allResults.forEach((row) => {
     const semNum = Number(row[0]);
-    if (!isNaN(semNum) && semNum >= 1 && semNum <= 8 && semNum > maxSemEvaluated) {
+    if (!isNaN(semNum) && semNum >= 1 && semNum > maxSemEvaluated) {
       maxSemEvaluated = semNum;
     }
   });
 
   allResults.forEach((row) => {
     const semNum = Number(row[0]);
-    if (isNaN(semNum) || semNum < 1 || semNum > 8) return;
+    if (isNaN(semNum) || semNum < 1) return;
 
     const rawTotal = row[5];
     const statusCode = row[6];

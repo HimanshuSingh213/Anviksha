@@ -129,14 +129,17 @@ export const LoginForm = () => {
                             id="enrollment"
                             {...register("enrollment")}
                             type="text"
+                            inputMode="numeric"
                             placeholder="09414802721"
                             autoComplete="username"
+                            aria-invalid={Boolean(errors.enrollment)}
+                            aria-describedby={errors.enrollment ? "enrollment-error" : undefined}
                             suppressHydrationWarning
                             className="w-full rounded-lg border border-border-strong bg-background py-2.5 pl-10 pr-3 font-mono text-sm text-foreground outline-none transition focus:border-gold focus:ring-1 focus:ring-gold"
                         />
                     </div>
                     {errors.enrollment && (
-                        <p className="text-xs text-grade-fail">{errors.enrollment.message}</p>
+                        <p id="enrollment-error" role="alert" className="text-xs text-grade-fail">{errors.enrollment.message}</p>
                     )}
                 </div>
 
@@ -158,6 +161,8 @@ export const LoginForm = () => {
                             type={showPass ? "text" : "password"}
                             placeholder="••••••••"
                             autoComplete="current-password"
+                            aria-invalid={Boolean(errors.password)}
+                            aria-describedby={errors.password ? "password-error" : undefined}
                             suppressHydrationWarning
                             className="w-full rounded-lg border border-border-strong bg-background py-2.5 pl-10 pr-10 font-mono text-sm text-foreground outline-none transition focus:border-gold focus:ring-1 focus:ring-gold"
                         />
@@ -165,6 +170,7 @@ export const LoginForm = () => {
                             type="button"
                             onClick={() => setShowPass(!showPass)}
                             aria-label={showPass ? "Hide password" : "Show password"}
+                            aria-pressed={showPass}
                             suppressHydrationWarning
                             className="absolute right-3 text-foreground-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-gold rounded p-0.5"
                         >
@@ -172,7 +178,7 @@ export const LoginForm = () => {
                         </button>
                     </div>
                     {errors.password && (
-                        <p className="text-xs text-grade-fail">{errors.password.message}</p>
+                        <p id="password-error" role="alert" className="text-xs text-grade-fail">{errors.password.message}</p>
                     )}
                 </div>
 
@@ -213,7 +219,7 @@ export const LoginForm = () => {
                                         /* eslint-disable-next-line @next/next/no-img-element */
                                         <img
                                             src={captchaSrc}
-                                            alt="CAPTCHA Code"
+                                            alt="CAPTCHA code image — type the characters shown. Use the Refresh button if unreadable."
                                             onLoad={() => setCaptchaLoading(false)}
                                             onError={() => {
                                                 setCaptchaLoading(false);
@@ -233,18 +239,22 @@ export const LoginForm = () => {
                         {...register("captcha")}
                         type="text"
                         placeholder="Enter CAPTCHA"
+                        autoComplete="off"
+                        aria-invalid={Boolean(errors.captcha)}
+                        aria-describedby={errors.captcha ? "captcha-error" : undefined}
                         suppressHydrationWarning
                         className="w-full rounded-lg border border-border-strong bg-background py-2.5 px-3 font-mono text-sm tracking-wider text-foreground outline-none transition focus:border-gold focus:ring-1 focus:ring-gold"
                     />
                     {errors.captcha && (
-                        <p className="text-xs text-grade-fail">{errors.captcha.message}</p>
+                        <p id="captcha-error" role="alert" className="text-xs text-grade-fail">{errors.captcha.message}</p>
                     )}
                 </div>
 
-                {/* Submit Button */}
+                {/* Submit Button — aria-live announces the state change */}
                 <button
                     type="submit"
                     disabled={isSubmitting}
+                    aria-busy={isSubmitting}
                     suppressHydrationWarning
                     className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-gold-border bg-gold-surface py-3 text-sm font-semibold text-gold transition hover:bg-gold-border active:scale-[0.99] disabled:opacity-50 cursor-pointer"
                 >

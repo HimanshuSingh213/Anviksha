@@ -4,11 +4,7 @@ import { BadgeCheck, Sigma } from "lucide-react";
 import Tooltip from "@/components/common/Tooltip";
 import type { SupportState } from "@/lib/academic/academic-db";
 
-/**
- * Provenance chip — the inline trust mark rendered beside every calculated
- * number (VERIFIED = calculated under verified rules; RESULT_DERIVED = calculated from ExamWeb marks).
- * Tooltip carries the engine's reason.
- */
+// Provenance verification chip
 
 export function ProvenanceChip({
   state,

@@ -91,15 +91,15 @@ export const FAQS: FaqItem[] = [
   },
   {
     q: "Does it work for every programme and college?",
-    a: "If your result is declared on GGSIPU's ExamWeb server, Anviksha processes it. That covers all 50+ affiliated institutes and every programme listed above — B.Tech, law, management, health sciences, and more.",
+    a: "If your result is declared on GGSIPU's ExamWeb server, Anviksha shows it — every affiliated institute is covered. Analytics are computed under each programme's own ordinance (Ordinance 11 for semester degrees; separate verified frameworks for MBBS, BPT, and other professional programmes), and anything not yet verified is clearly labelled instead of guessed.",
   },
   {
     q: "How is CGPA calculated under Ordinance 11?",
-    a: "SGPA is the credit-weighted average of grade points for a semester: Σ(credits × grade points) ÷ Σ(credits). CGPA is the cumulative equivalent across all completed semesters, and the equivalent percentage is CGPA × 10.0. Anviksha implements the formula exactly as written in the ordinance — no approximations.",
+    a: "SGPA is the credit-weighted average of grade points for a semester: Σ(credits × grade points) ÷ Σ(credits) — Ordinance 11, Clause 13. CGPA is the cumulative equivalent across all completed semesters, and the equivalent percentage is CGPA × 10. Anviksha implements the formula exactly as written in the ordinance — no approximations.",
   },
   {
     q: "What is the 50% credit rule?",
-    a: "Under Ordinance 11 (§11.7), promotion to the next academic year requires two thresholds: clearing at least 50% of the credits offered in your current academic year, plus holding 90% of your previous year's credits overall. B.Tech students get supplementary-exam windows at the end of 2nd and 3rd years to make up shortfalls. Anviksha tracks your annual credit standing live so a year-back never surprises you — additional programme-specific requirements may apply.",
+    a: "Under Ordinance 11, promotion to the next academic year requires earning at least 50% of the credits offered in your current academic year (Clause 11.3(v)). Anviksha tracks your annual credit standing live so a year-back never surprises you — it uses the verified ordinance baseline and notes that additional programme-scheme requirements may apply, rather than inventing extra conditions.",
   },
   {
     q: "Where does my data go?",
