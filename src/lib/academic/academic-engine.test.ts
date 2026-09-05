@@ -6,7 +6,6 @@ import {
   isVerified,
   getSubjectMaxMarks,
 } from "./academic-db";
-import { DUMMY_PROFILES } from "@/app/(app)/preview/dummy-data";
 
 // The real 498 payload shape (spec §37 fixtures)
 const REAL_498 = {
@@ -723,8 +722,49 @@ describe("Targeted Audit — Division Capabilities & Generic Mappings", () => {
     expect(rLaw.analytics.division.value).toBe("First Division");
   });
 
-  it("BASLP dummy profile evaluates to Ordinance 24 with percentage division and no 0.00 CGPA", () => {
-    const baslpResult = DUMMY_PROFILES.baslp.result;
+  it("BASLP profile evaluates to Ordinance 24 with percentage division and no 0.00 CGPA", () => {
+    const baslpResult = {
+      report: "IEM",
+      stprofile: {
+        nrollno: "00850209622",
+        stname: "KAVYA MENON",
+        byoa: 2022,
+        yoa: 2022,
+        prgcode: "096",
+        prgname: "BACHELOR OF AUDIOLOGY AND SPEECH LANGUAGE PATHOLOGY",
+        icode: "502",
+        iname: "ALI YAVAR JUNG NATIONAL INSTITUTE OF SPEECH & HEARING DISABILITIES",
+      },
+      header: [
+        "Sem/ Annual",
+        "Paper Code",
+        "Subject Name",
+        "Internal",
+        "External",
+        "Total",
+        "status",
+        "Exam (Month,Year)",
+        "Declared Date (YYYY-MM-DD)",
+      ],
+      stresult: [
+        [1, "BASLP-101", "SPEECH-LANGUAGE PATHOLOGY BASIC CONCEPTS", "18", "54", "72", "08", "12,2022", "2023-02-16"],
+        [1, "BASLP-102", "BASIC ANATOMY & PHYSIOLOGY OF SPEECH & HEARING", "19", "55", "74", "08", "12,2022", "2023-02-16"],
+        [1, "BASLP-103", "INTRODUCTION TO AUDIOLOGY", "17", "51", "68", "08", "12,2022", "2023-02-16"],
+        [1, "BASLP-151", "CLINICAL PRACTICUM IN AUDIOLOGY", "38", "42", "80", "08", "12,2022", "2023-02-16"],
+        [2, "BASLP-104", "SPEECH DIAGNOSTICS & THERAPEUTICS", "20", "56", "76", "08", "05,2023", "2023-07-22"],
+        [2, "BASLP-105", "HEARING ASSESSMENT TECHNIQUES", "18", "53", "71", "08", "05,2023", "2023-07-22"],
+        [2, "BASLP-106", "LINGUISTICS AND PHONETICS", "19", "54", "73", "08", "05,2023", "2023-07-22"],
+        [2, "BASLP-152", "CLINICAL PRACTICUM IN SPEECH PATHOLOGY", "39", "43", "82", "08", "05,2023", "2023-07-22"],
+        [3, "BASLP-201", "VOICE AND ITS DISORDERS", "19", "55", "74", "08", "12,2023", "2024-02-18"],
+        [3, "BASLP-202", "PEDIATRIC AUDIOLOGY", "20", "57", "77", "08", "12,2023", "2024-02-18"],
+        [3, "BASLP-203", "NEUROMOTOR SPEECH DISORDERS", "18", "52", "70", "08", "12,2023", "2024-02-18"],
+        [3, "BASLP-251", "CLINICAL PRACTICUM IN AUDIOLOGY II", "40", "44", "84", "08", "12,2023", "2024-02-18"],
+        [4, "BASLP-204", "FLUENCY AND ITS DISORDERS", "19", "56", "75", "08", "05,2024", "2024-07-24"],
+        [4, "BASLP-205", "REHABILITATIVE AUDIOLOGY", "20", "58", "78", "08", "05,2024", "2024-07-24"],
+        [4, "BASLP-206", "ADULT NEUROGENIC DISORDERS", "18", "54", "72", "08", "05,2024", "2024-07-24"],
+        [4, "BASLP-252", "CLINICAL PRACTICUM IN SPEECH PATHOLOGY II", "41", "44", "85", "08", "05,2024", "2024-07-24"],
+      ],
+    };
     const r = analyzeResult(baslpResult);
     expect(r.programme.ordinance).toBe("ORD_24");
     expect(r.analytics.cgpa.value).toBeNull();

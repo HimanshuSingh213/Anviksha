@@ -190,9 +190,10 @@ export default function CalculationsPage() {
 
             <Link
               href="/login"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-black text-xs font-mono font-bold hover:bg-neutral-200 transition-colors uppercase tracking-wider shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-black text-xs font-mono font-bold hover:bg-neutral-200 transition-colors uppercase tracking-wider shadow-xs shrink-0"
             >
-              <span>Student Login</span>
+              <span className="hidden sm:inline">Student Login</span>
+              <span className="sm:hidden">Login</span>
             </Link>
           </div>
         </div>
@@ -256,7 +257,7 @@ export default function CalculationsPage() {
               GGSIPU does not use one universal rule. Anviksha identifies your programme family from the official programme name and applies the correct statutory framework — keeping your raw ExamWeb programme code untouched:
             </p>
             <div className="overflow-x-auto pt-1">
-              <table className="w-full text-xs font-mono border-collapse border border-border-strong text-center">
+              <table className="w-full min-w-[560px] sm:min-w-full text-xs font-mono border-collapse border border-border-strong text-center">
                 <thead>
                   <tr className="bg-surface-deep border-b border-border-strong text-foreground">
                     <th className="p-2 border border-border-strong">Programme Family</th>
@@ -337,7 +338,7 @@ export default function CalculationsPage() {
             <p>Your official total marks (out of 100) are mapped to the standard GGSIPU letter grade and numerical grade point.</p>
 
             <div className="overflow-x-auto pt-2">
-              <table className="w-full text-xs font-mono border-collapse border border-border-strong text-center">
+              <table className="w-full min-w-[420px] sm:min-w-full text-xs font-mono border-collapse border border-border-strong text-center">
                 <thead>
                   <tr className="bg-surface-deep border-b border-border-strong text-foreground">
                     <th className="p-2 border border-border-strong">Marks Range</th>
@@ -378,7 +379,7 @@ export default function CalculationsPage() {
 
             <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground pt-1">How Anviksha calculates it</h3>
             <div className="p-3 bg-surface-deep rounded border border-border-strong font-mono text-xs text-foreground">
-              SGPA = Σ (Ci × Gi) / Σ Ci   —  Ordinance 11 Clause 13
+              SGPA = Σ (Ci × Gi) / Σ Ci · Ordinance 11, Clause 13
             </div>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1 font-mono">
@@ -390,7 +391,7 @@ export default function CalculationsPage() {
             </div>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
-              <strong className="text-foreground">Important: </strong>SGPA is always credit-weighted. It is not a simple average of subject grade points. A failed paper (Grade F) contributes 0 grade points while still counting in the credit denominator. A course passed with a non-numeric legend (CS — Credit Secured, AP — Already Passed) carries no grade point at all, so it is excluded from the calculation rather than counted as zero.
+              <strong className="text-foreground">Important: </strong>SGPA is always credit-weighted. It is not a simple average of subject grade points. A failed paper (Grade F) contributes 0 grade points while still counting in the credit denominator. A course passed with a non-numeric legend (CS · Credit Secured, AP · Already Passed) carries no grade point at all, so it is excluded from the calculation rather than counted as zero.
             </div>
           </div>
         </section>
@@ -408,7 +409,7 @@ export default function CalculationsPage() {
 
             <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-foreground pt-1">How Anviksha calculates it</h3>
             <div className="p-3 bg-surface-deep rounded border border-border-strong font-mono text-xs text-foreground">
-              CGPA = Σ (Cni × Gni) / Σ Cni   —  Ordinance 11 Clause 13 (cumulative, rounded to 2 decimals)
+              CGPA = Σ (Cni × Gni) / Σ Cni · Ordinance 11, Clause 13 (cumulative, rounded to 2 decimals)
             </div>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
@@ -429,7 +430,7 @@ export default function CalculationsPage() {
             <p>GGSIPU defines an official conversion formula to convert CGPA into an equivalent percentage for job applications and higher education admissions.</p>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong font-mono text-xs text-foreground">
-              Equivalent Percentage = CGPA × 10   —  Ordinance 11 Clause 13
+              Equivalent Percentage = CGPA × 10 · Ordinance 11, Clause 13
             </div>
 
             <div className="p-3 bg-surface-deep rounded border border-border-strong text-xs space-y-1">
@@ -550,7 +551,7 @@ export default function CalculationsPage() {
           <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">
             <p>The revised GGSIPU Ordinance 11 defines the following division standings based on final cumulative CGPA:</p>
             <div className="overflow-x-auto pt-1">
-              <table className="w-full text-xs font-mono border-collapse border border-border-strong text-center">
+              <table className="w-full min-w-[400px] sm:min-w-full text-xs font-mono border-collapse border border-border-strong text-center">
                 <thead>
                   <tr className="bg-surface-deep border-b border-border-strong text-foreground">
                     <th className="p-2 border border-border-strong">CGPA Range</th>

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { MessageSquare } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { track } from "@vercel/analytics";
 
 export default function FloatingReportButton() {
     const pathname = usePathname();
@@ -25,7 +24,6 @@ export default function FloatingReportButton() {
             >
                 <Link
                     href={`/report?from=${encodeURIComponent(pathname)}`}
-                    onClick={() => track("click_report_button", { from: pathname })}
                     title="Report a Problem / Submit Feedback"
                     className="flex items-center gap-2 px-3 py-2 rounded-full border border-border-strong bg-surface-deep/90 text-foreground-secondary hover:text-foreground hover:border-gold-border backdrop-blur-md shadow-lg font-mono text-xs transition-all duration-200 hover:scale-[1.03] active:scale-[0.97] group cursor-pointer focus-visible:ring-2 focus-visible:ring-gold"
                 >

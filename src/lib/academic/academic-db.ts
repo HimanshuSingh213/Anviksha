@@ -253,7 +253,7 @@ export const ORDINANCES: Record<string, OrdinanceDefinition> = {
         ruleName: "10-Point Letter Grade Scale",
         passingGrade: "P",
         bands: ORD_11_GRADE_BANDS,
-        sources: ["GGSIPU Ordinance 11, Clause 11.2"],
+        sources: ["GGSIPU Ordinance 11, Clause 11.5"],
       },
       coursePassByTotalMarks: {
         ruleName: "Minimum 40% Marks",
@@ -263,27 +263,27 @@ export const ORDINANCES: Record<string, OrdinanceDefinition> = {
       sgpa: {
         ruleName: "Weighted SGPA",
         formula: "Σ(Ci × Gi) / ΣCi",
-        sources: ["GGSIPU Ordinance 11, Clause 11.4"],
+        sources: ["GGSIPU Ordinance 11, Clause 13"],
       },
       cgpa: {
         ruleName: "Cumulative CGPA",
         formula: "Σ(Cni × Gi) / ΣCni",
-        sources: ["GGSIPU Ordinance 11, Clause 11.5"],
+        sources: ["GGSIPU Ordinance 11, Clause 13"],
       },
       percentageFromCGPA: {
         ruleName: "Equivalent Percentage",
         formula: "CGPA × 10",
-        sources: ["GGSIPU Ordinance 11, Clause 11.6"],
+        sources: ["GGSIPU Ordinance 11, Clause 13"],
       },
       divisionFromCGPA: {
         ruleName: "Division Classification",
         bands: ORD_11_DIVISION_BANDS,
-        sources: ["GGSIPU Ordinance 11, Clause 13.1"],
+        sources: ["GGSIPU Ordinance 11, Clause 13"],
       },
       promotionByAcademicYearCredits: {
         ruleName: "Minimum 50% Annual Credits",
         minimumEarnedCreditShare: 0.5,
-        sources: ["GGSIPU Ordinance 11, Clause 12"],
+        sources: ["GGSIPU Ordinance 11, Clause 11.3(v)"],
       },
       duration: {
         text: "Choice Based Credit System (CBCS) semester framework",

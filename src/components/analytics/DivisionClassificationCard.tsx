@@ -46,7 +46,7 @@ export default function DivisionClassificationCard({
                 nextTierMessage = "Maximum exemplary performance tier achieved (≥90%)";
             } else if (scoreValue >= 75) {
                 const gap = (90 - scoreValue).toFixed(2);
-                nextTierMessage = `+${gap}% needed for Distinction (90%)`;
+                nextTierMessage = `+${gap}% needed for Exemplary (90%)`;
             } else if (scoreValue >= 60) {
                 const gap = (75 - scoreValue).toFixed(2);
                 nextTierMessage = `+${gap}% needed for Distinction (75%)`;
@@ -118,9 +118,12 @@ export default function DivisionClassificationCard({
         return null;
     }
 
-    const ordLabel = ordinanceName
-        ? (ordinanceName.startsWith("ORD_") ? `Ordinance ${ordinanceName.replace("ORD_", "")}` : ordinanceName)
-        : "Ordinance 11";
+    let ordLabel = "Ordinance 11";
+    if (ordinanceName) {
+        ordLabel = ordinanceName.startsWith("ORD_")
+            ? `Ordinance ${ordinanceName.replace("ORD_", "")}`
+            : ordinanceName;
+    }
 
     return (
         <motion.div

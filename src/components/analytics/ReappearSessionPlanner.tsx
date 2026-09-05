@@ -13,7 +13,6 @@ import {
     BookOpenCheck,
     HelpCircle,
 } from "lucide-react";
-import { track } from "@vercel/analytics";
 import {
     getReappearSessionPlan,
     type ReappearSubject,
@@ -158,7 +157,6 @@ export default function ReappearSessionPlanner({
                                     key={value}
                                     type="button"
                                     onClick={() => {
-                                        track("toggle_reappear_tab", { tab: value });
                                         setSelectedTab(value);
                                     }}
                                     className={`flex-1 sm:flex-initial text-center rounded px-2.5 py-1 text-[10px] font-semibold transition-colors cursor-pointer ${

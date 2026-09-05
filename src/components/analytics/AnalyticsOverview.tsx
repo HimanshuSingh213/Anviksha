@@ -61,16 +61,21 @@ const getCards = (props: Props) => {
             bg: "bg-cat-pink-surface",
             href: "/calculations#grades",
         },
-        {
-            label: isGpaApplicable ? "Equivalent %" : "Aggregate %",
-            value: formatPercentage(props.percentage),
-            sub: props.percentSub ?? (props.gpaLabel.includes("SGPA") ? "SGPA × 10 (Ordinance 11)" : "CGPA × 10 (Ordinance 11)"),
-            icon: Percent,
-            accent: "text-cat-blue",
-            border: "border-cat-blue-border",
-            bg: "bg-cat-blue-surface",
-            href: "/calculations#percentage",
-        },
+        (() => {
+            const defaultSub = props.gpaLabel.includes("SGPA")
+                ? "SGPA × 10 (Ordinance 11)"
+                : "CGPA × 10 (Ordinance 11)";
+            return {
+                label: isGpaApplicable ? "Equivalent %" : "Aggregate %",
+                value: formatPercentage(props.percentage),
+                sub: props.percentSub ?? defaultSub,
+                icon: Percent,
+                accent: "text-cat-blue",
+                border: "border-cat-blue-border",
+                bg: "bg-cat-blue-surface",
+                href: "/calculations#percentage",
+            };
+        })(),
     ];
 };
 

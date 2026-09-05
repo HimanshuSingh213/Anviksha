@@ -2,7 +2,7 @@
 
 import React, { forwardRef, useMemo } from "react";
 import { StudentProfile } from "@/types/result";
-import { decodeStatus } from "@/lib/academic/academic-engine";
+import { decodeStatus, resolvePaperCredit } from "@/lib/academic/academic-engine";
 import { AnvikshaWatermark } from "./AnvikshaWatermark";
 
 function getGradeAndPoints(rawTotal: string | number | undefined) {
@@ -81,9 +81,7 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                     const statusCode = row[6];
                     const paperCode = row[1];
                     const subjectTitle = row[2];
-                    const hasCustom = paperCode in customCredits || (typeof paperCode === "string" && paperCode.toUpperCase() in customCredits);
-                    const customVal = customCredits[paperCode] !== undefined ? customCredits[paperCode] : (typeof paperCode === "string" ? customCredits[paperCode.toUpperCase()] : undefined);
-                    const credit = hasCustom ? (customVal ?? 0) : getFallbackCredit(subjectTitle);
+                    const credit = resolvePaperCredit(paperCode, customCredits, getFallbackCredit(subjectTitle));
 
                     const semantic = decodeStatus(statusCode, rawTotal);
                     const { grade, points, pass } = getGradeAndPoints(rawTotal);

@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Percent, BarChart2, BookOpen, Pencil, ArrowRight, FileDown } from "lucide-react";
 import { toast } from "sonner";
-import { track } from "@vercel/analytics";
 import Skeleton from "@/components/dashboard/Skeleton";
 import AppNavbar from "@/components/common/AppNavbar";
 import useResultStore from "@/store/result-store";
@@ -66,7 +65,6 @@ function CreditInputCell({
 
         // When user clears the field with backspace / delete:
         if (val === "") {
-            track("clear_custom_credit", { paperCode });
             setLocalValue("");
             onSetCredit(paperCode, null);
             return;
@@ -76,7 +74,6 @@ function CreditInputCell({
         if (/^\d{1,2}$/.test(val)) {
             const num = parseInt(val, 10);
             if (num <= 20) {
-                track("edit_custom_credit", { paperCode, credits: num });
                 setLocalValue(val);
                 onSetCredit(paperCode, num);
             }
@@ -220,14 +217,6 @@ export default function DashboardPage() {
         }
     }, [fullResult, fetchResults]);
 
-    useEffect(() => {
-        if (fullResult?.stprofile?.prgname || fullResult?.stprofile?.prgcode) {
-            track("view_dashboard", {
-                programme: fullResult.stprofile.prgname || String(fullResult.stprofile.prgcode),
-            });
-        }
-    }, [fullResult?.stprofile?.prgname, fullResult?.stprofile?.prgcode]);
-
     const engine = useMemo(
         () => analyzeResult(fullResult, customCredit),
         [fullResult, customCredit]
@@ -290,7 +279,7 @@ export default function DashboardPage() {
             return {
                 value: Math.round(activeGpaMetric.value * 10 * 100) / 100,
                 status: activeGpaMetric.status,
-                sources: ["GGSIPU Ordinance 11, Clause 11.6"],
+                sources: ["GGSIPU Ordinance 11, Clause 13"],
             };
         }
         const periodSummary = analytics.periodSummaries?.value?.find((p) => String(p.period) === activeSem);
@@ -306,13 +295,33 @@ export default function DashboardPage() {
 
     const displayPercentage = activePercentMetric.value !== null ? `${activePercentMetric.value.toFixed(2)}%` : "—";
 
-    const gpaLabel = activeSem === "100" ? "Overall CGPA" : (programme.examinationSystem === "ANNUAL" ? `Year ${activeSem} GPA` : `Sem ${activeSem} SGPA`);
-    const percentLabel = activeSem === "100"
-        ? (isPercentageFramework ? "Aggregate %" : "Equivalent %")
-        : (isPercentageFramework ? (programme.examinationSystem === "ANNUAL" ? `Year ${activeSem} %` : `Sem ${activeSem} %`) : `Sem ${activeSem} Equivalent %`);
-    const formulaSub = activeSem === "100"
-        ? (programme.ordinance === "ORD_11" ? "CGPA × 10 (Ordinance 11)" : (analytics.framework.value ?? "Statutory Regulations"))
-        : (programme.ordinance === "ORD_11" ? "SGPA × 10 (Ordinance 11)" : (programme.examinationSystem === "ANNUAL" ? `Year ${activeSem} marks` : `Semester ${activeSem} marks`));
+    // Determine friendly labels based on active semester and academic framework
+    const gpaLabel = (() => {
+        if (activeSem === "100") return "Overall CGPA";
+        if (programme.examinationSystem === "ANNUAL") return `Year ${activeSem} GPA`;
+        return `Sem ${activeSem} SGPA`;
+    })();
+
+    const percentLabel = (() => {
+        if (activeSem === "100") {
+            return isPercentageFramework ? "Aggregate %" : "Equivalent %";
+        }
+        if (isPercentageFramework) {
+            return programme.examinationSystem === "ANNUAL" ? `Year ${activeSem} %` : `Sem ${activeSem} %`;
+        }
+        return `Sem ${activeSem} Equivalent %`;
+    })();
+
+    const formulaSub = (() => {
+        const isOrd11 = programme.ordinance === "ORD_11";
+        if (activeSem === "100") {
+            return isOrd11 ? "CGPA × 10 (Ordinance 11)" : (analytics.framework.value ?? "Statutory Regulations");
+        }
+        if (isOrd11) {
+            return "SGPA × 10 (Ordinance 11)";
+        }
+        return programme.examinationSystem === "ANNUAL" ? `Year ${activeSem} marks` : `Semester ${activeSem} marks`;
+    })();
 
     // Credits calculations
     const allKnownCredits = courses.filter((c) => c.credits.value !== null);
@@ -343,6 +352,15 @@ export default function DashboardPage() {
     );
     const semObtainedMarks = semPassedCourses.reduce((sum, c) => sum + (c.total ?? 0), 0);
     const semTotalMaxMarks = visibleCourses.reduce((sum, c) => sum + (c.maxMarks ?? 100), 0);
+
+    const hasCredits = allKnownCredits.length > 0;
+    const earnedCreditsDisplay = activeSem === "100" ? totalEarnedCredits : semEarnedCredits;
+    const offeredCreditsDisplay = activeSem === "100" ? totalOfferedCredits : semOfferedCredits;
+    const hasBacklogs = activeBacklogs.length > 0;
+    const backlogsCount = activeBacklogs.length;
+    const backlogsSub = hasBacklogs
+        ? (backlogsCount === 1 ? "1 backlog" : `${backlogsCount} backlogs`)
+        : "all cleared";
 
     const profile = useMemo(() => fullResult?.stprofile, [fullResult?.stprofile]);
 
@@ -460,32 +478,32 @@ export default function DashboardPage() {
                                     tooltip: activePercentMetric.reason ?? "Percentage derived under university regulations.",
                                 },
                                 {
-                                    label: allKnownCredits.length > 0 ? "Credits Earned" : "Courses Cleared",
-                                    value: allKnownCredits.length > 0
-                                        ? `${activeSem === "100" ? totalEarnedCredits : semEarnedCredits}`
-                                        : `${semPassedCourses.length}`,
-                                    valueSuffix: allKnownCredits.length > 0
-                                        ? ` / ${activeSem === "100" ? totalOfferedCredits : semOfferedCredits}`
-                                        : ` / ${visibleCourses.length}`,
-                                    sub: allKnownCredits.length > 0
-                                        ? (activeSem === "100" ? "overall degree credits" : `Semester ${activeSem} credits`)
-                                        : (activeSem === "100" ? "total courses cleared" : (programme.examinationSystem === "ANNUAL" ? `Year ${activeSem} cleared` : `Semester ${activeSem} cleared`)),
+                                    label: hasCredits ? "Credits Earned" : "Courses Cleared",
+                                    value: hasCredits ? String(earnedCreditsDisplay) : String(semPassedCourses.length),
+                                    valueSuffix: hasCredits ? ` / ${offeredCreditsDisplay}` : ` / ${visibleCourses.length}`,
+                                    sub: (() => {
+                                        if (hasCredits) {
+                                            return activeSem === "100" ? "overall degree credits" : `Semester ${activeSem} credits`;
+                                        }
+                                        if (activeSem === "100") return "total courses cleared";
+                                        return programme.examinationSystem === "ANNUAL" ? `Year ${activeSem} cleared` : `Semester ${activeSem} cleared`;
+                                    })(),
                                     color: "text-cat-teal",
                                     icon: <BookOpen size={13} className="text-cat-teal opacity-70" />,
                                     provenance: "RESULT_DERIVED" as const,
-                                    tooltip: allKnownCredits.length > 0
+                                    tooltip: hasCredits
                                         ? "Credits earned across cleared course examinations."
                                         : "Count of cleared courses in examination result.",
                                 },
                                 {
                                     label: "Status",
-                                    value: activeBacklogs.length > 0 ? String(activeBacklogs.length) : "✓",
-                                    sub: activeBacklogs.length > 0 ? `backlog${activeBacklogs.length > 1 ? "s" : ""}` : "all cleared",
-                                    color: activeBacklogs.length > 0 ? "text-grade-fail" : "text-grade-excellent",
-                                    icon: activeBacklogs.length > 0
+                                    value: hasBacklogs ? String(backlogsCount) : "✓",
+                                    sub: backlogsSub,
+                                    color: hasBacklogs ? "text-grade-fail" : "text-grade-excellent",
+                                    icon: hasBacklogs
                                         ? <AlertTriangle size={13} className="text-grade-fail opacity-80" />
                                         : <CheckCircle2 size={13} className="text-grade-excellent opacity-80" />,
-                                    bgClass: activeBacklogs.length > 0
+                                    bgClass: hasBacklogs
                                         ? "bg-grade-fail-surface border-grade-fail-border"
                                         : "bg-grade-excellent-surface border-grade-excellent-border",
                                     provenance: "RESULT_DERIVED" as const,
@@ -514,11 +532,13 @@ export default function DashboardPage() {
                                                 <span className="text-sm sm:text-xl text-foreground-secondary font-semibold">{card.valueSuffix}</span>
                                             )}
                                         </div>
-                                        <div className="flex items-center justify-between gap-2 mt-1.5 sm:mt-2">
-                                            <span className="text-[10px] text-foreground-secondary font-mono font-medium truncate">
+                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between items-start gap-1.5 sm:gap-2 mt-1.5 sm:mt-2">
+                                            <span className="text-[10px] text-foreground-secondary font-mono font-medium truncate w-full sm:w-auto">
                                                 {card.sub}
                                             </span>
-                                            <ProvenanceChip state={card.provenance} tooltip={card.tooltip} />
+                                            <div className="shrink-0">
+                                                <ProvenanceChip state={card.provenance} tooltip={card.tooltip} />
+                                            </div>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -538,7 +558,6 @@ export default function DashboardPage() {
                             <button
                                 key={sem.value}
                                 onClick={() => {
-                                    track("filter_semester", { semester: sem.value });
                                     setActiveSem(sem.value);
                                 }}
                                 disabled={loading}
@@ -753,7 +772,9 @@ export default function DashboardPage() {
                                         },
                                         {
                                             label: "Credits",
-                                            value: `${activeSem === "100" ? totalEarnedCredits : semEarnedCredits}/${activeSem === "100" ? totalOfferedCredits : semOfferedCredits}`,
+                                            value: activeSem === "100"
+                                                ? `${totalEarnedCredits}/${totalOfferedCredits}`
+                                                : `${semEarnedCredits}/${semOfferedCredits}`,
                                             containerClass: "bg-cat-teal-surface/50 border-cat-teal-border",
                                             labelClass: "text-cat-teal",
                                             valueClass: "text-foreground",

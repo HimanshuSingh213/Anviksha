@@ -26,7 +26,8 @@ export default function proxy(req: NextRequest) {
 
     // Intercept protected pages
     if (isProtectedPage && !isAuthenticated) {
-        const loginUrl = new URL("/login?expired=true", req.url);
+        const hadCookie = req.cookies.has("auth_session");
+        const loginUrl = new URL(hadCookie ? "/login?expired=true" : "/login", req.url);
         const response = NextResponse.redirect(loginUrl);
         response.cookies.set("auth_session", "", { maxAge: 0, path: "/" });
         return response;

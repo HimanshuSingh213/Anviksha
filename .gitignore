@@ -30,6 +30,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
 
 # env files
 .env*
@@ -54,8 +55,10 @@ LICENSE
 CONTRIBUTING.md
 Reports/
 .vercel
-preview
-preview/
-src/app/(app)/preview/
-src/components/v2/
+
+# Test routes — local testing only, never published
+src/app/(app)/test/
+src/app/test/
+setup-redesign.js
 ordinances
+Reports/

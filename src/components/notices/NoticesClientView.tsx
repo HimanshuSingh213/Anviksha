@@ -13,7 +13,6 @@ import {
   Clock,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { track } from "@vercel/analytics";
 import { GGSIPUNotice, NoticeCategory } from "@/types/notice";
 
 const CATEGORY_TABS: { label: string; value: "ALL" | NoticeCategory }[] = [
@@ -82,7 +81,6 @@ export default function NoticesClientView({ initialNotices }: Props) {
   }, [filteredNotices, page]);
 
   const selectCategory = (category: "ALL" | NoticeCategory) => {
-    track("filter_notices_category", { category });
     setActiveCategory(category);
     setPage(1);
   };
@@ -228,11 +226,6 @@ export default function NoticesClientView({ initialNotices }: Props) {
                       target="_blank"
                       rel="noopener noreferrer"
                       aria-label={`View PDF for ${notice.title}`}
-                      onClick={() =>
-                        track("open_notice_pdf", {
-                          title: notice.title.slice(0, 30),
-                        })
-                      }
                       className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md bg-surface-deep border border-border-strong text-foreground text-xs font-mono font-semibold hover:border-gold hover:text-gold transition-colors shadow-xs focus-visible:ring-2 focus-visible:ring-gold"
                       title="Open official university PDF in new tab"
                     >

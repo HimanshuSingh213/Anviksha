@@ -2,7 +2,7 @@
 
 import React, { forwardRef } from "react";
 import { StudentProfile } from "@/types/result";
-import { decodeStatus } from "@/lib/academic/academic-engine";
+import { decodeStatus, resolvePaperCredit } from "@/lib/academic/academic-engine";
 import { AnvikshaWatermark } from "./AnvikshaWatermark";
 
 function getGradeAndPoints(rawTotal: string | number | undefined) {
@@ -16,6 +16,16 @@ function getGradeAndPoints(rawTotal: string | number | undefined) {
     if (total >= 45) return { grade: "C", points: 5, pass: true };
     if (total >= 40) return { grade: "P", points: 4, pass: true };
     return { grade: "F", points: 0, pass: false };
+}
+
+function getGradeColorClass(grade: string): string {
+    if (grade === "O" || grade === "A+" || grade === "A") {
+        return "text-emerald-700 font-bold";
+    }
+    if (grade === "B+" || grade === "B" || grade === "C" || grade === "P") {
+        return "text-blue-700 font-bold";
+    }
+    return "text-red-700 font-bold";
 }
 
 function getFallbackCredit(subjectTitle: string): number {
@@ -46,9 +56,7 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
             const rawTotal = row[5];
             const statusCode = row[6];
 
-            const hasCustom = paperCode in customCredits || (typeof paperCode === "string" && paperCode.toUpperCase() in customCredits);
-            const customVal = customCredits[paperCode] !== undefined ? customCredits[paperCode] : (typeof paperCode === "string" ? customCredits[paperCode.toUpperCase()] : undefined);
-            const credit = hasCustom ? (customVal ?? 0) : getFallbackCredit(subjectTitle);
+            const credit = resolvePaperCredit(paperCode, customCredits, getFallbackCredit(subjectTitle));
             const semantic = decodeStatus(statusCode, rawTotal);
             const { grade, points, pass } = getGradeAndPoints(rawTotal);
 
@@ -60,12 +68,7 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
                 totalPoints += points * credit;
             }
 
-            const gradeColorClass =
-                grade === "O" || grade === "A+" || grade === "A"
-                    ? "text-emerald-700 font-bold"
-                    : grade === "B+" || grade === "B" || grade === "C" || grade === "P"
-                    ? "text-blue-700 font-bold"
-                    : "text-red-700 font-bold";
+            const gradeColorClass = getGradeColorClass(grade);
 
             return {
                 sem,

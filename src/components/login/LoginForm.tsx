@@ -18,7 +18,6 @@ import { LoginSchema, LoginInput } from "@/validations/login.validation";
 import axios from "axios";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { track } from "@vercel/analytics";
 
 function SessionTimeoutToast() {
     const searchParams = useSearchParams();
@@ -67,7 +66,6 @@ export const LoginForm = () => {
             const res = await axios.post(`/api/login`, data);
 
             if (res.data.success) {
-                track("user_login_success");
                 toast.success("Logged In Successfully!");
                 router.push("/dashboard");
             }
@@ -130,7 +128,7 @@ export const LoginForm = () => {
                             {...register("enrollment")}
                             type="text"
                             inputMode="numeric"
-                            placeholder="09414802721"
+                            placeholder="Your enrollment number"
                             autoComplete="username"
                             aria-invalid={Boolean(errors.enrollment)}
                             aria-describedby={errors.enrollment ? "enrollment-error" : undefined}

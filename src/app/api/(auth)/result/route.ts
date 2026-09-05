@@ -39,7 +39,8 @@ export const GET = async (req: NextRequest) => {
     }
 
     const { searchParams } = new URL(req.url);
-    const euno = searchParams.get("euno") || "100";
+    const rawEuno = searchParams.get("euno") || "100";
+    const euno = /^[a-zA-Z0-9_-]{1,10}$/.test(rawEuno) ? rawEuno : "100";
 
     const res = await axios.get(`${BASE_URL}/web/StudentSearchProcess`, {
       params: { flag: 2, euno },

@@ -290,13 +290,27 @@ function buildCourses(
 
     const maxMarks = getSubjectMaxMarks(name, programme?.programmeFamily);
     const isAmbiguous = programme?.verification === "INFERRED" || !programme;
-    const ruleCheck = !isAmbiguous && coursePassRule && numericTotal !== undefined && maxMarks
-      ? (numericTotal / maxMarks * 100 >= coursePassRule.minimumTotalPercent ? "PASS" as const : "FAIL" as const)
-      : "UNTESTABLE" as const;
+    let ruleCheck: "PASS" | "FAIL" | "UNTESTABLE" = "UNTESTABLE";
+    if (!isAmbiguous && coursePassRule && numericTotal !== undefined && maxMarks) {
+      const scorePercent = (numericTotal / maxMarks) * 100;
+      ruleCheck = scorePercent >= coursePassRule.minimumTotalPercent ? "PASS" : "FAIL";
+    }
     const marksPercent = numericTotal !== undefined && maxMarks ? Math.round((numericTotal / maxMarks) * 10000) / 100 : null;
 
-    const hasExplicitCredit = rawCode in userCredits || (typeof rawCode === "string" && rawCode.toUpperCase() in userCredits);
-    const userCredit = userCredits[rawCode] !== undefined ? userCredits[rawCode] : (typeof rawCode === "string" ? userCredits[rawCode.toUpperCase()] : undefined);
+    let hasExplicitCredit = false;
+    let userCredit: number | null | undefined = undefined;
+
+    if (rawCode in userCredits) {
+      hasExplicitCredit = true;
+      userCredit = userCredits[rawCode];
+    } else {
+      const upperCode = typeof rawCode === "string" ? rawCode.toUpperCase() : "";
+      if (upperCode && upperCode in userCredits) {
+        hasExplicitCredit = true;
+        userCredit = userCredits[upperCode];
+      }
+    }
+
     const gradeRuleApplies = Boolean(programme && gradeRule && ordinance?.capabilities?.grade !== false && programme.verification === "VERIFIED");
     const calculatedGrade = gradeRuleApplies && numericTotal !== undefined && numericTotal <= 100 ? getGradeFromMarks(numericTotal, gradeRule!.bands) : null;
 
@@ -313,9 +327,7 @@ function buildCourses(
       }
     }
 
-    const gradePointUsedForGpa = gradeRuleApplies
-      ? (calculatedGrade ? calculatedGrade.point : null)
-      : null;
+    const gradePointUsedForGpa = gradeRuleApplies && calculatedGrade ? calculatedGrade.point : null;
 
     const defaultCredit = getDefaultCredit(name);
     const usesCredits = ordinance?.capabilities?.credits !== false;
@@ -608,7 +620,10 @@ export function analyzeResult(
       division = createMetric(null, "UNAVAILABLE", "Division classification requires CPI under Ordinance 31.", ordinance.rules.divisionFromCpi.sources);
     }
   } else if (ordinance?.rules.divisionFromPercentage) {
-    const pctValue = percentage.value ?? (numericTotals.length > 0 ? Math.round(numericTotals.reduce((sum, val) => sum + val, 0) / numericTotals.length * 100) / 100 : null);
+    const averageFromTotals = numericTotals.length > 0
+      ? Math.round(numericTotals.reduce((sum, val) => sum + val, 0) / numericTotals.length * 100) / 100
+      : null;
+    const pctValue = percentage.value ?? averageFromTotals;
     if (pctValue !== null) {
       const band = ordinance.rules.divisionFromPercentage.bands.find(
         (b: any) => pctValue >= b.minimumPercent && (b.maximumPercent === undefined || b.maximumPercent === null || pctValue <= b.maximumPercent)
@@ -902,12 +917,6 @@ export interface AcademicYearStatus {
   hasEvenSem: boolean;
   requiredCredits: number;
   creditsDeficit: number;
-  priorYearsTotalCredits: number;
-  priorYearsEarnedCredits: number;
-  priorYearsRequiredCredits: number;
-  priorYearsDeficit: number;
-  meetsCurrentYearRule: boolean;
-  meetsPriorYearsRule: boolean;
 }
 
 export function getAcademicPromotionStatus(
@@ -932,9 +941,6 @@ export function getAcademicPromotionStatus(
   let hasDetentionRisk = false;
   let maxSemFound = 0;
 
-  let cumulativePriorTotal = 0;
-  let cumulativePriorEarned = 0;
-
   const years: AcademicYearStatus[] = Array.from({ length: yearCount }, (_, index) => {
     const yearNumber = index + 1;
     const oddSem = index * 2 + 1;
@@ -950,12 +956,6 @@ export function getAcademicPromotionStatus(
     if (hasOddSem && oddSem > maxSemFound) maxSemFound = oddSem;
     if (hasEvenSem && evenSem > maxSemFound) maxSemFound = evenSem;
 
-    const priorYearsTotalCredits = cumulativePriorTotal;
-    const priorYearsEarnedCredits = cumulativePriorEarned;
-    const priorYearsRequiredCredits = Math.ceil(priorYearsTotalCredits * 0.9);
-    const priorYearsDeficit = Math.max(0, priorYearsRequiredCredits - priorYearsEarnedCredits);
-    const meetsPriorYearsRule = priorYearsTotalCredits === 0 || priorYearsEarnedCredits >= priorYearsRequiredCredits;
-
     if (!hasOddSem && !hasEvenSem) {
       return {
         yearNumber,
@@ -969,12 +969,6 @@ export function getAcademicPromotionStatus(
         hasEvenSem: false,
         requiredCredits: 0,
         creditsDeficit: 0,
-        priorYearsTotalCredits,
-        priorYearsEarnedCredits,
-        priorYearsRequiredCredits,
-        priorYearsDeficit,
-        meetsCurrentYearRule: true,
-        meetsPriorYearsRule,
       };
     }
 
@@ -1017,14 +1011,12 @@ export function getAcademicPromotionStatus(
     let status: AcademicYearStatus["status"] = "IN_PROGRESS";
 
     if (hasOddSem && hasEvenSem) {
-      if (meetsCurrentYearRule && meetsPriorYearsRule) {
+      if (meetsCurrentYearRule) {
         status = "PROMOTED";
       } else {
         status = "YEAR_BACK_RISK";
         hasDetentionRisk = true;
       }
-      cumulativePriorTotal += totalCredits;
-      cumulativePriorEarned += earnedCredits;
     } else if (hasOddSem && !hasEvenSem) {
       status = "IN_PROGRESS";
     }
@@ -1041,12 +1033,6 @@ export function getAcademicPromotionStatus(
       hasEvenSem,
       requiredCredits,
       creditsDeficit,
-      priorYearsTotalCredits,
-      priorYearsEarnedCredits,
-      priorYearsRequiredCredits,
-      priorYearsDeficit,
-      meetsCurrentYearRule,
-      meetsPriorYearsRule,
     };
   });
 
@@ -1211,6 +1197,31 @@ export interface ReappearSessionPlan {
   cleanRecord: boolean;
 }
 
+/**
+ * Resolves credits for a paper code, checking user custom credits (case-insensitive)
+ * and falling back to a default value if not specified.
+ */
+export function resolvePaperCredit(
+  paperCode: string | undefined | null,
+  customCredits: Record<string, number | null> | undefined,
+  fallbackCredit: number
+): number {
+  if (!paperCode || !customCredits) {
+    return fallbackCredit;
+  }
+
+  if (paperCode in customCredits) {
+    return customCredits[paperCode] ?? 0;
+  }
+
+  const upperCode = typeof paperCode === "string" ? paperCode.toUpperCase() : "";
+  if (upperCode && upperCode in customCredits) {
+    return customCredits[upperCode] ?? 0;
+  }
+
+  return fallbackCredit;
+}
+
 export function getReappearSessionPlan(
   allResults: any[][],
   customCredits: Record<string, number | null> = {}
@@ -1235,9 +1246,7 @@ export function getReappearSessionPlan(
     const statusCode = row[6];
     const paperCode = String(row[1] ?? "");
     const subjectTitle = String(row[2] ?? "");
-    const hasCustom = paperCode in customCredits || paperCode.toUpperCase() in customCredits;
-    const customVal = customCredits[paperCode] !== undefined ? customCredits[paperCode] : customCredits[paperCode.toUpperCase()];
-    const credit = hasCustom ? (customVal ?? 0) : getDefaultCredit(subjectTitle);
+    const credit = resolvePaperCredit(paperCode, customCredits, getDefaultCredit(subjectTitle));
 
     const semantic = decodeStatus(statusCode, rawTotal);
     const isPassed = semantic === "PASS" || semantic === "CREDIT_SECURED" || semantic === "ALREADY_PASSED";
@@ -1301,10 +1310,22 @@ export function getReappearSessionPlan(
   if (!cleanRecord) {
     const nextIsEven = maxSemEvaluated % 2 !== 0;
     if (nextIsEven) {
-      nextRecommendedSession = evenTermBacklogs.length > 0 ? "EVEN" : oddTermBacklogs.length > 0 ? "ODD" : "NONE";
+      if (evenTermBacklogs.length > 0) {
+        nextRecommendedSession = "EVEN";
+      } else if (oddTermBacklogs.length > 0) {
+        nextRecommendedSession = "ODD";
+      } else {
+        nextRecommendedSession = "NONE";
+      }
       nextSessionLabel = "Typical Upcoming: May - Jun (Even Term Re-appear)";
     } else {
-      nextRecommendedSession = oddTermBacklogs.length > 0 ? "ODD" : evenTermBacklogs.length > 0 ? "EVEN" : "NONE";
+      if (oddTermBacklogs.length > 0) {
+        nextRecommendedSession = "ODD";
+      } else if (evenTermBacklogs.length > 0) {
+        nextRecommendedSession = "EVEN";
+      } else {
+        nextRecommendedSession = "NONE";
+      }
       nextSessionLabel = "Typical Upcoming: Nov - Dec (Odd Term Re-appear)";
     }
   }
@@ -1328,20 +1349,25 @@ export function getEffectiveCredits(
 ): Record<string, number> {
   const result: Record<string, number> = {};
   const rows = fullResult?.stresult ?? [];
+
   for (const row of rows) {
     const code = String(row[1] ?? "").trim();
     const name = String(row[2] ?? "").trim();
     if (!code) continue;
-    const hasCustom = code in customCredits || code.toUpperCase() in customCredits;
-    const customVal = customCredits[code] !== undefined ? customCredits[code] : customCredits[code.toUpperCase()];
+
+    const upperCode = code.toUpperCase();
+    const hasCustom = code in customCredits || upperCode in customCredits;
+
     if (hasCustom) {
-      if (customVal !== null && customVal !== undefined && customVal > 0) {
+      const customVal = customCredits[code] !== undefined ? customCredits[code] : customCredits[upperCode];
+      if (typeof customVal === "number" && customVal > 0) {
         result[code] = customVal;
       }
     } else {
       result[code] = getDefaultCredit(name);
     }
   }
+
   return result;
 }
 

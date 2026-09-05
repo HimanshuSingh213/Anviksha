@@ -312,22 +312,6 @@ export default function AcademicPromotionCard({
                                                     {year.creditsDeficit} cr
                                                 </p>
                                             </div>
-                                            {year.priorYearsTotalCredits > 0 && (
-                                                <>
-                                                    <div className="rounded-md border border-border bg-surface/70 px-2.5 py-1.5">
-                                                        <p className="text-foreground-muted">Prior (90%)</p>
-                                                        <p className="mt-0.5 font-mono font-semibold text-foreground">
-                                                            {year.priorYearsRequiredCredits} cr
-                                                        </p>
-                                                    </div>
-                                                    <div className="rounded-md border border-border bg-surface/70 px-2.5 py-1.5">
-                                                        <p className="text-foreground-muted">Prior Deficit</p>
-                                                        <p className={`mt-0.5 font-mono font-semibold ${year.priorYearsDeficit > 0 ? "text-grade-fail" : "text-grade-excellent"}`}>
-                                                            {year.priorYearsDeficit} cr
-                                                        </p>
-                                                    </div>
-                                                </>
-                                            )}
                                         </div>
                                     </div>
                                 )}
@@ -346,13 +330,7 @@ export default function AcademicPromotionCard({
                                         <>
                                             <AlertTriangle size={12} className="mt-0.5 shrink-0 text-grade-fail" aria-hidden="true" />
                                             <span className="text-foreground-secondary">
-                                                {!year.meetsCurrentYearRule && !year.meetsPriorYearsRule ? (
-                                                    <>Year-back risk: Need <strong className="font-mono text-grade-fail">{year.creditsDeficit} cr</strong> in current year (50%) & <strong className="font-mono text-grade-fail">{year.priorYearsDeficit} cr</strong> in prior years (90%).</>
-                                                ) : !year.meetsCurrentYearRule ? (
-                                                    <>Annual credit deficit: Clear <strong className="font-mono text-grade-fail">{year.creditsDeficit} credits</strong> through re-appear to meet 50% rule.</>
-                                                ) : (
-                                                    <>Prior backlog deficit: Clear <strong className="font-mono text-grade-fail">{year.priorYearsDeficit} credits</strong> in prior years to meet 90% rule.</>
-                                                )}
+                                                Annual credit deficit: Clear <strong className="font-mono text-grade-fail">{year.creditsDeficit} credits</strong> through re-appear to meet the 50% promotion rule.
                                             </span>
                                         </>
                                     ) : (

@@ -94,8 +94,17 @@ export async function fetchGGSIPUNotices(): Promise<GGSIPUNotice[]> {
         if (columns.length < 2) return;
 
         const linkElement = $(row).find("a");
-        const href = linkElement.attr("href");
-        if (!href || href.startsWith("mailto:")) return;
+        const rawHref = linkElement.attr("href");
+        if (!rawHref) return;
+        const href = rawHref.trim();
+        if (
+          !href ||
+          href.startsWith("mailto:") ||
+          href.startsWith("javascript:") ||
+          href.startsWith("data:")
+        ) {
+          return;
+        }
 
         // Extract title and date
         const linkText = linkElement.text().trim();
@@ -110,7 +119,7 @@ export async function fetchGGSIPUNotices(): Promise<GGSIPUNotice[]> {
         const date = lastColumnText || firstColumnText || "Recent";
 
         // Build full PDF url
-        const pdfUrl = href.startsWith("http")
+        const pdfUrl = href.startsWith("http://") || href.startsWith("https://")
           ? href
           : `https://www.ipu.ac.in/${href.replace(/^\//, "")}`;
 

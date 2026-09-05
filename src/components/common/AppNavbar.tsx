@@ -24,7 +24,7 @@ export default function AppNavbar({ profile }: AppNavbarProps) {
             transition={{ duration: 0.3, ease: "easeOut" }}
             className="sticky top-0 z-30 border-b border-border-strong bg-surface-deep/85 backdrop-blur-xl"
         >
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+            <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-2 sm:gap-4">
                 <AnimatePresence mode="wait">
                     {!isAnalytics ? (
                         <motion.div
@@ -55,20 +55,23 @@ export default function AppNavbar({ profile }: AppNavbarProps) {
                             whileTap={{ scale: 0.96 }}
                             transition={{ duration: 0.2, ease: "easeOut" }}
                             onClick={() => router.push("/dashboard")}
-                            className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-mono font-semibold text-foreground-secondary hover:text-foreground hover:bg-surface-elevated transition-colors cursor-pointer shrink-0"
+                            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-2.5 py-1.5 rounded-md text-xs font-mono font-semibold text-foreground-secondary hover:text-foreground hover:bg-surface-elevated transition-colors cursor-pointer shrink-0"
+                            aria-label="Back to Dashboard"
                         >
                             <ArrowLeft size={14} aria-hidden="true" />
-                            <span>Back to Dashboard</span>
+                            <span className="hidden sm:inline">Back to Dashboard</span>
+                            <span className="sm:hidden">Dashboard</span>
                         </motion.button>
                     )}
                 </AnimatePresence>
 
-                <nav aria-label="Dashboard navigation" className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                <nav aria-label="Dashboard navigation" className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
                     {/* Live Exam Notices Link */}
                     <Link
                         href="/notices"
                         title="Live GGSIPU Result Circulars & Date-Sheets"
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors duration-200 shrink-0 shadow-xs"
+                        aria-label="Live Circulars"
+                        className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors duration-200 shrink-0 shadow-xs"
                     >
                         <Bell size={13} className="text-gold" aria-hidden="true" />
                         <span className="hidden md:inline">Notices</span>
@@ -78,17 +81,19 @@ export default function AppNavbar({ profile }: AppNavbarProps) {
                     <Link
                         href="/calculations"
                         title="How Calculations Work"
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors duration-200 shrink-0 shadow-xs"
+                        aria-label="How Calculations Work"
+                        className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors duration-200 shrink-0 shadow-xs"
                     >
                         <HelpCircle size={13} aria-hidden="true" />
-                        <span className="hidden md:inline">How Calculations Work</span>
-                        <span className="md:hidden">Guide</span>
+                        <span className="hidden lg:inline">How Calculations Work</span>
+                        <span className="hidden sm:inline lg:hidden">Guide</span>
                     </Link>
 
                     <Link
                         href="/"
                         title="Go to Homepage"
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors duration-200 shrink-0 shadow-xs"
+                        aria-label="Go to Homepage"
+                        className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors duration-200 shrink-0 shadow-xs"
                     >
                         <Home size={13} aria-hidden="true" />
                         <span className="hidden sm:inline">Home</span>

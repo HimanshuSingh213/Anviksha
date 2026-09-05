@@ -4,7 +4,6 @@ import { KeyboardEvent, useEffect, useState, useMemo, useCallback } from "react"
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { TrendingUp, ShieldCheck, Briefcase, Layers, FlaskConical, AlertTriangle } from "lucide-react";
-import { track } from "@vercel/analytics";
 import useResultStore from "@/store/result-store";
 import { analyzeResult } from "@/lib/academic/academic-engine";
 import Skeleton from "@/components/dashboard/Skeleton";
@@ -65,10 +64,6 @@ export default function AnalyticsPage() {
             setActiveView("performance");
         }
     }, [isTech, activeView]);
-
-    useEffect(() => {
-        track("view_analytics_hub");
-    }, []);
 
     const handleViewKeyDown = useCallback((
         event: KeyboardEvent<HTMLButtonElement>,
@@ -164,7 +159,9 @@ export default function AnalyticsPage() {
     // or the annual average; a single semester = that semester's own numbers.
     const percentage = useMemo(() => {
         if (activeSem === "100") {
-            return analytics.percentage.value ?? (isAnnual ? analytics.averagePercentage.value : null);
+            const overallPct = analytics.percentage.value;
+            const annualAvg = isAnnual ? analytics.averagePercentage.value : null;
+            return overallPct ?? annualAvg;
         }
         const semPercentMetric = analytics.sgpaByPeriod?.find((p) => String(p.period) === activeSem)?.sgpa;
         if (isOrd11 && semPercentMetric?.value !== null && semPercentMetric?.value !== undefined) {
@@ -175,9 +172,10 @@ export default function AnalyticsPage() {
     }, [activeSem, analytics, isAnnual, isOrd11]);
     const isPromotionVerified = isOrd11 && (engine.analytics.promotion.status === "VERIFIED" || engine.analytics.promotion.status === "RESULT_DERIVED");
     const isDivisionVerified = (engine.analytics.division.status === "VERIFIED" || engine.analytics.division.status === "RESULT_DERIVED") && engine.analytics.division.value !== null;
-    const percentSub = isOrd11
-        ? (isOverall ? "CGPA × 10 (Ordinance 11)" : "SGPA × 10 (Ordinance 11)")
-        : (engine.analytics.percentage.reason ?? "Statutory scheme");
+    let percentSub = engine.analytics.percentage.reason ?? "Statutory scheme";
+    if (isOrd11) {
+        percentSub = isOverall ? "CGPA × 10 (Ordinance 11)" : "SGPA × 10 (Ordinance 11)";
+    }
 
     if (!fullResult) return <Skeleton />;
 
@@ -231,7 +229,6 @@ export default function AnalyticsPage() {
                                 tabIndex={isActive ? 0 : -1}
                                 type="button"
                                 onClick={() => {
-                                    track("switch_analytics_view", { view: tab.id });
                                     setActiveView(tab.id);
                                 }}
                                 onKeyDown={(event) => handleViewKeyDown(event, index)}

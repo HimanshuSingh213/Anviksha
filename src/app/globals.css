@@ -314,7 +314,7 @@ input[type="number"] {
   to   { transform: translateX(-50%); }
 }
 .ticker-track {
-  animation: ticker-scroll 55s linear infinite;
+  animation: ticker-scroll 90s linear infinite;
 }
 .ticker-track:hover {
   animation-play-state: paused;

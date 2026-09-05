@@ -14,7 +14,7 @@ import {
     CartesianGrid,
     Tooltip,
 } from "recharts";
-import { decodeStatus } from "@/lib/academic/academic-engine";
+import { decodeStatus, resolvePaperCredit } from "@/lib/academic/academic-engine";
 
 function getGradePoints(total: number): number {
     if (total >= 90) return 10;
@@ -65,10 +65,7 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
                 const subjectTitle = row[2];
                 const title = String(subjectTitle || "").toUpperCase();
                 const defaultCredit = title.includes("LAB") || title.includes("PRACTICAL") || title.includes("STUDIO") ? 1 : 3;
-                
-                const hasCustom = paperCode in customCredit || (typeof paperCode === "string" && paperCode.toUpperCase() in customCredit);
-                const customVal = customCredit[paperCode] !== undefined ? customCredit[paperCode] : (typeof paperCode === "string" ? customCredit[paperCode.toUpperCase()] : undefined);
-                const credit = hasCustom ? (customVal ?? 0) : defaultCredit;
+                const credit = resolvePaperCredit(paperCode, customCredit, defaultCredit);
                 
                 if (credit <= 0) return;
 
