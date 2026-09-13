@@ -10,8 +10,8 @@ export const metadata: Metadata = {
     canonical: `${appUrl}/login`,
   },
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
   },
 };
 

@@ -3,44 +3,46 @@ import { LoginSchema, type LoginInput } from "./login.validation";
 
 describe("login.validation.ts - Zod Schema Validation", () => {
   const validInput: LoginInput = {
-    enrollment: "09414802721",
+    enrollment: "12345678901",
     password: "Father Name",
     captcha: "ABC123",
   };
 
   describe("enrollment field", () => {
-    it("accepts valid 11-digit enrollment number", () => {
+    it("accepts an 11-digit enrollment number", () => {
       const result = LoginSchema.safeParse({ ...validInput, enrollment: "12345678901" });
       expect(result.success).toBe(true);
     });
 
-    it("rejects enrollment with less than 5 digits", () => {
-      const result = LoginSchema.safeParse({ ...validInput, enrollment: "1234" });
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toContain("too short");
-      }
+    it("accepts enrollment numbers of any length for any branch or institute", () => {
+      const result = LoginSchema.safeParse({ ...validInput, enrollment: "00841962622" });
+      expect(result.success).toBe(true);
     });
 
-    it("rejects enrollment with more than 15 digits", () => {
-      const result = LoginSchema.safeParse({ ...validInput, enrollment: "1234567890123456" });
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toContain("too long");
-      }
-    });
-
-    it("rejects enrollment with non-numeric characters", () => {
-      const result = LoginSchema.safeParse({ ...validInput, enrollment: "1234567890A" });
-      expect(result.success).toBe(false);
-      if (!result.success) {
-        expect(result.error.issues[0].message).toContain("Only numbers allowed");
-      }
+    it("accepts enrollment numbers containing letters", () => {
+      const result = LoginSchema.safeParse({ ...validInput, enrollment: "BCS22A1045" });
+      expect(result.success).toBe(true);
     });
 
     it("rejects empty enrollment", () => {
       const result = LoginSchema.safeParse({ ...validInput, enrollment: "" });
       expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toContain("required");
+      }
+    });
+
+    it("rejects blank enrollment", () => {
+      const result = LoginSchema.safeParse({ ...validInput, enrollment: "   " });
+      expect(result.success).toBe(false);
+    });
+
+    it("trims whitespace from enrollment", () => {
+      const result = LoginSchema.safeParse({ ...validInput, enrollment: "  12345678901  " });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.enrollment).toBe("12345678901");
+      }
     });
   });
 
@@ -96,15 +98,15 @@ describe("login.validation.ts - Zod Schema Validation", () => {
       expect(result.success).toBe(true);
     });
 
-    it("rejects input with multiple invalid fields", () => {
+    it("rejects input with empty required fields", () => {
       const result = LoginSchema.safeParse({
-        enrollment: "123",
+        enrollment: "",
         password: "",
         captcha: "",
       });
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues.length).toBeGreaterThanOrEqual(3);
+        expect(result.error.issues.length).toBe(3);
       }
     });
   });

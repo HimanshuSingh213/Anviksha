@@ -10,7 +10,7 @@ import { FAQS } from "./faq-data";
 interface Cta { label: string; href: string; }
 interface Props { cta: Cta; }
 
-export default function RedesignFaqCta({ cta }: Props) {
+export default function FaqCtaSection({ cta }: Props) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const reducedMotion = useReducedMotion() ?? false;
 
@@ -23,11 +23,11 @@ export default function RedesignFaqCta({ cta }: Props) {
           title="Questions, answered plainly."
           desc="The things students actually ask about GGSIPU results, ordinances and privacy."
         />
-        <div className="mt-10 flex flex-col gap-4">
+        <div className="mt-10 flex w-full flex-col gap-4">
           {FAQS.map((f, i) => {
             const open = openIndex === i;
             return (
-              <motion.div key={f.q} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.35, delay: Math.min(i * 0.04, 0.2) }} className="rounded-xl border border-border bg-surface transition-colors hover:border-gold-border/60">
+              <motion.div key={f.q} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.35, delay: Math.min(i * 0.04, 0.2) }} className="w-full rounded-xl border border-border bg-surface transition-colors hover:border-gold-border/60">
                 <h3>
                   <button
                     type="button"
@@ -51,7 +51,7 @@ export default function RedesignFaqCta({ cta }: Props) {
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={reducedMotion ? { duration: 0 } : { duration: 0.25 }}
-                      className="overflow-hidden"
+                      className="w-full overflow-hidden"
                     >
                       <p className="px-4 pb-5 text-xs leading-6 text-foreground-secondary sm:px-6 sm:pb-6">{f.a}</p>
                     </motion.div>
@@ -66,9 +66,9 @@ export default function RedesignFaqCta({ cta }: Props) {
       <section className="mx-auto w-full max-w-7xl px-4 pb-20 sm:px-6 sm:pb-24">
         <motion.div initial={{ opacity: 0, scale: 0.98 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="relative w-full overflow-hidden rounded-2xl border border-border-strong bg-surface px-5 py-12 text-center sm:px-12 sm:py-16 lg:px-16">
           <div className="pointer-events-none absolute -top-24 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-gold opacity-[0.08] blur-3xl" aria-hidden="true" />
-          <div className="relative mx-auto max-w-2xl">
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Ready to see where you actually stand?</h2>
-            <p className="mt-3 text-sm leading-6 text-foreground-secondary">
+          <div className="relative mx-auto max-w-3xl sm:max-w-4xl">
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-4xl">Ready to see where you actually stand?</h2>
+            <p className="mt-4 text-sm leading-relaxed text-foreground-secondary sm:text-base">
               Sign in with your standard ExamWeb credentials. Your complete multi-semester standing is computed in under ten seconds.
             </p>
             <div className="mt-7">

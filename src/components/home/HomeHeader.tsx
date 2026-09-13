@@ -18,7 +18,7 @@ const LINKS = [
   { href: "#privacy", label: "Privacy" },
 ];
 
-export default function RedesignHeader({ isAuthenticated }: Props) {
+export default function HomeHeader({ isAuthenticated }: Props) {
   const [open, setOpen] = useState(false);
   const reducedMotion = useReducedMotion() ?? false;
 

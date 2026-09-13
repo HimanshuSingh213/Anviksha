@@ -28,12 +28,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.8,
     },
-    {
-      url: `${baseUrl}/login`,
-      lastModified,
-      changeFrequency: "weekly",
-      priority: 0.5,
-    },
   ];
 
   // Each notice links to an official ipu.ac.in PDF. We can't index those

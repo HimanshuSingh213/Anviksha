@@ -1,7 +1,7 @@
 export default function StructuredData() {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.vercel.app";
   // Keep in sync with package.json "version" — shown in WebApplication JSON-LD.
-  const version = "1.6.0";
+  const version = "2.0.0";
 
   const jsonLd = {
     "@context": "https://schema.org",

@@ -21,7 +21,7 @@ const CIRC_CATS = [
   { label: "Inspection schedules", dot: "bg-gold" },
 ];
 
-export default function RedesignCoverage() {
+export default function CoverageSection() {
   return (
     <section id="coverage" className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
       <SectionHead
@@ -56,7 +56,7 @@ export default function RedesignCoverage() {
               Honest by design
             </span>
             <p className="mt-3 text-xs leading-5 text-foreground-secondary">
-              Separate verified frameworks for MBBS, BPT, BHMS, BAMS and BASLP. Anything unverified is rendered as published: raw marks, clearly labelled.
+              Separate verified frameworks for MBBS, BPT, BHMS, BAMS and BASLP. Anything unverified is rendered as published, with raw marks clearly labelled.
             </p>
           </div>
           <p className="mt-4 font-mono text-[11px] font-semibold text-gold">100% GGSIPU ExamWeb compatibility</p>

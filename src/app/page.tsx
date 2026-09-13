@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { fetchGGSIPUNotices } from "@/helpers/notices";
-import RedesignHeader from "@/components/home/RedesignHeader";
-import RedesignHero from "@/components/home/RedesignHero";
-import RedesignEngine from "@/components/home/RedesignEngine";
-import RedesignCoverage from "@/components/home/RedesignCoverage";
-import RedesignTrust from "@/components/home/RedesignTrust";
-import RedesignFaqCta from "@/components/home/RedesignFaqCta";
+import HomeHeader from "@/components/home/HomeHeader";
+import HeroSection from "@/components/home/HeroSection";
+import FeaturesSection from "@/components/home/FeaturesSection";
+import CoverageSection from "@/components/home/CoverageSection";
+import TrustSection from "@/components/home/TrustSection";
+import FaqCtaSection from "@/components/home/FaqCtaSection";
 import { FAQS } from "@/components/home/faq-data";
-import RedesignFooter from "@/components/home/RedesignFooter";
+import HomeFooter from "@/components/home/HomeFooter";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.vercel.app";
 
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Anviksha · GGSIPU Results, SGPA/CGPA Calculator & Academic Analytics",
     description:
-      "Your GGSIPU result, actually explained. SGPA/CGPA under Ordinance 11, promotion standing, placement eligibility, and consolidated transcripts — instantly after login.",
+      "Your GGSIPU result, actually explained. SGPA/CGPA under Ordinance 11, promotion standing, placement eligibility, and consolidated transcripts, instantly after login.",
     url: appUrl,
     type: "website",
     siteName: "Anviksha",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Anviksha · GGSIPU Results, SGPA/CGPA Calculator & Academic Analytics",
     description:
-      "Your GGSIPU result, actually explained. SGPA/CGPA under Ordinance 11, promotion standing, placement eligibility, and consolidated transcripts — instantly after login.",
+      "Your GGSIPU result, actually explained. SGPA/CGPA under Ordinance 11, promotion standing, placement eligibility, and consolidated transcripts, instantly after login.",
     images: ["/favicon.png"],
   },
   robots: {
@@ -48,7 +48,7 @@ export default async function Home() {
 
   let heroNotices: { title: string; url: string }[] = [];
   try {
-    heroNotices = (await fetchGGSIPUNotices()).slice(-8).map(({ title, url }) => ({ title, url }));
+    heroNotices = (await fetchGGSIPUNotices()).slice(0, 8).map(({ title, url }) => ({ title, url }));
   } catch {
     heroNotices = [];
   }
@@ -76,15 +76,15 @@ export default async function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      <RedesignHeader isAuthenticated={isAuthenticated} />
+      <HomeHeader isAuthenticated={isAuthenticated} />
       <main id="main-content" className="flex-1">
-        <RedesignHero isAuthenticated={isAuthenticated} cta={cta} notices={heroNotices} />
-        <RedesignEngine />
-        <RedesignCoverage />
-        <RedesignTrust />
-        <RedesignFaqCta cta={cta} />
+        <HeroSection isAuthenticated={isAuthenticated} cta={cta} notices={heroNotices} />
+        <FeaturesSection />
+        <CoverageSection />
+        <TrustSection />
+        <FaqCtaSection cta={cta} />
       </main>
-      <RedesignFooter />
+      <HomeFooter />
     </div>
   );
 }

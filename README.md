@@ -1,12 +1,12 @@
 # Anviksha | GGSIPU Result Wrapper & Academic Analytics
 
 [![Live App](https://img.shields.io/badge/Live_App-anviksha--result.vercel.app-000000?style=flat&logo=vercel&logoColor=white)](https://anviksha-result.vercel.app)
-[![Version](https://img.shields.io/badge/Version-v1.6.0-8A6D1F?style=flat)]()
+[![Version](https://img.shields.io/badge/Version-v2.0.0-8A6D1F?style=flat)]()
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-000000?style=flat&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2-23272F?style=flat&logo=react&logoColor=61DAFB)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-0B1120?style=flat&logo=tailwindcss&logoColor=38BDF8)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-74_Tests_Passing-1E293B?style=flat&logo=vitest&logoColor=FCC72B)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-75_Tests_Passing-1E293B?style=flat&logo=vitest&logoColor=FCC72B)](https://vitest.dev/)
 [![Security](https://img.shields.io/badge/Security-Zero--Storage_Proxy-064E3B?style=flat&logo=auth0&logoColor=34D399)]()
 
 ## Overview
@@ -52,7 +52,7 @@ Rather than showing only a raw table of marks, Anviksha interprets result data t
 1. **Zero-Storage Privacy** — Credentials, marks, and personal data are proxied, never persisted. There is no database anywhere in the stack.
 2. **Honesty Over Guesswork** — Every calculated metric carries a verification state: `VERIFIED` (statutory rule confirmed), `RESULT_DERIVED` (computed directly from official marks), `WARNING` (depends on estimated/user credits), `NOT_APPLICABLE` (the programme's ordinance doesn't define it), `UNAVAILABLE` (withheld rather than guessed), or `AMBIGUOUS` (programme framework unclear).
 3. **Fail-Closed Rendering** — If a programme's rules aren't verified, analytics aren't shown — Ordinance-11-shaped math is never silently applied to a medical or allied-health programme where it doesn't belong.
-4. **Tested Evolution** — The engine (`src/lib/academic/`) is type-checked and unit-tested (88 automated tests) and grows as ordinance verification progresses.
+4. **Tested Evolution** — The engine (`src/lib/academic/`) is type-checked and unit-tested (75 automated tests) and grows as ordinance verification progresses.
 
 ---
 
@@ -117,7 +117,7 @@ Dashboard & Analytics  →  render strictly within capabilities;
 ```
 
 - **Ordinance Database (`academic-db.ts`):** One registry entry per ordinance — ORD_10, ORD_11, ORD_15, ORD_16, ORD_22, ORD_24, ORD_25, ORD_31, ORD_38 — each with its examination system, capability flags, rule bands, and clause-level sources. Programme families (B.Tech, BCA, MBA, Law, MBBS, BPT…) map to their ordinance via keyword matching, with unrecognized names left `AMBIGUOUS` rather than defaulted.
-- **Clause Citations:** Rules cite the specific clause they implement (e.g. Ordinance 11 Clause 11.5 for the grade table, Clause 13 for SGPA/CGPA/percentage/division, Clause 11.3(v) for the 50% promotion baseline) — verified against the ordinance extracts in `Reports/ordinance-extracts/`.
+- **Clause Citations:** Rules cite the specific clause they implement (e.g. Ordinance 11 Clause 11.5 for the grade table, Clause 13 for SGPA/CGPA/percentage/division, Clause 11.3(v) for the 50% promotion baseline) — verified directly against the printed ordinance text.
 - **Warnings as UI:** Estimates, ambiguities, and unverified rules are structured objects rendered as badges and explanation panels — transparency is a first-class output, not a log line.
 
 ---
@@ -215,7 +215,7 @@ anviksha/
 │   │       └── result/route.ts     #   Full result fetch (euno=100) + normalization
 │   │
 │   ├── components/
-│   │   ├── home/                   #   LandingPageView, HeroDashboardPreview, landing data
+│   │   ├── home/                   #   Hero, engine bento, coverage, trust, FAQ/CTA sections
 │   │   ├── login/                  #   LoginForm
 │   │   ├── dashboard/              #   CreditTipModal, skeletons, avatar, logout
 │   │   ├── analytics/              #   Promotion, Placement, Division, Trends, Reappear,
@@ -307,10 +307,10 @@ anviksha/
 
 ## Testing & Verification
 
-The project maintains an **74-test** automated suite (5 files) covering the academic engine, notices scraper, validators, and API routes:
+The project maintains a **75-test** automated suite (5 files) covering the academic engine, notices scraper, validators, and API routes:
 
 ```bash
-npm test              # 74 tests, currently 100% green
+npm test              # 75 tests, currently 100% green
 npx tsc --noEmit      # clean
 npm run lint          # 0 errors
 npm run build         # production bundle
@@ -331,7 +331,7 @@ npm run build         # production bundle
 - **HttpOnly, path-scoped (`/api`), expiry-bound cookies** hold the upstream session token; the browser never exposes it to scripts.
 - **Password hashing** (`sha256(password + captcha salt)`) mirrors the portal's own behaviour — plaintext passwords never travel.
 - **Middleware access control** on all protected routes with explicit session-expiry signalling.
-- Security policy: [`SECURITY.md`](SECURITY.md).
+- Found a vulnerability? Open a private-security advisory on the GitHub repository and it will be acted on immediately.
 
 ---
 
@@ -352,7 +352,6 @@ Any Next.js-compatible host works — the app has no server-side state or enviro
 | Document | Contents |
 | :--- | :--- |
 | [`/calculations`](https://anviksha-result.vercel.app/calculations) | In-app methodology guide: every formula, badge, and its ordinance clause |
-| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Contribution guidelines |
 
 ---
 

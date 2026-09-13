@@ -27,10 +27,10 @@ const LIFECYCLE = [
   { icon: Lock, t: "Credential handoff", d: "Enrollment number and password go straight to the university login. Never written to disk." },
   { icon: Calculator, t: "Fetch & compute", d: "Your full result is normalized in memory; every analytic runs in your browser." },
   { icon: ShieldCheck, t: "Zero-database", d: "No tables, no logs, no records. There is nothing to leak." },
-  { icon: Timer, t: "Dissolve", d: "Logout destroys the session upstream and locally. Closing the tab does the same." },
+  { icon: Timer, t: "Dissolve", d: "Logout destroys the session upstream and locally. Otherwise the session cookie expires on its own after one hour." },
 ];
 
-export default function RedesignTrust() {
+export default function TrustSection() {
   return (
     <div className="w-full border-t border-border bg-surface/40">
       <section id="ordinance" className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
@@ -71,7 +71,7 @@ export default function RedesignTrust() {
             index="04"
             kicker="Privacy is the feature"
             title="A proxy, not a platform."
-            desc="Anviksha has no database. Your session lives for exactly as long as you keep the tab open."
+            desc="Anviksha has no database. Your session lasts only until you log out or the one-hour cookie expires."
           />
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
             {LIFECYCLE.map((s, i) => (
