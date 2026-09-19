@@ -3,17 +3,41 @@ import { NextRequest, NextResponse } from "next/server";
 import { BASE_URL } from "../captcha/route";
 import { ApiErrorResponse, ApiSuccessResponse } from "@/types/ApiResponse";
 import { ResultData } from "@/types/result";
+import * as cheerio from "cheerio";
 
 const REQUEST_TIMEOUT = 15000;
+const DEFAULT_FALLBACK_MESSAGE = "Unexpected response from GGSIPU. Please retry.";
 
-function extractHtmlText(html: string): string {
-  return html
-    .replace(/<script\b[^<]*>[\s\S]*?<\/script>/gi, "")
-    .replace(/<style\b[^<]*>[\s\S]*?<\/style>/gi, "")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 200);
+// Helper to extract error message, attempts left, and locked status from GGSIPU HTML
+function extractErrorFromHtml(html: string): { message: string; attemptsLeft?: number; locked: boolean } {
+  const $ = cheerio.load(html);
+
+  // Modern GGSIPU error container: <div class="message-box"><div class="message">...</div></div>
+  const errorMessage = $(".message-box .message").first().text().trim() || $(".message").first().text().trim();
+
+  const lower = (errorMessage || html).toLowerCase();
+  const locked =
+    lower.includes("account is locked") ||
+    lower.includes("account locked") ||
+    lower.includes("examination department") ||
+    lower.includes("0 attempts left");
+
+  if (!errorMessage) {
+    return {
+      message: locked ? "Your account is locked. Please visit the examination department." : DEFAULT_FALLBACK_MESSAGE,
+      locked,
+    };
+  }
+
+  // Check if message mentions attempts left
+  const attemptsMatch = errorMessage.match(/(\d+)\s*attempts?\s*left/i);
+  const attemptsLeft = attemptsMatch ? parseInt(attemptsMatch[1], 10) : undefined;
+
+  return {
+    message: errorMessage,
+    attemptsLeft,
+    locked: locked || attemptsLeft === 0,
+  };
 }
 
 export const GET = async (req: NextRequest) => {
@@ -42,14 +66,14 @@ export const GET = async (req: NextRequest) => {
     const rawEuno = searchParams.get("euno") || "100";
     const euno = /^[a-zA-Z0-9_-]{1,10}$/.test(rawEuno) ? rawEuno : "100";
 
-    const res = await axios.get(`${BASE_URL}/web/StudentSearchProcess`, {
+    const res = await axios.get(`${BASE_URL}/web/student/search`, {
       params: { flag: 2, euno },
       headers: {
         Cookie: `JSESSIONID=${sessionId}`,
         Accept: "application/json,text/html",
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        Referer: `${BASE_URL}/web/student/studenthome.jsp`,
+        Referer: `${BASE_URL}/web/student/studenthome`,
       },
       timeout: REQUEST_TIMEOUT,
       validateStatus: () => true,
@@ -58,7 +82,19 @@ export const GET = async (req: NextRequest) => {
     const raw = typeof res.data === "string" ? res.data : JSON.stringify(res.data);
 
     try {
-      const data: ResultData = JSON.parse(raw);
+      let parsed: any = typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+
+      // Handle new GGSIPU envelope { status: "OK", message: "..." }
+      if (parsed && typeof parsed === "object") {
+        if (parsed.status === "ERROR") {
+          throw new Error(parsed.message || "Session expired");
+        }
+        if (parsed.status === "OK" && parsed.message) {
+          parsed = typeof parsed.message === "string" ? JSON.parse(parsed.message) : parsed.message;
+        }
+      }
+
+      const data: ResultData = parsed;
 
       if (!data.stprofile || !Array.isArray(data.stresult)) {
         throw new Error("Invalid data structure");
@@ -70,7 +106,7 @@ export const GET = async (req: NextRequest) => {
       };
 
       return NextResponse.json(successPayload);
-    } catch {
+    } catch (parseError: any) {
       const lower = raw.toLowerCase();
 
       if (
@@ -93,28 +129,23 @@ export const GET = async (req: NextRequest) => {
         return response;
       }
 
-      if (lower.includes("account locked") || lower.includes("account is locked") || lower.includes("disabled")) {
-        const errPayload: ApiErrorResponse = {
-          success: false,
-          error: "Account access restricted on GGSIPU.",
-          code: "RATE_LIMITED",
-          locked: true,
-        };
-        return NextResponse.json(errPayload, { status: 403 });
-      }
+      const errorInfo = extractErrorFromHtml(raw);
 
-      const cleanedError = extractHtmlText(raw);
-      const userFriendlyMessage = cleanedError.length > 0 && cleanedError.length < 200
-        ? cleanedError
-        : "Unexpected response from GGSIPU. Please retry.";
+      // If HTML didn't contain an error message, use the JSON error message if available
+      const errorMessage =
+        errorInfo.message !== DEFAULT_FALLBACK_MESSAGE
+          ? errorInfo.message
+          : parseError?.message || DEFAULT_FALLBACK_MESSAGE;
 
       const errPayload: ApiErrorResponse = {
         success: false,
-        error: userFriendlyMessage,
-        code: "UPSTREAM_ERROR",
+        error: errorMessage,
+        code: errorInfo.locked ? "RATE_LIMITED" : "UPSTREAM_ERROR",
+        locked: errorInfo.locked,
+        attemptsLeft: errorInfo.attemptsLeft,
       };
 
-      const response = NextResponse.json(errPayload, { status: 502 });
+      const response = NextResponse.json(errPayload, { status: errorInfo.locked ? 403 : 502 });
       response.cookies.set("JSESSIONID", "", { maxAge: 0, path: "/api" });
       response.cookies.set("auth_session", "", { maxAge: 0, path: "/" });
       return response;

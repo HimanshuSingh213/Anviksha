@@ -54,6 +54,7 @@ SECURITY.md
 LICENSE
 CONTRIBUTING.md
 Reports/
+actual-sources-of-html/
 .vercel
 
 # Test routes — local testing only, never published

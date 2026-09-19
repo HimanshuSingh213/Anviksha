@@ -59,7 +59,7 @@ Rather than showing only a raw table of marks, Anviksha interprets result data t
 ## Key Features
 
 ### 1. Privacy-First Session Proxy
-- **Direct Server Proxy:** Credentials and results are relayed through Next.js Route Handlers straight to the official university endpoints (`/web/Login`, `/web/Logout`, `/web/StudentSearchProcess`, `/web/CaptchaServlet`).
+- **Direct Server Proxy:** Credentials and results are relayed through Next.js Route Handlers straight to the official university endpoints (`/web/login`, `/web/Logout`, `/web/student/search`, `/web/captcha`).
 - **SHA-256 Password Hashing:** The password is hashed with the captcha salt (`sha256(password + captcha)`) before leaving — mirroring the portal's own behaviour, so no plaintext password travels.
 - **Ephemeral Sessions:** The upstream `JSESSIONID` is captured server-side and stored in `HttpOnly` cookies scoped to `/api`, expiring after one hour or on logout.
 - **Middleware Guard (`src/proxy.ts`):** Protects `/dashboard` and `/api/result`, redirecting expired sessions to `/login?expired=true` and preventing logged-in users from re-entering the login page.
@@ -210,8 +210,8 @@ anviksha/
 │   │   │   └── report/             #   User feedback & diagnostics
 │   │   └── api/(auth)/
 │   │       ├── captcha/route.ts    #   Captcha image relay + JSESSIONID capture
-│   │       ├── login/route.ts      #   Credential proxy → upstream /web/Login
-│   │       ├── logout/route.ts     #   Session destruction + upstream /web/Logout
+│   │       ├── login/route.ts      #   Credential proxy → upstream /web/login
+│   │       ├── logout/route.ts     #   Session destruction + upstream /web/logout
 │   │       └── result/route.ts     #   Full result fetch (euno=100) + normalization
 │   │
 │   ├── components/
@@ -245,12 +245,12 @@ anviksha/
  Enter credentials + captcha
         │                                        │
         ▼                                        ▼
- Zod validation ─────────────────►  POST /api/(auth)/login ─────────►  POST /web/Login
+ Zod validation ─────────────────►  POST /api/(auth)/login ─────────►  POST /web/login
  sha256(password + captcha salt)          │  (captures JSESSIONID           │
         │                                 │   into HttpOnly cookie)         ▼
         │                                 │                          session established
         ▼                                 ▼
- Dashboard request ──────────────►  GET /api/(auth)/result ─────────►  StudentSearchProcess
+ Dashboard request ──────────────►  GET /api/(auth)/result ─────────►  student/search
         │                                 │  (euno=100 full fetch)         ?euno=100
         │                                 ▼
         │                          academic-engine.ts
@@ -261,7 +261,7 @@ anviksha/
         ├──► Dashboard, Analytics (verification-badged rendering)
         └──► PDF Transcript export (client-side only)
 
- Logout ─────────────────────────►  POST /api/(auth)/logout ────────►  GET /web/Logout
+ Logout ─────────────────────────►  POST /api/(auth)/logout ────────►  GET /web/logout
                                         (cookies destroyed)
 ```
 

@@ -9,6 +9,8 @@ import {
     RefreshCcw,
     MoveRight,
     Loader2,
+    Lock,
+    ExternalLink,
 } from "lucide-react";
 import { useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -178,6 +180,21 @@ export const LoginForm = () => {
                     {errors.password && (
                         <p id="password-error" role="alert" className="text-xs text-grade-fail">{errors.password.message}</p>
                     )}
+                </div>
+
+                {/* Forgot Password Link */}
+                <div className="flex justify-end">
+                    <a
+                        href="https://examweb.ggsipu.ac.in/web/forgetpw"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-gold hover:text-gold-bright transition-colors cursor-pointer"
+                        aria-label="Reset password on official GGSIPU portal"
+                    >
+                        <Lock size={12} />
+                        <span className="underline">Forgot Password?</span>
+                        <ExternalLink size={10} aria-hidden="true" />
+                    </a>
                 </div>
 
                 {/* CAPTCHA Section */}

@@ -26,7 +26,7 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.verce
 export const metadata: Metadata = {
   metadataBase: new URL(appUrl),
   title: {
-    default: "Anviksha — GGSIPU Results, SGPA/CGPA Calculator & Academic Analytics",
+    default: "Anviksha · GGSIPU Results, SGPA/CGPA Calculator & Academic Analytics",
     template: "%s | Anviksha",
   },
   description:

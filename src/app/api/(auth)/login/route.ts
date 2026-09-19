@@ -12,20 +12,72 @@ const hashPassword = (password: string, captcha: string): string => {
 
 const REQUEST_TIMEOUT = 10000;
 
-function extractErrorFromHtml(html: string): { message: string; attemptsLeft?: number } {
+// New Error HTML body
+
+// <body>
+//     <div id="main-container">
+
+//         <div class="login-card">
+
+//             <!-- Standardized Header -->
+//             <div class="login-header">
+//                 <img src="/web/images/ggsipulogo.png" alt="University Logo" class="logo">
+//                 <div class="university-details">
+//                     <h2 class="uni-name">Guru Gobind Singh Indraprastha University</h2>
+//                     <h3 class="dept-name">Message</h3>
+//                 </div>
+//             </div>
+
+//             <!-- Message Content Area -->
+//             <div class="modern-form" style="text-align: center;">
+
+//                 <div class="message-box">
+//                     <div class="message-type  error">ERROR</div>
+
+//                     <div class="message">Invalid Captcha!</div>
+//                 </div>
+
+//                 <!-- Action Button -->
+//                 <a href="/web/login" class="btn-login" style="text-decoration: none; display: block;">Go to
+//                     Login</a>
+
+//             </div>
+//         </div>
+
+//     </div>
+
+// </body>
+
+// Helper to extract error message, attempts left, and locked status from GGSIPU HTML
+function extractErrorFromHtml(html: string): { message: string; attemptsLeft?: number; locked: boolean } {
   const $ = cheerio.load(html);
-  const h2Text = $("#content h2").first().text().trim() || $("h2").first().text().trim();
 
-  if (!h2Text) {
-    return { message: "Login failed. Please check your credentials." };
+  // Modern GGSIPU error container: <div class="message-box"><div class="message">...</div></div>
+  const errorMessage = $(".message-box .message").first().text().trim() || $(".message").first().text().trim();
+
+  const lower = (errorMessage || html).toLowerCase();
+  const locked =
+    lower.includes("account is locked") ||
+    lower.includes("account locked") ||
+    lower.includes("examination department") ||
+    lower.includes("0 attempts left");
+
+  if (!errorMessage) {
+    return {
+      message: locked ? "Your account is locked. Please visit the examination department." : "Login failed. Please check your credentials.",
+      locked,
+    };
   }
 
-  const attemptsMatch = h2Text.match(/(\d+)\s*attempts?\s*left/i);
-  if (attemptsMatch) {
-    return { message: h2Text, attemptsLeft: parseInt(attemptsMatch[1], 10) };
-  }
+  // Check if message mentions attempts left (e.g. "Login Error! 2 attempts left.")
+  const attemptsMatch = errorMessage.match(/(\d+)\s*attempts?\s*left/i);
+  const attemptsLeft = attemptsMatch ? parseInt(attemptsMatch[1], 10) : undefined;
 
-  return { message: h2Text };
+  return {
+    message: errorMessage,
+    attemptsLeft,
+    locked: locked || attemptsLeft === 0,
+  };
 }
 
 export const POST = async (req: NextRequest) => {
@@ -65,7 +117,7 @@ export const POST = async (req: NextRequest) => {
     );
 
     const res = await axios.post(
-      `${BASE_URL}/web/Login`,
+      `${BASE_URL}/web/login`,
       new URLSearchParams({
         username: validationResult.data.enrollment,
         passwd: hashedPass,
@@ -77,7 +129,7 @@ export const POST = async (req: NextRequest) => {
           Cookie: `JSESSIONID=${sessionId}`,
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-          Referer: `${BASE_URL}/web/Login`,
+          Referer: `${BASE_URL}/web/`,
           Origin: BASE_URL,
         },
         timeout: REQUEST_TIMEOUT,
@@ -101,14 +153,12 @@ export const POST = async (req: NextRequest) => {
     if (!success) {
       const rawHtml = typeof res.data === "string" ? res.data : "";
       const lower = rawHtml.toLowerCase();
-      const extracted = extractErrorFromHtml(rawHtml);
+      const errorInfo = extractErrorFromHtml(rawHtml);
 
       let code: 'INVALID_CREDENTIALS' | 'INVALID_CAPTCHA' | 'SESSION_EXPIRED' | 'RATE_LIMITED' = 'INVALID_CREDENTIALS';
-      let locked = false;
 
-      if (lower.includes("account locked") || lower.includes("account is locked") || lower.includes("0 attempts left")) {
+      if (errorInfo.locked) {
         code = "RATE_LIMITED";
-        locked = true;
       } else if (lower.includes("captcha")) {
         code = "INVALID_CAPTCHA";
       } else if (lower.includes("session") || lower.includes("expired") || (res.status === 302 && !location.includes("studenthome"))) {
@@ -117,14 +167,14 @@ export const POST = async (req: NextRequest) => {
 
       const errPayload: ApiErrorResponse = {
         success: false,
-        error: extracted.message,
+        error: errorInfo.message,
         code,
         expired: true,
-        locked,
-        attemptsLeft: extracted.attemptsLeft,
+        locked: errorInfo.locked,
+        attemptsLeft: errorInfo.attemptsLeft,
       };
 
-      return NextResponse.json(errPayload, { status: locked ? 403 : 401 });
+      return NextResponse.json(errPayload, { status: errorInfo.locked ? 403 : 401 });
     }
 
     const payload: ApiSuccessResponse<{ message: string }> = {

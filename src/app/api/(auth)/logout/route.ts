@@ -19,7 +19,7 @@ export const POST = async (req: NextRequest) => {
           Cookie: `JSESSIONID=${sessionId}`,
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-          Referer: `${BASE_URL}/web/student/studenthome.jsp`,
+          Referer: `${BASE_URL}/web/student/studenthome`,
         },
         validateStatus: () => true,
       });

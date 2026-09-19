@@ -13,13 +13,14 @@ export const GET = async (req: NextRequest) => {
 
   try {
     const timestamp = Date.now();
-    const res = await axios.get(`${BASE_URL}/web/CaptchaServlet`, {
+    const res = await axios.get(`${BASE_URL}/web/captcha`, {
       params: { t: timestamp },
       responseType: "arraybuffer",
       headers: {
         Accept: "image/png,image/*",
         "User-Agent":
           "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        Referer: `${BASE_URL}/web/`,
       },
       timeout: REQUEST_TIMEOUT,
       validateStatus: () => true,
