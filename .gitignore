@@ -55,6 +55,7 @@ LICENSE
 CONTRIBUTING.md
 Reports/
 actual-sources-of-html/
+execution-flow.md
 .vercel
 
 # Test routes — local testing only, never published

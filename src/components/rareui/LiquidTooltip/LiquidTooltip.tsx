@@ -47,7 +47,7 @@ export const LiquidTooltip = ({
     setTriggerRect(rect);
     const verticalSafety = 85;
 
-    // 1. Vertical auto-flip if overflowing window top or bottom
+    // Vertical auto-flip if overflowing window top or bottom
     let nextPlacement = placement;
     if (placement === 'top' && rect.top < verticalSafety) {
       nextPlacement = 'bottom';
@@ -56,7 +56,7 @@ export const LiquidTooltip = ({
     }
     setEffectivePlacement(nextPlacement);
 
-    // 2. Horizontal auto-align to keep tooltip fully inside the window
+    // Horizontal auto-align to keep tooltip fully inside the window
     const centerX = rect.left + rect.width / 2;
     if (centerX < 160) {
       setHorizontalShift('left');

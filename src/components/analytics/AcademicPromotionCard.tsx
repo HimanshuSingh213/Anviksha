@@ -12,13 +12,20 @@ import {
     GraduationCap,
     HelpCircle,
 } from "lucide-react";
-import { getAcademicPromotionStatus, type AcademicYearStatus } from "@/lib/academic/academic-engine";
+import { getAcademicPromotionStatus, type AcademicYearStatus, type SubjectResult } from "@/lib/academic/academic-engine";
 
 export type { AcademicYearStatus };
 
 interface Props {
-    allResults: any[][];
-    customCredit: Record<string, number | null>;
+    subjectResults?: SubjectResult[];
+    courses?: SubjectResult[];
+    allResults?: any[][];
+    customCredit?: Record<string, number | null>;
+    promotion?: {
+        years: AcademicYearStatus[];
+        hasDetentionRisk: boolean;
+        activeYear: number;
+    };
 }
 
 const statusTone = {
@@ -57,13 +64,18 @@ const statusTone = {
 } as const;
 
 export default function AcademicPromotionCard({
+    subjectResults,
+    courses,
     allResults,
-    customCredit,
+    customCredit = {},
+    promotion: propPromotion,
 }: Props) {
-    const promotion = useMemo(
-        () => getAcademicPromotionStatus(allResults, customCredit),
-        [allResults, customCredit],
-    );
+    const promotion = useMemo(() => {
+        if (propPromotion) return propPromotion;
+        const subjects = subjectResults ?? courses;
+        if (subjects && subjects.length > 0) return getAcademicPromotionStatus(subjects, customCredit);
+        return getAcademicPromotionStatus(allResults ?? [], customCredit);
+    }, [propPromotion, subjectResults, courses, allResults, customCredit]);
 
     const summary = useMemo(() => {
         let evaluatedYears = 0;
@@ -95,7 +107,7 @@ export default function AcademicPromotionCard({
         };
     }, [promotion.years]);
 
-    if (allResults.length === 0) return null;
+    if ((courses?.length ?? allResults?.length ?? 0) === 0 && !propPromotion) return null;
 
     const { years, hasDetentionRisk, activeYear } = promotion;
 

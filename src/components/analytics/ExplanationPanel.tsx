@@ -86,10 +86,10 @@ export default function ExplanationPanel({
       sources: a.framework.sources,
     },
     {
-      name: "Course Pass",
-      status: a.coursePassRule.status,
-      reason: a.coursePassRule.reason ?? a.coursePassRule.value ?? "Programme-specific course passing criteria.",
-      sources: a.coursePassRule.sources,
+      name: "Subject Pass",
+      status: a.subjectPassRule.status,
+      reason: a.subjectPassRule.reason ?? a.subjectPassRule.value ?? "Programme-specific subject passing criteria.",
+      sources: a.subjectPassRule.sources,
     },
     {
       name: "Promotion",

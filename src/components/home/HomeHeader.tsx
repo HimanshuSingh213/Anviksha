@@ -6,10 +6,6 @@ import { useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 
-interface Props {
-  isAuthenticated: boolean;
-}
-
 const LINKS = [
   { href: "#engine", label: "The Engine" },
   { href: "#coverage", label: "Coverage" },
@@ -18,7 +14,7 @@ const LINKS = [
   { href: "#privacy", label: "Privacy" },
 ];
 
-export default function HomeHeader({ isAuthenticated }: Props) {
+export default function HomeHeader({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [open, setOpen] = useState(false);
   const reducedMotion = useReducedMotion() ?? false;
 

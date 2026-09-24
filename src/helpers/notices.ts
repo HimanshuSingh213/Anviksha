@@ -1,6 +1,12 @@
 import * as cheerio from "cheerio";
 import { GGSIPUNotice, NoticeCategory } from "@/types/notice";
 
+/**
+ * Categorizes a university examination notice by inspecting keywords in its title.
+ *
+ * @param title - The raw notice title text
+ * @returns NoticeCategory ("Datesheet", "Result", "Inspection", or "Notice")
+ */
 function getNoticeCategory(title: string): NoticeCategory {
   const text = title.toLowerCase();
 
@@ -54,6 +60,12 @@ const TARGET_URLS = [
   "http://www.ipu.ac.in/exam_notices.php",
 ];
 
+/**
+ * Scrapes latest examination notices, date sheets, and result declarations from official GGSIPU portals.
+ * Falls back gracefully to cached notices if upstream servers are unreachable.
+ *
+ * @returns Array of parsed GGSIPUNotice objects
+ */
 export async function fetchGGSIPUNotices(): Promise<GGSIPUNotice[]> {
   for (const targetUrl of TARGET_URLS) {
     try {

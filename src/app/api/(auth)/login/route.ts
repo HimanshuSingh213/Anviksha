@@ -48,7 +48,12 @@ const REQUEST_TIMEOUT = 10000;
 
 // </body>
 
-// Helper to extract error message, attempts left, and locked status from GGSIPU HTML
+/**
+ * Extracts error message, remaining attempts, and account locked status from GGSIPU HTML response.
+ *
+ * @param html - Raw HTML response string from GGSIPU portal
+ * @returns Parsed error message, remaining attempts count, and locked status flag
+ */
 function extractErrorFromHtml(html: string): { message: string; attemptsLeft?: number; locked: boolean } {
   const $ = cheerio.load(html);
 

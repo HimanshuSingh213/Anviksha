@@ -1,9 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { analyzeResult, decodeStatus } from "./academic-engine";
+import {
+  analyzeResult,
+  decodeStatus,
+  getAcademicPromotionStatus,
+  getReappearSessionPlan,
+  parseSubjectResults,
+} from "./academic-engine";
 import {
   findProgramme,
   findOrdinance,
-  isVerified,
   getSubjectMaxMarks,
 } from "./academic-db";
 
@@ -38,9 +43,9 @@ describe("CASE 1 — 498 + 2025 identifies B.Tech CSE-DS, raw result visible", (
   });
 
   it("every course stays visible with raw codes and statuses", () => {
-    expect(r.courses).toHaveLength(4);
-    expect(r.courses[0].rawCode).toBe("ICT101");
-    expect(r.courses[0].name).toContain("PROGRAMMING");
+    expect(r.subjectResults).toHaveLength(4);
+    expect(r.subjectResults[0].rawCode).toBe("ICT101");
+    expect(r.subjectResults[0].name).toContain("PROGRAMMING");
     expect(r.analytics.paperCount.value).toBe(4);
     expect(r.analytics.paperCount.status).toBe("RESULT_DERIVED");
   });
@@ -64,7 +69,7 @@ describe("CASE 2 — strict mode without user credits ⇒ no guessed credits: SG
     expect(r.analytics.percentage.status).toBe("UNAVAILABLE");
     expect(r.analytics.division.status).toBe("VERIFIED");
     expect(r.analytics.division.value).toBeNull();
-    expect(r.analytics.coursePassRule.status).toBe("VERIFIED");
+    expect(r.analytics.subjectPassRule.status).toBe("VERIFIED");
     expect(r.analytics.averagePercentage.status).toBe("UNAVAILABLE");
     expect(r.analytics.averagePercentage.value).toBeNull();
   });
@@ -130,7 +135,7 @@ describe("CASE 3 — user-edited credits calculate SGPA/CGPA as WARNING estimate
 describe("CASE 3b — user removes credit (null) or sets to 0 ⇒ calculation done without it", () => {
   it("calculates SGPA and CGPA excluding the course with null credit", () => {
     const r = analyzeResult(REAL_498, { ICT101: null });
-    const course101 = r.courses.find((c) => c.rawCode === "ICT101");
+    const course101 = r.subjectResults.find((c) => c.rawCode === "ICT101");
     expect(course101?.credits.value).toBeNull();
     expect(course101?.credits.source).toBe("USER");
 
@@ -142,7 +147,7 @@ describe("CASE 3b — user removes credit (null) or sets to 0 ⇒ calculation do
 
   it("calculates SGPA and CGPA with credit reset to zero (old method)", () => {
     const r = analyzeResult(REAL_498, { ICT101: 0 });
-    const course101 = r.courses.find((c) => c.rawCode === "ICT101");
+    const course101 = r.subjectResults.find((c) => c.rawCode === "ICT101");
     expect(course101?.credits.value).toBe(0);
     expect(course101?.credits.source).toBe("USER");
 
@@ -161,7 +166,7 @@ describe("CASE 4 — unknown programme ⇒ result visible, analytics limited", (
 
   it("programme unknown, courses still fully rendered", () => {
     expect(r.programme.known).toBe(false);
-    expect(r.courses).toHaveLength(4);
+    expect(r.subjectResults).toHaveLength(4);
     expect(r.analytics.paperCount.value).toBe(4);
     expect(r.analytics.grade.status).toBe("UNAVAILABLE");
     expect(r.warnings.some((w) => w.message.includes("not mapped"))).toBe(true);
@@ -180,7 +185,7 @@ describe("CASE 5 — special ordinance never inherits ORD_11", () => {
     expect(r.analytics.sgpa.status).toBe("NOT_APPLICABLE");
     expect(r.analytics.division.status).toBe("NOT_APPLICABLE");
     expect(r.analytics.division.value).toBeNull();
-    expect(r.analytics.coursePassRule.status).toBe("VERIFIED");
+    expect(r.analytics.subjectPassRule.status).toBe("VERIFIED");
   });
 
   it("BPT → ORD_31, separate annual framework with no ORD_10/11 rules", () => {
@@ -193,7 +198,7 @@ describe("CASE 5 — special ordinance never inherits ORD_11", () => {
     expect(r.analytics.grade.status).toBe("NOT_APPLICABLE");
     expect(r.analytics.sgpa.status).toBe("NOT_APPLICABLE");
     expect(r.analytics.cgpa.status).toBe("NOT_APPLICABLE");
-    expect(r.analytics.coursePassRule.status).toBe("VERIFIED");
+    expect(r.analytics.subjectPassRule.status).toBe("VERIFIED");
     expect(r.analytics.promotion.status).toBe("WARNING");
     // result-derived features still work
     expect(r.analytics.paperCount.value).toBe(4);
@@ -279,13 +284,6 @@ describe("helpers — programme and ordinance lookups", () => {
     expect(findOrdinance("UNKNOWN_ORD")).toBeNull();
   });
 
-  it("isVerified correctly evaluates verification scale", () => {
-    expect(isVerified("VERIFIED")).toBe(true);
-    expect(isVerified("VERIFIED_2")).toBe(true);
-    expect(isVerified("INFERRED")).toBe(false);
-    expect(isVerified("UNKNOWN")).toBe(false);
-  });
-
   it("resolves isTech correctly for technical vs non-technical degrees", () => {
     expect(findProgramme("BACHELOR OF TECHNOLOGY")?.isTech).toBe(true);
     expect(findProgramme("BACHELOR OF COMPUTER APPLICATIONS")?.isTech).toBe(true);
@@ -305,15 +303,15 @@ describe("multi-period separation — SGPA vs CGPA decoupling", () => {
     };
     const r = analyzeResult(REAL_498, userCredits);
 
-    // Period 1: ICT101 (68 -> A, GP 8, cr 4) + ICT151 (86 -> A+, GP 9, cr 1)
+    // Semester 1: ICT101 (68 -> A, GP 8, cr 4) + ICT151 (86 -> A+, GP 9, cr 1)
     // Sem 1 SGPA = (4*8 + 1*9) / 5 = 41 / 5 = 8.20
-    const sem1 = r.analytics.sgpaByPeriod.find((p) => p.period === 1);
+    const sem1 = r.analytics.sgpaBySemester.find((p) => p.semester === 1);
     expect(sem1?.sgpa.value).toBe(8.2);
 
-    // Period 2: ICT104 (26 -> F, GP 0, cr 4) + ICT110 (ABS, excluded from GPA
+    // Semester 2: ICT104 (26 -> F, GP 0, cr 4) + ICT110 (ABS, excluded from GPA
     // because a non-numeric legend carries no grade point)
     // Sem 2 SGPA = 0 / 4 = 0.00
-    const sem2 = r.analytics.sgpaByPeriod.find((p) => p.period === 2);
+    const sem2 = r.analytics.sgpaBySemester.find((p) => p.semester === 2);
     expect(sem2?.sgpa.value).toBe(0);
 
     // Latest period SGPA = Sem 2 SGPA = 0
@@ -386,11 +384,11 @@ describe("Requirement 15 — Statutory Verification Suite", () => {
       ICT110: 4,
     };
     const r = analyzeResult(REAL_498, userCredits);
-    expect(r.courses[0].grade?.value).toBe("A");
-    expect(r.courses[0].grade?.point).toBe(8);
-    expect(r.courses[1].grade?.value).toBe("A+");
-    expect(r.courses[1].grade?.point).toBe(9);
-    const sem1 = r.analytics.sgpaByPeriod.find((p) => p.period === 1);
+    expect(r.subjectResults[0].grade?.value).toBe("A");
+    expect(r.subjectResults[0].grade?.point).toBe(8);
+    expect(r.subjectResults[1].grade?.value).toBe("A+");
+    expect(r.subjectResults[1].grade?.point).toBe(9);
+    const sem1 = r.analytics.sgpaBySemester.find((p) => p.semester === 1);
     expect(sem1?.sgpa.value).toBe(8.2);
     expect(r.analytics.cgpa.value).toBe(4.56);
   });
@@ -516,9 +514,9 @@ describe("Requirement 15 — Statutory Verification Suite", () => {
     };
     const r = analyzeResult(unknownPayload);
     expect(r.programme.known).toBe(false);
-    expect(r.courses).toHaveLength(1);
-    expect(r.courses[0].rawCode).toBe("PAP01");
-    expect(r.courses[0].total).toBe(50);
+    expect(r.subjectResults).toHaveLength(1);
+    expect(r.subjectResults[0].rawCode).toBe("PAP01");
+    expect(r.subjectResults[0].total).toBe(50);
     expect(r.analytics.paperCount.value).toBe(1);
   });
 
@@ -644,20 +642,16 @@ describe("Targeted Audit — Division Capabilities & Generic Mappings", () => {
     // Generic BA without discipline evidence
     const genericBA = findProgramme("BACHELOR OF ARTS");
     expect(genericBA?.verification).toBe("INFERRED");
-    expect(isVerified(genericBA)).toBe(false);
 
     const bareBA = findProgramme("BA");
     expect(bareBA?.verification).toBe("INFERRED");
-    expect(isVerified(bareBA)).toBe(false);
 
     // Generic LAW without discipline evidence
     const genericLaw = findProgramme("BACHELOR OF LAW");
     expect(genericLaw?.verification).toBe("INFERRED");
-    expect(isVerified(genericLaw)).toBe(false);
 
     const bareLaw = findProgramme("LAW");
     expect(bareLaw?.verification).toBe("INFERRED");
-    expect(isVerified(bareLaw)).toBe(false);
 
     // Engine: generic BA leaves framework and division AMBIGUOUS
     const rBA = analyzeResult({
@@ -679,24 +673,21 @@ describe("Targeted Audit — Division Capabilities & Generic Mappings", () => {
     expect(rBA.analytics.framework.status).toBe("AMBIGUOUS");
     expect(rBA.analytics.division.status).toBe("AMBIGUOUS");
     expect(rBA.analytics.grade.status).toBe("AMBIGUOUS");
-    expect(rBA.courses).toHaveLength(1);
-    expect(rBA.courses[0].rawCode).toBe("BA101");
-    expect(rBA.courses[0].total).toBe(70);
+    expect(rBA.subjectResults).toHaveLength(1);
+    expect(rBA.subjectResults[0].rawCode).toBe("BA101");
+    expect(rBA.subjectResults[0].total).toBe(70);
 
     // But specific verified BA disciplines (e.g. Journalism) become VERIFIED
     const specificBA = findProgramme("BACHELOR OF ARTS (JOURNALISM AND MASS COMMUNICATION)");
     expect(specificBA?.verification).toBe("VERIFIED");
-    expect(isVerified(specificBA)).toBe(true);
 
     const specificLaw = findProgramme("BA LLB");
     expect(specificLaw?.verification).toBe("VERIFIED");
     expect(specificLaw?.ordinanceCode).toBe("ORD_11");
-    expect(isVerified(specificLaw)).toBe(true);
 
     const fullLawName = findProgramme("BACHELOR OF LAWS (B.A. LL.B)");
     expect(fullLawName?.verification).toBe("VERIFIED");
     expect(fullLawName?.ordinanceCode).toBe("ORD_11");
-    expect(isVerified(fullLawName)).toBe(true);
 
     const rLaw = analyzeResult({
       stprofile: {
@@ -803,17 +794,46 @@ describe("Targeted Audit — Division Capabilities & Generic Mappings", () => {
     expect(r.programme.ordinance).toBe("ORD_11");
 
     // Check pass/fail semantics
-    const ict101 = r.courses.find((c) => c.rawCode === "ICT101");
+    const ict101 = r.subjectResults.find((c) => c.rawCode === "ICT101");
     expect(ict101?.semantic).toBe("PASS");
 
-    const ict103 = r.courses.find((c) => c.rawCode === "ICT103");
+    const ict103 = r.subjectResults.find((c) => c.rawCode === "ICT103");
     expect(ict103?.semantic).toBe("NOT_CLEARED");
 
-    const ict105 = r.courses.find((c) => c.rawCode === "ICT105");
+    const ict105 = r.subjectResults.find((c) => c.rawCode === "ICT105");
     expect(ict105?.semantic).toBe("ABSENT");
 
-    const ict102 = r.courses.find((c) => c.rawCode === "ICT102");
+    const ict102 = r.subjectResults.find((c) => c.rawCode === "ICT102");
     expect(ict102?.semantic).toBe("DETAINED");
+  });
+
+  it("pre-computes academicPromotion and reappearPlan on engine to avoid duplicate recalculation", () => {
+    const r = analyzeResult(REAL_498);
+    expect(r.analytics.academicPromotion).toBeDefined();
+    expect(r.analytics.reappearPlan).toBeDefined();
+
+    // Verify fast path on subject results produces equivalent promotion evaluation
+    const fromSubjects = getAcademicPromotionStatus(r.subjectResults);
+    const fromRaw = getAcademicPromotionStatus(REAL_498.stresult);
+    expect(fromSubjects.years.length).toBe(fromRaw.years.length);
+    expect(fromSubjects.hasDetentionRisk).toBe(fromRaw.hasDetentionRisk);
+
+    // Verify fast path on subject results produces equivalent reappear plan
+    const planFromSubjects = getReappearSessionPlan(r.subjectResults);
+    const planFromRaw = getReappearSessionPlan(REAL_498.stresult);
+    expect(planFromSubjects.totalBacklogs).toBe(planFromRaw.totalBacklogs);
+    expect(planFromSubjects.totalCreditsAtRisk).toBe(planFromRaw.totalCreditsAtRisk);
+  });
+
+  it("parseSubjectResults parses marksheet rows into structured subject results", () => {
+    const programme = findProgramme("BACHELOR OF TECHNOLOGY");
+    const ordinance = findOrdinance(programme);
+    const parsed = parseSubjectResults(REAL_498.stresult, ordinance, programme, {});
+
+    expect(parsed).toHaveLength(4);
+    expect(parsed[0].rawCode).toBe("ICT101");
+    expect(parsed[0].name).toContain("PROGRAMMING");
+    expect(parsed[0].semantic).toBe("PASS");
   });
 });
 

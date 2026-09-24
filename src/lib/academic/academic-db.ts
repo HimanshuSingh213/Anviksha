@@ -14,9 +14,15 @@ export type SupportState =
   | "AMBIGUOUS"
   | "NOT_APPLICABLE";
 
-// A metric's status is one of the runtime SupportStates; a programme's
-// verification uses the Verification scale. "UNKNOWN" only ever appears on
-// the verification scale, so map it to UNAVAILABLE when reused as a status.
+/**
+ * Maps a programme or metric verification level into a runtime SupportState.
+ * A metric's status is one of the runtime SupportStates; a programme's
+ * verification uses the Verification scale. "UNKNOWN" only ever appears on
+ * the verification scale, so map it to UNAVAILABLE when reused as a status.
+ *
+ * @param verification - The Verification level or null
+ * @returns The corresponding SupportState or null
+ */
 export function verificationAsStatus(verification: Verification | null): SupportState | null {
   if (verification === null) return null;
   if (verification === "UNKNOWN") return "UNAVAILABLE";
@@ -582,19 +588,6 @@ export const ORDINANCES: Record<string, OrdinanceDefinition> = {
   },
 };
 
-export const COURSE_MAX_MARKS: Record<string, number> = {
-  "HUMAN ANATOMY": 200,
-  "HUMAN PHYSIOLOGY": 200,
-  "BIOCHEMISTRY": 200,
-  "PATHOLOGY": 200,
-  "MICROBIOLOGY": 200,
-  "PHARMACOLOGY": 200,
-  "FORENSIC MEDICINE": 100,
-  "OPHTHALMOLOGY": 200,
-  "OTO-RHINO-LARYNGOLOGY": 100,
-  "COMMUNITY MEDICINE": 200,
-};
-
 export const STATUSES = {
   numericStatus: {
     "08": { semantic: "PASS" },
@@ -623,6 +616,13 @@ const GENERIC_TITLES = new Set([
   "bachelor of laws",
 ]);
 
+/**
+ * Resolves an academic degree name or code against the university programme database,
+ * determining its programme family, examination system, and governing ordinance.
+ *
+ * @param degreeOrFamilyName - The degree title or family code (e.g. "B.Tech", "MCA", "027")
+ * @returns The resolved ProgrammeEntry with associated ordinance, or null if unmapped
+ */
 export function findProgramme(degreeOrFamilyName?: string | null): ProgrammeEntry | null {
   const searchQuery = String(degreeOrFamilyName ?? "").trim().toLowerCase();
   if (!searchQuery) return null;
@@ -663,6 +663,12 @@ export function findProgramme(degreeOrFamilyName?: string | null): ProgrammeEntr
   };
 }
 
+/**
+ * Retrieves the statutory OrdinanceDefinition corresponding to a programme entry or ordinance code.
+ *
+ * @param identifier - ProgrammeEntry object, ordinance identifier (e.g. "ORD_11"), or programme family
+ * @returns The matching OrdinanceDefinition, or null if not found
+ */
 export function findOrdinance(identifier?: ProgrammeEntry | string | null): OrdinanceDefinition | null {
   if (!identifier) return null;
 
@@ -691,6 +697,13 @@ export function findOrdinance(identifier?: ProgrammeEntry | string | null): Ordi
   return null;
 }
 
+/**
+ * Looks up the statutory maximum marks for a specific subject or programme standard.
+ *
+ * @param subjectName - Title or name of the subject/paper
+ * @param programmeFamily - Programme family code (e.g. "BTECH", "BPT")
+ * @returns Maximum marks (e.g. 100) or null if not defined
+ */
 export function getSubjectMaxMarks(subjectName?: string, programmeFamily?: string): number | null {
   if (!programmeFamily) return null;
 
@@ -706,10 +719,4 @@ export function getSubjectMaxMarks(subjectName?: string, programmeFamily?: strin
   }
 
   return (ordinance.rules.standardMaxMarks as number | undefined) ?? null;
-}
-
-export function isVerified(item?: unknown): boolean {
-  if (!item) return false;
-  const status = typeof item === "string" ? item : (item as { verification?: string })?.verification;
-  return status === "VERIFIED" || status === "VERIFIED_2";
 }

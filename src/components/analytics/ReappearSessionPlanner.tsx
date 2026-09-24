@@ -17,13 +17,17 @@ import {
     getReappearSessionPlan,
     type ReappearSubject,
     type ReappearSessionPlan,
+    type SubjectResult,
 } from "@/lib/academic/academic-engine";
 
 export type { ReappearSubject, ReappearSessionPlan };
 
 interface Props {
-    allResults: any[][];
-    customCredit: Record<string, number | null>;
+    subjectResults?: SubjectResult[];
+    courses?: SubjectResult[];
+    allResults?: any[][];
+    customCredit?: Record<string, number | null>;
+    plan?: ReappearSessionPlan;
 }
 
 const tabs = [
@@ -33,15 +37,20 @@ const tabs = [
 ] as const;
 
 export default function ReappearSessionPlanner({
+    subjectResults,
+    courses,
     allResults,
-    customCredit,
+    customCredit = {},
+    plan: propPlan,
 }: Props) {
     const [selectedTab, setSelectedTab] = useState<"ALL" | "ODD" | "EVEN">("ALL");
 
-    const plan = useMemo(
-        () => getReappearSessionPlan(allResults, customCredit),
-        [allResults, customCredit],
-    );
+    const plan = useMemo(() => {
+        if (propPlan) return propPlan;
+        const subjects = subjectResults ?? courses;
+        if (subjects && subjects.length > 0) return getReappearSessionPlan(subjects, customCredit);
+        return getReappearSessionPlan(allResults ?? [], customCredit);
+    }, [propPlan, subjectResults, courses, allResults, customCredit]);
 
     const activeList = useMemo(() => {
         if (selectedTab === "ODD") return plan.oddTermBacklogs;
@@ -55,7 +64,7 @@ export default function ReappearSessionPlanner({
         EVEN: plan.evenTermBacklogs.length,
     };
 
-    if (allResults.length === 0) return null;
+    if ((courses?.length ?? allResults?.length ?? 0) === 0 && !propPlan) return null;
 
     return (
         <motion.section

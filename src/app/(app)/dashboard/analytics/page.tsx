@@ -46,7 +46,7 @@ export default function AnalyticsPage() {
 
     const profile = useMemo(() => fullResult?.stprofile, [fullResult?.stprofile]);
     const allResults = useMemo(() => fullResult?.stresult ?? [], [fullResult?.stresult]);
-    const { analytics, programme, courses } = engine;
+    const { analytics, programme, subjectResults } = engine;
     const isTech = programme.isTech;
     const isAnnual = programme.examinationSystem === "ANNUAL";
 
@@ -97,18 +97,18 @@ export default function AnalyticsPage() {
 
     const availableSemesters = useMemo(() => {
         const list: number[] = [];
-        courses.forEach((c) => {
-            const semNum = Number(c.period);
+        subjectResults.forEach((s) => {
+            const semNum = Number(s.semester);
             if (semNum >= 1 && semNum <= 10 && !list.includes(semNum)) {
                 list.push(semNum);
             }
         });
         return list.sort((a, b) => a - b);
-    }, [courses]);
+    }, [subjectResults]);
 
-    const visibleCourses = useMemo(
-        () => activeSem === "100" ? courses : courses.filter((c) => String(c.period) === activeSem),
-        [courses, activeSem]
+    const visibleSubjects = useMemo(
+        () => activeSem === "100" ? subjectResults : subjectResults.filter((s) => String(s.semester) === activeSem),
+        [subjectResults, activeSem]
     );
 
     const filteredResults = useMemo(
@@ -118,29 +118,29 @@ export default function AnalyticsPage() {
 
     const perSemesterSgpa = activeSem === "100"
         ? analytics.cgpa.value
-        : analytics.sgpaByPeriod?.find((p) => String(p.period) === activeSem)?.sgpa.value ?? null;
+        : analytics.sgpaBySemester?.find((p) => String(p.semester) === activeSem)?.sgpa.value ?? null;
 
     const gpaLabel = activeSem === "100" ? "Overall CGPA" : `Semester ${activeSem} SGPA`;
     const isOverall = activeSem === "100";
 
-    const backlogs = visibleCourses.filter(
-        (c) => c.semantic === "NOT_CLEARED" || c.semantic === "ABSENT" || c.semantic === "DETAINED"
+    const backlogs = visibleSubjects.filter(
+        (s) => s.semantic === "NOT_CLEARED" || s.semantic === "ABSENT" || s.semantic === "DETAINED"
     );
 
     const highWarnings = engine.warnings.filter((w) => w.severity === "HIGH");
 
     const stats = useMemo(() => {
         const rawGpa = activeSem === "100" ? analytics.cgpa.value : perSemesterSgpa;
-        const numericCourses = visibleCourses.filter((c) => c.total !== undefined);
-        const passedCourses = numericCourses.filter(
-            (c) => c.semantic === "PASS" || c.semantic === "CREDIT_SECURED" || c.semantic === "ALREADY_PASSED"
+        const numericSubjects = visibleSubjects.filter((s) => s.total !== undefined);
+        const passedSubjects = numericSubjects.filter(
+            (s) => s.semantic === "PASS" || s.semantic === "CREDIT_SECURED" || s.semantic === "ALREADY_PASSED"
         );
-        const obtainedMarks = passedCourses.reduce((sum, c) => sum + (c.total ?? 0), 0);
-        const totalMaxMarks = visibleCourses.reduce((sum, c) => sum + (c.maxMarks ?? 100), 0);
-        const knownCredits = visibleCourses.filter((c) => c.credits.value !== null);
+        const obtainedMarks = passedSubjects.reduce((sum, s) => sum + (s.total ?? 0), 0);
+        const totalMaxMarks = visibleSubjects.reduce((sum, s) => sum + (s.maxMarks ?? 100), 0);
+        const knownCredits = visibleSubjects.filter((s) => s.credits.value !== null);
         const totalCredits = knownCredits.reduce((s, c) => s + (c.credits.value ?? 0), 0);
         const earnedCredits = knownCredits
-            .filter((c) => c.semantic === "PASS" || c.semantic === "CREDIT_SECURED" || c.semantic === "ALREADY_PASSED")
+            .filter((s) => s.semantic === "PASS" || s.semantic === "CREDIT_SECURED" || s.semantic === "ALREADY_PASSED")
             .reduce((s, c) => s + (c.credits.value ?? 0), 0);
 
         return {
@@ -151,7 +151,7 @@ export default function AnalyticsPage() {
             totalMaxMarks,
             backlogs: backlogs.length,
         };
-    }, [activeSem, analytics.cgpa.value, perSemesterSgpa, visibleCourses, backlogs.length]);
+    }, [activeSem, analytics.cgpa.value, perSemesterSgpa, visibleSubjects, backlogs.length]);
 
     const isOrd11 = programme.ordinance === "ORD_11";
 
@@ -163,12 +163,12 @@ export default function AnalyticsPage() {
             const annualAvg = isAnnual ? analytics.averagePercentage.value : null;
             return overallPct ?? annualAvg;
         }
-        const semPercentMetric = analytics.sgpaByPeriod?.find((p) => String(p.period) === activeSem)?.sgpa;
+        const semPercentMetric = analytics.sgpaBySemester?.find((p) => String(p.semester) === activeSem)?.sgpa;
         if (isOrd11 && semPercentMetric?.value !== null && semPercentMetric?.value !== undefined) {
             return Math.round(semPercentMetric.value * 10 * 100) / 100;
         }
-        const periodSummary = analytics.periodSummaries.value?.find((p) => String(p.period) === activeSem);
-        return periodSummary?.averagePercentage ?? null;
+        const semSummary = analytics.semesterSummaries.value?.find((p) => String(p.semester) === activeSem);
+        return semSummary?.averagePercentage ?? null;
     }, [activeSem, analytics, isAnnual, isOrd11]);
     const isPromotionVerified = isOrd11 && (engine.analytics.promotion.status === "VERIFIED" || engine.analytics.promotion.status === "RESULT_DERIVED");
     const isDivisionVerified = (engine.analytics.division.status === "VERIFIED" || engine.analytics.division.status === "RESULT_DERIVED") && engine.analytics.division.value !== null;
@@ -205,7 +205,7 @@ export default function AnalyticsPage() {
                 <SemesterSelector
                     activeSem={activeSem}
                     onSelectSem={setActiveSem}
-                    totalSubjects={visibleCourses.length}
+                    totalSubjects={visibleSubjects.length}
                     availableSemesters={availableSemesters}
                 />
 
@@ -289,12 +289,13 @@ export default function AnalyticsPage() {
                                     />
 
                                     <QuickStatsDistribution
-                                        courses={visibleCourses}
+                                        subjectResults={visibleSubjects}
                                         totalCredits={stats.totalCredits}
                                         earnedCredits={stats.earnedCredits}
                                     />
 
                                     <SemesterTrendChart
+                                        subjectResults={subjectResults}
                                         allResults={allResults}
                                         filteredResults={filteredResults}
                                         customCredit={customCredit}
@@ -337,11 +338,15 @@ export default function AnalyticsPage() {
                                     {isPromotionVerified && (
                                         <>
                                             <AcademicPromotionCard
+                                                promotion={engine.analytics.academicPromotion}
+                                                subjectResults={subjectResults}
                                                 allResults={allResults}
                                                 customCredit={customCredit}
                                             />
 
                                             <ReappearSessionPlanner
+                                                plan={engine.analytics.reappearPlan}
+                                                subjectResults={subjectResults}
                                                 allResults={allResults}
                                                 customCredit={customCredit}
                                             />
@@ -434,11 +439,15 @@ export default function AnalyticsPage() {
                                     {isPromotionVerified && (
                                         <>
                                             <AcademicPromotionCard
+                                                promotion={engine.analytics.academicPromotion}
+                                                subjectResults={subjectResults}
                                                 allResults={allResults}
                                                 customCredit={customCredit}
                                             />
 
                                             <ReappearSessionPlanner
+                                                plan={engine.analytics.reappearPlan}
+                                                subjectResults={subjectResults}
                                                 allResults={allResults}
                                                 customCredit={customCredit}
                                             />
@@ -456,7 +465,7 @@ export default function AnalyticsPage() {
                             )}
 
                             <QuickStatsDistribution
-                                courses={visibleCourses}
+                                subjectResults={visibleSubjects}
                                 totalCredits={stats.totalCredits}
                                 earnedCredits={stats.earnedCredits}
                             />
@@ -553,7 +562,7 @@ function SpecialAnnualAnalytics({ engine }: { engine: ReturnType<typeof analyzeR
             </div>
             <div className="p-3.5 sm:p-4 rounded-lg border border-border-strong bg-surface font-mono">
                 <div className="text-xs font-bold text-foreground uppercase tracking-wider">Professional Framework Regulations</div>
-                <p className="mt-2 text-[11px] text-foreground-secondary leading-relaxed">{a.coursePassRule.value ?? a.coursePassRule.reason ?? "Programme-specific passing criteria loaded."}</p>
+                <p className="mt-2 text-[11px] text-foreground-secondary leading-relaxed">{a.subjectPassRule.value ?? a.subjectPassRule.reason ?? "Programme-specific passing criteria loaded."}</p>
                 <div className="mt-2 text-[10px] text-foreground-muted">Official marksheet totals prevail; component sub-breakups are evaluated directly from university examination records.</div>
             </div>
         </section>
@@ -567,9 +576,9 @@ function SpecialAnnualStanding({ engine }: { engine: ReturnType<typeof analyzeRe
     return (
         <section className={`grid grid-cols-1 ${hasDivision ? "md:grid-cols-3" : "md:grid-cols-2"} gap-4`}>
             <div className="p-4 sm:p-5 bg-surface border border-border-strong rounded-lg font-mono">
-                <div className="text-[10px] uppercase tracking-wider font-bold text-foreground-secondary">Course Pass Rule</div>
-                <div className="mt-3 text-sm font-bold text-foreground">{a.coursePassRule.value ?? "Unavailable"}</div>
-                <div className="mt-2 text-[10px] text-foreground-muted">{a.coursePassRule.sources.join(" · ")}</div>
+                <div className="text-[10px] uppercase tracking-wider font-bold text-foreground-secondary">Subject Pass Rule</div>
+                <div className="mt-3 text-sm font-bold text-foreground">{a.subjectPassRule.value ?? "Unavailable"}</div>
+                <div className="mt-2 text-[10px] text-foreground-muted">{a.subjectPassRule.sources.join(" · ")}</div>
             </div>
             {hasDivision && (
                 <div className="p-4 sm:p-5 bg-surface border border-border-strong rounded-lg font-mono">
@@ -580,7 +589,7 @@ function SpecialAnnualStanding({ engine }: { engine: ReturnType<typeof analyzeRe
             )}
             <div className="p-4 sm:p-5 bg-surface border border-border-strong rounded-lg font-mono">
                 <div className="text-[10px] uppercase tracking-wider font-bold text-foreground-secondary">Progression</div>
-                <div className="mt-3 text-xl font-bold text-foreground">{progression === "PROMOTED" ? "All courses cleared" : progression === "NOT_PROMOTED" ? "Courses pending" : "Official result required"}</div>
+                <div className="mt-3 text-xl font-bold text-foreground">{progression === "PROMOTED" ? "All subjects cleared" : progression === "NOT_PROMOTED" ? "Subjects pending" : "Official result required"}</div>
                 <div className="mt-2 text-[10px] text-foreground-muted">{a.promotion.reason ?? "Professional progression is determined under annual regulations."}</div>
             </div>
         </section>

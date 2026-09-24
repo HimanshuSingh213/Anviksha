@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import Skeleton from "@/components/dashboard/Skeleton";
 import AppNavbar from "@/components/common/AppNavbar";
 import useResultStore from "@/store/result-store";
-import { ResultData } from "@/types/result";
+import { type ResultData } from "@/types/result";
 import { analyzeResult } from "@/lib/academic/academic-engine";
 import { ProvenanceChip } from "@/components/analytics/ProvenanceChip";
 import ExplanationPanel from "@/components/analytics/ExplanationPanel";
@@ -121,7 +121,7 @@ function CreditInputCell({
                 className="w-10 text-center bg-surface-deep border border-border-strong hover:border-gold/60 focus:border-gold focus:ring-1 focus:ring-gold/30 rounded-sm py-0.5 font-mono text-xs font-bold text-foreground outline-none transition-all cursor-pointer focus:cursor-text"
             />
             {!isPassed && (
-                <div className="text-[9px] font-mono text-grade-fail font-semibold mt-0.5" title="Backlog: 0 credits earned until cleared">
+                <div className="text-[9px] leading-none font-mono text-grade-fail font-semibold mt-1" title="Backlog: 0 credits earned until cleared">
                     0 earned
                 </div>
             )}
@@ -222,19 +222,19 @@ export default function DashboardPage() {
         [fullResult, customCredit]
     );
 
-    const { analytics, programme, courses } = engine;
+    const { analytics, programme, subjectResults } = engine;
 
-    const visibleCourses = useMemo(() => {
+    const visibleSubjects = useMemo(() => {
         return activeSem === "100"
-            ? courses
-            : courses.filter((c) => String(c.period) === activeSem);
-    }, [courses, activeSem]);
+            ? subjectResults
+            : subjectResults.filter((s) => String(s.semester) === activeSem);
+    }, [subjectResults, activeSem]);
 
     const availableSemesters = useMemo(() => {
         const semSet = new Set<string>();
-        for (const c of courses) {
-            if (c.period !== undefined && c.period !== null && String(c.period).trim() !== "") {
-                semSet.add(String(c.period).trim());
+        for (const s of subjectResults) {
+            if (s.semester !== undefined && s.semester !== null && String(s.semester).trim() !== "") {
+                semSet.add(String(s.semester).trim());
             }
         }
         const sorted = [...semSet].sort((a, b) => Number(a) - Number(b));
@@ -253,7 +253,7 @@ export default function DashboardPage() {
                 return { label, value: sem };
             }),
         ];
-    }, [courses]);
+    }, [subjectResults]);
 
     const isPercentageFramework = programme.ordinance !== "ORD_11" || analytics.cgpa.status === "NOT_APPLICABLE";
 
@@ -261,7 +261,7 @@ export default function DashboardPage() {
         if (activeSem === "100") {
             return analytics.cgpa;
         }
-        const semGpa = analytics.sgpaByPeriod?.find((p) => String(p.period) === activeSem)?.sgpa;
+        const semGpa = analytics.sgpaBySemester?.find((p) => String(p.semester) === activeSem)?.sgpa;
         return semGpa ?? analytics.sgpa;
     }, [activeSem, analytics]);
 
@@ -282,16 +282,16 @@ export default function DashboardPage() {
                 sources: ["GGSIPU Ordinance 11, Clause 13"],
             };
         }
-        const periodSummary = analytics.periodSummaries?.value?.find((p) => String(p.period) === activeSem);
-        if (periodSummary?.averagePercentage !== null && periodSummary?.averagePercentage !== undefined) {
+        const semSummary = analytics.semesterSummaries?.value?.find((p) => String(p.semester) === activeSem);
+        if (semSummary?.averagePercentage !== null && semSummary?.averagePercentage !== undefined) {
             return {
-                value: periodSummary.averagePercentage,
+                value: semSummary.averagePercentage,
                 status: "RESULT_DERIVED" as const,
-                sources: ["Period course marks normalized by subject maxima"],
+                sources: ["Semester subject marks normalized by subject maxima"],
             };
         }
         return analytics.percentage.value !== null ? analytics.percentage : analytics.averagePercentage;
-    }, [activeSem, activeGpaMetric, analytics.percentage, analytics.averagePercentage, analytics.periodSummaries, programme.ordinance]);
+    }, [activeSem, activeGpaMetric, analytics.percentage, analytics.averagePercentage, analytics.semesterSummaries, programme.ordinance]);
 
     const displayPercentage = activePercentMetric.value !== null ? `${activePercentMetric.value.toFixed(2)}%` : "—";
 
@@ -324,34 +324,34 @@ export default function DashboardPage() {
     })();
 
     // Credits calculations
-    const allKnownCredits = courses.filter((c) => c.credits.value !== null);
-    const totalOfferedCredits = allKnownCredits.reduce((sum, c) => sum + (c.credits.value ?? 0), 0);
+    const allKnownCredits = subjectResults.filter((s) => s.credits.value !== null);
+    const totalOfferedCredits = allKnownCredits.reduce((sum, s) => sum + (s.credits.value ?? 0), 0);
     const totalEarnedCredits = allKnownCredits
-        .filter((c) => c.semantic === "PASS" || c.semantic === "CREDIT_SECURED" || c.semantic === "ALREADY_PASSED")
-        .reduce((sum, c) => sum + (c.credits.value ?? 0), 0);
+        .filter((s) => s.semantic === "PASS" || s.semantic === "CREDIT_SECURED" || s.semantic === "ALREADY_PASSED")
+        .reduce((sum, s) => sum + (s.credits.value ?? 0), 0);
 
-    const semKnownCredits = visibleCourses.filter((c) => c.credits.value !== null);
-    const semOfferedCredits = semKnownCredits.reduce((sum, c) => sum + (c.credits.value ?? 0), 0);
+    const semKnownCredits = visibleSubjects.filter((s) => s.credits.value !== null);
+    const semOfferedCredits = semKnownCredits.reduce((sum, s) => sum + (s.credits.value ?? 0), 0);
     const semEarnedCredits = semKnownCredits
-        .filter((c) => c.semantic === "PASS" || c.semantic === "CREDIT_SECURED" || c.semantic === "ALREADY_PASSED")
-        .reduce((sum, c) => sum + (c.credits.value ?? 0), 0);
+        .filter((s) => s.semantic === "PASS" || s.semantic === "CREDIT_SECURED" || s.semantic === "ALREADY_PASSED")
+        .reduce((sum, s) => sum + (s.credits.value ?? 0), 0);
 
     // Backlogs
-    const allBacklogs = courses.filter(
-        (c) => c.semantic === "NOT_CLEARED" || c.semantic === "ABSENT" || c.semantic === "DETAINED"
+    const allBacklogs = subjectResults.filter(
+        (s) => s.semantic === "NOT_CLEARED" || s.semantic === "ABSENT" || s.semantic === "DETAINED"
     );
-    const semBacklogs = visibleCourses.filter(
-        (c) => c.semantic === "NOT_CLEARED" || c.semantic === "ABSENT" || c.semantic === "DETAINED"
+    const semBacklogs = visibleSubjects.filter(
+        (s) => s.semantic === "NOT_CLEARED" || s.semantic === "ABSENT" || s.semantic === "DETAINED"
     );
     const activeBacklogs = activeSem === "100" ? allBacklogs : semBacklogs;
 
     // Marks for active selection
-    const semNumericCourses = visibleCourses.filter((c) => c.total !== undefined);
-    const semPassedCourses = semNumericCourses.filter(
-        (c) => c.semantic === "PASS" || c.semantic === "CREDIT_SECURED" || c.semantic === "ALREADY_PASSED"
+    const semNumericSubjects = visibleSubjects.filter((s) => s.total !== undefined);
+    const semPassedSubjects = semNumericSubjects.filter(
+        (s) => s.semantic === "PASS" || s.semantic === "CREDIT_SECURED" || s.semantic === "ALREADY_PASSED"
     );
-    const semObtainedMarks = semPassedCourses.reduce((sum, c) => sum + (c.total ?? 0), 0);
-    const semTotalMaxMarks = visibleCourses.reduce((sum, c) => sum + (c.maxMarks ?? 100), 0);
+    const semObtainedMarks = semPassedSubjects.reduce((sum, s) => sum + (s.total ?? 0), 0);
+    const semTotalMaxMarks = visibleSubjects.reduce((sum, s) => sum + (s.maxMarks ?? 100), 0);
 
     const hasCredits = allKnownCredits.length > 0;
     const earnedCreditsDisplay = activeSem === "100" ? totalEarnedCredits : semEarnedCredits;
@@ -478,9 +478,9 @@ export default function DashboardPage() {
                                     tooltip: activePercentMetric.reason ?? "Percentage derived under university regulations.",
                                 },
                                 {
-                                    label: hasCredits ? "Credits Earned" : "Courses Cleared",
-                                    value: hasCredits ? String(earnedCreditsDisplay) : String(semPassedCourses.length),
-                                    valueSuffix: hasCredits ? ` / ${offeredCreditsDisplay}` : ` / ${visibleCourses.length}`,
+                                    label: hasCredits ? "Credits Earned" : "Subjects Cleared",
+                                    value: hasCredits ? String(earnedCreditsDisplay) : String(semPassedSubjects.length),
+                                    valueSuffix: hasCredits ? ` / ${offeredCreditsDisplay}` : ` / ${visibleSubjects.length}`,
                                     sub: (() => {
                                         if (hasCredits) {
                                             return activeSem === "100" ? "overall degree credits" : `Semester ${activeSem} credits`;
@@ -601,7 +601,7 @@ export default function DashboardPage() {
                                     {activeSem === "100" ? "All Semesters" : `Semester ${activeSem}`}
                                 </span>
                                 <span className="px-2.5 py-1 rounded-md bg-cat-teal-surface border border-cat-teal-border text-xs font-mono font-bold text-cat-teal shadow-sm">
-                                    {visibleCourses.length} subjects
+                                    {visibleSubjects.length} subjects
                                 </span>
                             </div>
                             <span className="sm:hidden text-[10px] font-mono text-foreground-muted italic shrink-0">Scroll sideways →</span>
@@ -615,7 +615,7 @@ export default function DashboardPage() {
 
                     <div className="bg-surface border border-border-strong rounded-lg hover:border-gold-border/80 transition-all duration-200 shadow-xs">
                         <AnimatePresence mode="wait">
-                            {visibleCourses && visibleCourses.length > 0 ? (
+                            {visibleSubjects && visibleSubjects.length > 0 ? (
                                 <motion.div
                                     key={activeSem}
                                     initial={{ opacity: 0 }}
@@ -644,52 +644,54 @@ export default function DashboardPage() {
                                                 ))}
                                             </tr>
                                         </thead>
-                                        <tbody>
-                                            {visibleCourses.map((c, idx) => {
-                                                const status = STATUS_LABEL[c.semantic] ?? STATUS_LABEL.UNKNOWN;
-                                                const isPassed = c.semantic === "PASS" || c.semantic === "CREDIT_SECURED" || c.semantic === "ALREADY_PASSED";
-                                                const themeClasses = getGradeThemeClasses(c.grade?.value ?? "");
+                                         <tbody>
+                                            {visibleSubjects.map((s, idx) => {
+                                                const status = STATUS_LABEL[s.semantic] ?? STATUS_LABEL.UNKNOWN;
+                                                const isPassed = s.semantic === "PASS" || s.semantic === "CREDIT_SECURED" || s.semantic === "ALREADY_PASSED";
+                                                const themeClasses = getGradeThemeClasses(s.grade?.value ?? "");
 
                                                 return (
                                                     <motion.tr
-                                                        key={`${c.period}-${c.rawCode}-${idx}`}
+                                                        key={`${s.semester}-${s.rawCode}-${idx}`}
                                                         initial={{ opacity: 0, x: -6 }}
                                                         animate={{ opacity: 1, x: 0 }}
                                                         transition={{ delay: Math.min(idx * 0.02, 0.25), duration: 0.2 }}
                                                         className="border-b border-border-strong/40 last:border-0 hover:bg-surface-elevated/80 hover:border-gold-border/40 transition-colors duration-150"
                                                     >
-                                                        <td className="px-4 py-3.5 text-xs font-mono text-foreground-secondary font-medium">{c.period}</td>
-                                                        <td className="px-4 py-3.5 text-xs font-mono font-bold text-gold">{c.rawCode}</td>
-                                                        <td className="px-4 py-3.5 text-sm font-medium text-foreground flex items-center gap-2">
-                                                            <span>{c.name}</span>
-                                                            {(c.name.toUpperCase().includes("LAB") || c.name.toUpperCase().includes("PRACTICAL")) && (
-                                                                <span className="text-[9px] font-mono font-bold text-cat-teal bg-cat-teal-surface border border-cat-teal-border px-1.5 py-0.5 rounded-sm tracking-wider uppercase">
-                                                                    LAB
-                                                                </span>
+                                                        <td className="px-4 py-3 align-middle text-xs font-mono text-foreground-secondary font-medium">{s.semester}</td>
+                                                        <td className="px-4 py-3 align-middle text-xs font-mono font-bold text-gold">{s.rawCode}</td>
+                                                        <td className="px-4 py-3 align-middle text-sm font-medium text-foreground">
+                                                            <div className="flex items-center gap-2">
+                                                                <span>{s.name}</span>
+                                                                {(s.name.toUpperCase().includes("LAB") || s.name.toUpperCase().includes("PRACTICAL")) && (
+                                                                    <span className="text-[9px] font-mono font-bold text-cat-teal bg-cat-teal-surface border border-cat-teal-border px-1.5 py-0.5 rounded-sm tracking-wider uppercase shrink-0">
+                                                                        LAB
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 align-middle text-xs font-mono text-center text-foreground-secondary font-medium">{s.internal ?? "–"}</td>
+                                                        <td className="px-4 py-3 align-middle text-xs font-mono text-center text-foreground-secondary font-medium">{s.external ?? "–"}</td>
+                                                        <td className="px-4 py-3 align-middle text-xs font-mono text-center font-bold text-foreground">
+                                                            {s.rawTotal || (s.total !== undefined ? String(s.total) : "–")}
+                                                            {s.maxMarks !== null && s.rawTotal && s.total !== undefined && (
+                                                                <span className="ml-1 text-[9px] text-foreground-muted font-normal">/ {s.maxMarks}</span>
                                                             )}
                                                         </td>
-                                                        <td className="px-4 py-3.5 text-xs font-mono text-center text-foreground-secondary font-medium">{c.internal ?? "–"}</td>
-                                                        <td className="px-4 py-3.5 text-xs font-mono text-center text-foreground-secondary font-medium">{c.external ?? "–"}</td>
-                                                        <td className="px-4 py-3.5 text-xs font-mono text-center font-bold text-foreground">
-                                                            {c.rawTotal || (c.total !== undefined ? String(c.total) : "–")}
-                                                            {c.maxMarks !== null && c.rawTotal && c.total !== undefined && (
-                                                                <span className="ml-1 text-[9px] text-foreground-muted font-normal">/ {c.maxMarks}</span>
-                                                            )}
-                                                        </td>
-                                                        <td className="px-4 py-3.5 text-center">
+                                                        <td className="px-4 py-3 align-middle text-center">
                                                             <CreditInputCell
-                                                                paperCode={c.rawCode}
-                                                                courseName={c.name}
-                                                                creditValue={c.credits.value}
+                                                                paperCode={s.rawCode}
+                                                                courseName={s.name}
+                                                                creditValue={s.credits.value}
                                                                 isPassed={isPassed}
                                                                 onSetCredit={(code, val) => setCustomCredit(code, val)}
                                                             />
                                                         </td>
-                                                        <td className="px-4 py-3.5 text-center">
-                                                            {c.grade ? (
-                                                                <Tooltip content={c.grade.value === "Distinction" ? "More than 75% in the course qualifies for distinction under Ordinance 15." : "Letter grade determined by the applicable GGSIPU ordinance."} position="top">
+                                                        <td className="px-4 py-3 align-middle text-center">
+                                                            {s.grade ? (
+                                                                <Tooltip content={s.grade.value === "Distinction" ? "More than 75% in the subject qualifies for distinction under Ordinance 15." : "Letter grade determined by the applicable GGSIPU ordinance."} position="top">
                                                                     <span className={`inline-flex items-center justify-center min-w-9 px-1.5 h-6 rounded-sm border font-mono text-[11px] font-bold cursor-help ${themeClasses}`}>
-                                                                        {c.grade.value}
+                                                                        {s.grade.value}
                                                                     </span>
                                                                 </Tooltip>
                                                             ) : (
@@ -698,12 +700,12 @@ export default function DashboardPage() {
                                                                 </Tooltip>
                                                             )}
                                                         </td>
-                                                        <td className="px-4 py-3.5 text-center">
+                                                        <td className="px-4 py-3 align-middle text-center">
                                                             <div className="inline-flex items-center justify-center gap-1.5">
                                                                 <span className={`text-[10px] font-mono font-bold uppercase tracking-wider ${status.className}`}>
                                                                     {status.label}
                                                                 </span>
-                                                                {c.ruleCheck === "FAIL" && isPassed && (
+                                                                {s.ruleCheck === "FAIL" && isPassed && (
                                                                     <Tooltip content="Displayed marks are below the loaded programme pass threshold, while ExamWeb reports PASS. Raw result is preserved; verify the official marksheet." position="top">
                                                                         <AlertTriangle size={11} className="text-gold cursor-help" aria-label="Rule mismatch" />
                                                                     </Tooltip>
@@ -732,7 +734,7 @@ export default function DashboardPage() {
 
                 {/* Summary Bar */}
                 <AnimatePresence>
-                    {visibleCourses && visibleCourses.length > 0 && (
+                    {visibleSubjects && visibleSubjects.length > 0 && (
                         <motion.section
                             key="summary"
                             initial={{ opacity: 0, y: 12 }}

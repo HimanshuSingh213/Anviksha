@@ -14,7 +14,7 @@ import {
     CartesianGrid,
     Tooltip,
 } from "recharts";
-import { decodeStatus, resolvePaperCredit } from "@/lib/academic/academic-engine";
+import { decodeStatus, resolvePaperCredit, type SubjectResult } from "@/lib/academic/academic-engine";
 
 function getGradePoints(total: number): number {
     if (total >= 90) return 10;
@@ -28,12 +28,14 @@ function getGradePoints(total: number): number {
 }
 
 interface Props {
-    allResults: any[][];
-    filteredResults: any[][];
-    customCredit: Record<string, number | null>;
+    subjectResults?: SubjectResult[];
+    courses?: SubjectResult[];
+    allResults?: any[][];
+    filteredResults?: any[][];
+    customCredit?: Record<string, number | null>;
 }
 
-export default function SemesterTrendChart({ allResults, filteredResults, customCredit }: Props) {
+export default function SemesterTrendChart({ subjectResults, courses, allResults = [], filteredResults, customCredit = {} }: Props) {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
@@ -41,7 +43,57 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
     }, []);
 
     // Memoize SGPA semester curve calculation
+    const subjects = subjectResults ?? courses;
     const { semData, bestSem } = useMemo(() => {
+        if (subjects && subjects.length > 0) {
+            const semMap: Record<number, SubjectResult[]> = {};
+            subjects.forEach((s) => {
+                const sem = Number(s.semester);
+                if (sem >= 1 && sem <= 8) {
+                    if (!semMap[sem]) semMap[sem] = [];
+                    semMap[sem].push(s);
+                }
+            });
+
+            const semKeys = Object.keys(semMap).map(Number).sort((a, b) => a - b);
+            const data = semKeys.map((semNum) => {
+                let weighted = 0;
+                let credits = 0;
+                let backlogs = 0;
+
+                semMap[semNum].forEach((subject) => {
+                    const credit = subject.credits.value ?? 0;
+                    if (credit <= 0) return;
+
+                    const totalNum = subject.total ?? 0;
+                    const points = getGradePoints(totalNum);
+                    const isPassed = subject.semantic === "PASS" || subject.semantic === "CREDIT_SECURED" || subject.semantic === "ALREADY_PASSED";
+
+                    weighted += credit * (isPassed ? points : 0);
+                    credits += credit;
+                    if (!isPassed) backlogs += 1;
+                });
+
+                const sgpa = credits > 0 ? Number((weighted / credits).toFixed(2)) : 0;
+                return {
+                    semLabel: `Sem ${semNum}`,
+                    sem: semNum,
+                    sgpa,
+                    backlogs,
+                    subjects: semMap[semNum].length,
+                    totalCredits: credits,
+                };
+            });
+
+            let best = { semLabel: "–", sgpa: -1 };
+            data.forEach((d) => {
+                if (d.sgpa > best.sgpa) {
+                    best = { semLabel: d.semLabel, sgpa: d.sgpa };
+                }
+            });
+
+            return { semData: data, bestSem: best };
+        }
         const semMap: Record<number, any[][]> = {};
         allResults.forEach((row) => {
             const sem = Number(row[0]);
@@ -99,11 +151,11 @@ export default function SemesterTrendChart({ allResults, filteredResults, custom
         });
 
         return { semData: data, bestSem: best };
-    }, [allResults, customCredit]);
+    }, [subjects, allResults, customCredit]);
 
     // Memoize subject-wise internal vs external bar chart data
     const { subjectMarksData, minBarChartWidth } = useMemo(() => {
-        const data = filteredResults.map((row) => {
+        const data = (filteredResults ?? []).map((row) => {
             const paperCode = String(row[1] || "").trim();
             const subjectTitle = String(row[2] || "").trim();
             const internal = isNaN(Number(row[3])) ? 0 : Number(row[3]);

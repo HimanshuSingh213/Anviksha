@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import type { EngineCourse } from "@/lib/academic/academic-engine";
+import type { SubjectResult } from "@/lib/academic/academic-engine";
 
 // Quick Stats + Grade Distribution donut chart
 
@@ -42,20 +42,23 @@ interface DistributionSlice {
 }
 
 interface Props {
-    courses: EngineCourse[];
+    subjectResults?: SubjectResult[];
+    courses?: SubjectResult[];
     totalCredits: number;
     earnedCredits: number;
 }
 
-export default function QuickStatsDistribution({ courses, totalCredits, earnedCredits }: Props) {
+export default function QuickStatsDistribution({ subjectResults, courses, totalCredits, earnedCredits }: Props) {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
+    const subjects = subjectResults ?? courses ?? [];
+
     const { totalSubjects, totalMarks, totalMaxMarks, highest, lowest, backlogs, highestCourse, lowestCourse, chartData } = useMemo(() => {
-        // Distribution = one bucket per course: engine letter grade when the
+        // Distribution = one bucket per subject: engine letter grade when the
         // programme has one, official result status otherwise.
         const gradeBuckets = new Map<string, DistributionSlice>();
         const statusBuckets = new Map<string, DistributionSlice>();
@@ -63,13 +66,13 @@ export default function QuickStatsDistribution({ courses, totalCredits, earnedCr
         let maxMarksSum = 0;
         let highestValue = -Infinity;
         let lowestValue = Infinity;
-        let highestItem: EngineCourse | null = null;
-        let lowestItem: EngineCourse | null = null;
+        let highestItem: SubjectResult | null = null;
+        let lowestItem: SubjectResult | null = null;
         let backlogCount = 0;
 
-        for (const course of courses) {
-            if (course.grade) {
-                const gradeValue = course.grade.value;
+        for (const subject of subjects) {
+            if (subject.grade) {
+                const gradeValue = subject.grade.value;
                 const label = `Grade ${gradeValue}`;
                 const slice = gradeBuckets.get(label) ?? {
                     label,
@@ -80,35 +83,35 @@ export default function QuickStatsDistribution({ courses, totalCredits, earnedCr
                 slice.value += 1;
                 gradeBuckets.set(label, slice);
             } else {
-                const label = course.semantic.replace(/_/g, " ");
+                const label = subject.semantic.replace(/_/g, " ");
                 const slice = statusBuckets.get(label) ?? {
                     label,
                     grade: label,
                     value: 0,
-                    color: STATUS_COLORS[course.semantic] ?? "var(--cat-slate)",
+                    color: STATUS_COLORS[subject.semantic] ?? "var(--cat-slate)",
                 };
                 slice.value += 1;
                 statusBuckets.set(label, slice);
             }
 
-            if (course.total !== undefined) {
-                marksSum += course.total;
-                if (highestValue < course.total) {
-                    highestValue = course.total;
-                    highestItem = course;
+            if (subject.total !== undefined) {
+                marksSum += subject.total;
+                if (highestValue < subject.total) {
+                    highestValue = subject.total;
+                    highestItem = subject;
                 }
-                if (lowestValue > course.total) {
-                    lowestValue = course.total;
-                    lowestItem = course;
+                if (lowestValue > subject.total) {
+                    lowestValue = subject.total;
+                    lowestItem = subject;
                 }
             }
-            if (course.maxMarks !== null) maxMarksSum += course.maxMarks;
-            if (course.semantic === "NOT_CLEARED" || course.semantic === "ABSENT" || course.semantic === "DETAINED") {
+            if (subject.maxMarks !== null) maxMarksSum += subject.maxMarks;
+            if (subject.semantic === "NOT_CLEARED" || subject.semantic === "ABSENT" || subject.semantic === "DETAINED") {
                 backlogCount += 1;
             }
         }
 
-        const totalCount = courses.length;
+        const totalCount = subjects.length;
         const withGrades = [...gradeBuckets.values()].sort((a, b) => {
             const indexA = GRADE_ORDER.indexOf(a.grade ?? "");
             const indexB = GRADE_ORDER.indexOf(b.grade ?? "");
@@ -133,7 +136,7 @@ export default function QuickStatsDistribution({ courses, totalCredits, earnedCr
             lowestCourse: lowestItem,
             chartData: chartSlices,
         };
-    }, [courses]);
+    }, [subjects]);
 
     const passedCount = totalSubjects - backlogs;
 

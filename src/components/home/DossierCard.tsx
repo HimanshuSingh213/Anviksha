@@ -37,7 +37,14 @@ const SEMESTERS: Array<Array<{ code: string; name: string; credits: number; grad
   ],
 ];
 
-// SGPA = Σ(credits × gradePoints) / Σ credits, per Ordinance 11, Clause 13.
+/**
+ * Calculates Semester Grade Point Average (SGPA) for the interactive preview dossier:
+ * SGPA = Σ(credits × gradePoints) / Σ credits, per Ordinance 11, Clause 13.
+ *
+ * @param subjects - Array of semester subjects with grades and points
+ * @param credits - Array of credit weights corresponding to the subjects
+ * @returns Computed SGPA value, or null if total credits is zero
+ */
 function calculateSgpa(subjects: typeof SEMESTERS[number], credits: number[]) {
   const qualityPoints = subjects.reduce((sum, subject, index) => sum + credits[index] * subject.gradePoints, 0);
   const totalCredits = credits.reduce((sum, credit) => sum + credit, 0);
