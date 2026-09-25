@@ -17,15 +17,17 @@ import {
 } from "./subject-results";
 import { evaluatePromotion, getAcademicPromotionStatus } from "./rules/promotion";
 import { getReappearSessionPlan } from "./rules/reappear";
+import { determineDivisionPresentation } from "./rules/division";
 import type {
   AnalyzeOptions,
   EnginePromotionYear,
   EngineResult,
+  DivisionPresentation,
   ExamWebResult,
   Metric,
   MetricWarning,
   SubjectResult,
-} from "./types";
+} from "@/types/result";
 
 /**
  * Audits marksheet records against official pass criteria and marksheet mapping.
@@ -250,6 +252,49 @@ function determinePassRuleMetric(
     "UNAVAILABLE",
     "No programme-specific subject pass rule is loaded."
   );
+}
+
+/**
+ * Computes per-semester credit, subject, and backlog rollups.
+ * Sibling to calculateGpaMetrics: produces the per-semester counters the analytics
+ * UI renders (tooltip credits/subjects/backlogs, overview tiles) so those values
+ * are derived once from the parsed domain objects instead of re-aggregated downstream.
+ *
+ * @param subjectResults - Array of parsed SubjectResult objects
+ * @param semesterList - List of unique semester identifiers present on the marksheet
+ * @returns One rollup per semester: credit totals, subject count, backlog count, and mark sums
+ */
+function calculateSemesterPerformance(
+  subjectResults: SubjectResult[],
+  semesterList: Array<string | number>,
+  semesterSummaries: Array<{ semester: string | number; averagePercentage: number | null }>
+) {
+  return semesterList.map((sem) => {
+    const semSubjects = subjectResults.filter((s) => s.semester === sem);
+
+    const knownCredits = semSubjects.filter((s) => s.credits.value !== null);
+    const totalCredits = knownCredits.reduce((sum, s) => sum + (s.credits.value ?? 0), 0);
+    const earnedCredits = knownCredits
+      .filter((s) => isSubjectPassed(s.semantic))
+      .reduce((sum, s) => sum + (s.credits.value ?? 0), 0);
+
+    const passedSubjects = semSubjects.filter((s) => isSubjectPassed(s.semantic));
+
+    return {
+      semester: sem,
+      totalCredits,
+      earnedCredits,
+      subjectCount: semSubjects.length,
+      passedCount: passedSubjects.length,
+      backlogCount:
+        semSubjects.length -
+        passedSubjects.length,
+      obtainedMarks: passedSubjects.reduce((sum, s) => sum + (s.total ?? 0), 0),
+      totalMaxMarks: semSubjects.reduce((sum, s) => sum + (s.maxMarks ?? 100), 0),
+      averagePercentage:
+        semesterSummaries.find((x) => x.semester === sem)?.averagePercentage ?? null,
+    };
+  });
 }
 
 /**
@@ -792,6 +837,13 @@ export function analyzeResult(
     ordinance
   );
 
+  // Compute per-semester performance rollups (credits, subjects, backlogs, marks)
+  const semesterPerformance = calculateSemesterPerformance(
+    subjectResults,
+    stats.semesterList,
+    stats.semesterSummaries
+  );
+
   // Compute Percentage and Degree Division
   const percentage = calculatePercentageMetric(
     subjectResults,
@@ -814,6 +866,12 @@ export function analyzeResult(
     gpaReason
   );
 
+  const divisionPresentation: DivisionPresentation = determineDivisionPresentation(
+    ordinance,
+    percentage,
+    cgpa
+  );
+
   // Evaluate promotion standing, year-back risk, and reappear schedule
   const promotion = determinePromotionMetric(subjectResults, programme, ordinance);
   const academicPromotion = getAcademicPromotionStatus(subjectResults, userEditedCredits);
@@ -821,10 +879,7 @@ export function analyzeResult(
 
   // Package the unified academic dossier
   return {
-    student: {
-      name: toCleanString(studentProfile?.stname),
-      rollNumber: toCleanString(studentProfile?.nrollno),
-    },
+    profile: studentProfile?? null,
     programme: {
       programmeCode,
       programmeName,
@@ -922,10 +977,12 @@ export function analyzeResult(
       subjectPassRule,
       framework,
       sgpaBySemester,
+      semesterPerformance,
       sgpa,
       cgpa,
       percentage,
       division,
+      divisionPresentation,
       promotion,
       academicPromotion,
       reappearPlan,
@@ -936,7 +993,7 @@ export function analyzeResult(
 }
 
 // Re-export all types and domain modules cleanly
-export * from "./types";
+export type * from "@/types/result";
 export * from "./subject-results";
 export * from "./rules/promotion";
 export * from "./rules/reappear";

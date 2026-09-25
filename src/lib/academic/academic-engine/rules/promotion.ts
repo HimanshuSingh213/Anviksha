@@ -11,7 +11,7 @@ import type {
   EnginePromotionYear,
   Metric,
   SubjectResult,
-} from "../types";
+} from "@/types/result";
 
 /**
  * Type guard verifying whether an input array consists of domain SubjectResult objects.

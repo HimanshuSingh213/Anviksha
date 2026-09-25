@@ -32,7 +32,7 @@ const REAL_498 = {
   ],
 };
 
-describe("CASE 1 — 498 + 2025 identifies B.Tech CSE-DS, raw result visible", () => {
+describe("CASE 1 — 498 + 2025 identifies B.Tech CSE-DS, raw result visible", () => {
   const r = analyzeResult(REAL_498);
   it("keeps the raw programme code and separates the family", () => {
     expect(r.programme.programmeCode).toBe("498"); // raw preserved
@@ -56,7 +56,7 @@ describe("CASE 1 — 498 + 2025 identifies B.Tech CSE-DS, raw result visible", (
   });
 });
 
-describe("CASE 2 — strict mode without user credits ⇒ no guessed credits: SGPA/CGPA stay UNAVAILABLE", () => {
+describe("CASE 2 — strict mode without user credits ⇒ no guessed credits: SGPA/CGPA stay UNAVAILABLE", () => {
   const r = analyzeResult(REAL_498, {}, { allowFallbackCredits: false });
   it("grades calculate (ORD_11 rule verified) but credit GPA is withheld without credits", () => {
     expect(r.analytics.grade.value).toBe(true);
@@ -73,7 +73,7 @@ describe("CASE 2 — strict mode without user credits ⇒ no guessed credits: SG
     expect(r.analytics.averagePercentage.status).toBe("UNAVAILABLE");
     expect(r.analytics.averagePercentage.value).toBeNull();
   });
-  it("promotion is UNAVAILABLE without credits — never guessed", () => {
+  it("promotion is UNAVAILABLE without credits — never guessed", () => {
     expect(r.analytics.promotion.status).toBe("UNAVAILABLE");
     expect(r.analytics.promotion.value).toBeNull();
   });
@@ -86,10 +86,10 @@ describe("CASE 2 — strict mode without user credits ⇒ no guessed credits: SG
   });
 });
 
-describe("CASE 2b — default mode with fallback credits ⇒ SGPA/CGPA calculate out-of-the-box as ESTIMATES", () => {
+describe("CASE 2b — default mode with fallback credits ⇒ SGPA/CGPA calculate out-of-the-box as ESTIMATES", () => {
   const r = analyzeResult(REAL_498);
   it("calculates SGPA and CGPA with WARNING status using fallback heuristic credits", () => {
-    // Fallback credits are guesses (lab 1 / theory 3), not scheme credits —
+    // Fallback credits are guesses (lab 1 / theory 3), not scheme credits —
     // every GPA metric built on them must badge as WARNING (estimate).
     expect(r.analytics.sgpa.status).toBe("WARNING");
     expect(r.analytics.sgpa.value).not.toBeNull();
@@ -104,7 +104,7 @@ describe("CASE 2b — default mode with fallback credits ⇒ SGPA/CGPA calculate
   });
 });
 
-describe("CASE 3 — user-edited credits calculate SGPA/CGPA as WARNING estimates", () => {
+describe("CASE 3 — user-edited credits calculate SGPA/CGPA as WARNING estimates", () => {
   const userCredits = {
     ICT101: 4,
     ICT151: 1,
@@ -132,7 +132,7 @@ describe("CASE 3 — user-edited credits calculate SGPA/CGPA as WARNING estimate
   });
 });
 
-describe("CASE 3b — user removes credit (null) or sets to 0 ⇒ calculation done without it", () => {
+describe("CASE 3b — user removes credit (null) or sets to 0 ⇒ calculation done without it", () => {
   it("calculates SGPA and CGPA excluding the course with null credit", () => {
     const r = analyzeResult(REAL_498, { ICT101: null });
     const course101 = r.subjectResults.find((c) => c.rawCode === "ICT101");
@@ -158,7 +158,7 @@ describe("CASE 3b — user removes credit (null) or sets to 0 ⇒ calculation do
   });
 });
 
-describe("CASE 4 — unknown programme ⇒ result visible, analytics limited", () => {
+describe("CASE 4 — unknown programme ⇒ result visible, analytics limited", () => {
   const r = analyzeResult({
     stprofile: { ...REAL_498.stprofile, prgcode: "999", prgname: "BACHELOR OF MARITIME STUDIES" },
     stresult: REAL_498.stresult,
@@ -173,8 +173,8 @@ describe("CASE 4 — unknown programme ⇒ result visible, analytics limited", (
   });
 });
 
-describe("CASE 5 — special ordinance never inherits ORD_11", () => {
-  it("MBBS → ORD_15, has no grade table or division classification", () => {
+describe("CASE 5 — special ordinance never inherits ORD_11", () => {
+  it("MBBS ⇒ ORD_15, has no grade table or division classification", () => {
     const r = analyzeResult({
       stprofile: { ...REAL_498.stprofile, prgcode: "MBBS", prgname: "BACHELOR OF MEDICINE & SURGERY" },
       stresult: REAL_498.stresult,
@@ -188,7 +188,7 @@ describe("CASE 5 — special ordinance never inherits ORD_11", () => {
     expect(r.analytics.subjectPassRule.status).toBe("VERIFIED");
   });
 
-  it("BPT → ORD_31, separate annual framework with no ORD_10/11 rules", () => {
+  it("BPT ⇒ ORD_31, separate annual framework with no ORD_10/11 rules", () => {
     const r = analyzeResult({
       stprofile: { ...REAL_498.stprofile, prgcode: "BPT", prgname: "BACHELOR OF PHYSIOTHERAPY" },
       stresult: REAL_498.stresult,
@@ -205,7 +205,7 @@ describe("CASE 5 — special ordinance never inherits ORD_11", () => {
   });
 });
 
-describe("family generalization — all branch degrees generalize to family (VERIFIED)", () => {
+describe("family generalization — all branch degrees generalize to family (VERIFIED)", () => {
   it("any B.Tech branch resolves to BTECH/ORD_11 with VERIFIED regulations", () => {
     const r = analyzeResult({
       stprofile: { ...REAL_498.stprofile, prgname: "BACHELOR OF TECHNOLOGY (ELECTRONICS AND COMMUNICATION ENGINEERING)" },
@@ -238,7 +238,7 @@ describe("family generalization — all branch degrees generalize to family (VER
   });
 });
 
-describe("CASE 6 — decodeStatus semantics", () => {
+describe("CASE 6 — decodeStatus semantics", () => {
   it("maps 08 to PASS", () => {
     expect(decodeStatus("08", "68")).toBe("PASS");
   });
@@ -256,7 +256,7 @@ describe("CASE 6 — decodeStatus semantics", () => {
   });
 });
 
-describe("helpers — programme and ordinance lookups", () => {
+describe("helpers — programme and ordinance lookups", () => {
   it("findProgramme handles degree names and family identifiers without program codes", () => {
     expect(findProgramme("BACHELOR OF TECHNOLOGY")?.programmeFamily).toBe("BTECH");
     expect(findProgramme("B.Tech")?.programmeFamily).toBe("BTECH");
@@ -293,7 +293,7 @@ describe("helpers — programme and ordinance lookups", () => {
   });
 });
 
-describe("multi-period separation — SGPA vs CGPA decoupling", () => {
+describe("multi-period separation — SGPA vs CGPA decoupling", () => {
   it("calculates distinct period SGPA and multi-period cumulative CGPA", () => {
     const userCredits = {
       ICT101: 4,
@@ -326,7 +326,7 @@ describe("multi-period separation — SGPA vs CGPA decoupling", () => {
   });
 });
 
-describe("safe max marks — no blind fallback to 100", () => {
+describe("safe max marks — no blind fallback to 100", () => {
   it("returns null for unknown programmes rather than inventing 100", () => {
     expect(getSubjectMaxMarks("SOME_UNKNOWN_SUBJECT", undefined)).toBeNull();
     expect(getSubjectMaxMarks("SOME_UNKNOWN_SUBJECT", "MARITIME_STUDIES")).toBeNull();
@@ -345,7 +345,7 @@ describe("safe max marks — no blind fallback to 100", () => {
   });
 });
 
-describe("framework capabilities — accurate statutory feature support", () => {
+describe("framework capabilities — accurate statutory feature support", () => {
   it("declares comprehensive capabilities for ORD_11", () => {
     const ord11 = findOrdinance("ORD_11");
     expect(ord11?.capabilities.grade).toBe(true);
@@ -375,7 +375,7 @@ describe("framework capabilities — accurate statutory feature support", () => 
   });
 });
 
-describe("Requirement 15 — Statutory Verification Suite", () => {
+describe("Requirement 15 — Statutory Verification Suite", () => {
   it("a) Ordinance 11: accurate SGPA, CGPA, grades with credits", () => {
     const userCredits = {
       ICT101: 4,
@@ -546,7 +546,7 @@ describe("Requirement 15 — Statutory Verification Suite", () => {
   });
 });
 
-describe("Targeted Audit — Division Capabilities & Generic Mappings", () => {
+describe("Targeted Audit — Division Capabilities & Generic Mappings", () => {
   it("BASLP / ORD_24: division is applicable and classified from cumulative percentage", () => {
     const ord24 = findOrdinance("ORD_24");
     expect(ord24?.capabilities.division).toBe(true);
@@ -837,3 +837,93 @@ describe("Targeted Audit — Division Capabilities & Generic Mappings", () => {
   });
 });
 
+describe("Division presentation is derived from ordinance bands", () => {
+  it("CGPA programme (ORD_11) exposes CGPA scale and its 4.00-10.00 ladder", () => {
+    const r = analyzeResult(REAL_498, { "ICT101": 4, "ICT102": 4, "ICT103": 3, "ICT104": 3 });
+    const p = r.analytics.divisionPresentation;
+    expect(p.scale).toBe("CGPA");
+    expect(p.max).toBe(10);
+    expect(p.tiers).not.toBeNull();
+
+    const titles = p.tiers!.map((t) => t.division);
+    expect(titles).toContain("Exemplary Performance");
+    expect(titles).toContain("First Division");
+    expect(titles).toContain("Third Division");
+
+    // The below-passing segment exists and is flagged, spanning 0 to the lowest band.
+    const failTier = p.tiers!.find((t) => t.isFail)!;
+    expect(failTier.division).toBeNull();
+    expect(failTier.min).toBe(0);
+    expect(failTier.max).toBe(4.0);
+  });
+
+  it("CPI programme (ORD_31) exposes CPI scale with a 10.0 ceiling", () => {
+    const bpt = {
+      stprofile: {
+        nrollno: "2022907789",
+        stname: "TEST BPT",
+        byoa: 2022,
+        yoa: 2022,
+        prgcode: "BPT",
+        prgname: "BACHELOR OF PHYSIOTHERAPY",
+        icode: "127",
+        iname: "BCIP",
+      },
+      stresult: [[1, "BPT-101", "ANATOMY", "40", "40", "80", "08", "12,2023", "2024-02-03"]],
+    };
+    const p = analyzeResult(bpt, { "BPT-101": 4 }).analytics.divisionPresentation;
+    expect(p.scale).toBe("CPI");
+    expect(p.max).toBe(10);
+    expect(p.tiers!.length).toBeGreaterThan(0);
+  });
+
+  it("Ordinances awarding no division report NONE with no tiers", () => {
+    const mbbs = {
+      stprofile: {
+        nrollno: "2022MBBS1",
+        stname: "TEST MBBS",
+        byoa: 2022,
+        yoa: 2022,
+        prgcode: "MBBS",
+        prgname: "BACHELOR OF MEDICINE AND SURGERY",
+        icode: "001",
+        iname: "MED",
+      },
+      stresult: [[1, "MB-101", "ANATOMY", "40", "45", "85", "08", "12,2023", "2024-02-03"]],
+    };
+    const p = analyzeResult(mbbs).analytics.divisionPresentation;
+    expect(p.scale).toBe("NONE");
+    expect(p.tiers).toBeNull();
+    expect(p.score).toBeNull();
+  });
+});
+
+describe("Semester performance exposes per-semester percentages", () => {
+  it("carries a non-null averagePercentage for a percentage-scheme programme", () => {
+    const baslp = {
+      stprofile: {
+        nrollno: "2022BASLP1",
+        stname: "TEST BASLP",
+        byoa: 2022,
+        yoa: 2022,
+        prgcode: "BASLP",
+        prgname: "BACHELOR OF AUDIOLOGY AND SPEECH LANGUAGE PATHOLOGY",
+        icode: "127",
+        iname: "BCIP",
+      },
+      stresult: [
+        [1, "BASLP-101", "SPEECH SCIENCE", "30", "45", "75", "08", "12,2023", "2024-02-03"],
+        [1, "BASLP-102", "AUDIOLOGY", "28", "40", "68", "08", "12,2023", "2024-02-03"],
+      ],
+    };
+    const perf = analyzeResult(baslp).analytics.semesterPerformance;
+    expect(perf.length).toBeGreaterThan(0);
+    for (const p of perf) {
+      expect(typeof p.averagePercentage).toBe("number");
+      expect(p.averagePercentage).toBeGreaterThan(0);
+    }
+    // Percentage ordinances classify division on the percentage scale.
+    const r = analyzeResult(baslp);
+    expect(r.analytics.divisionPresentation.scale).toBe("PERCENTAGE");
+  });
+});

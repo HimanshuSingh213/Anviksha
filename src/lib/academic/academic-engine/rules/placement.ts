@@ -1,7 +1,7 @@
 import type {
   PlacementEligibilitySummary,
   PlacementTier,
-} from "../types";
+} from "@/types/result";
 
 export const PLACEMENT_TIERS_CONFIG: Array<
   Omit<PlacementTier, "isEligible" | "cgpaDeficit" | "backlogDeficit" | "statusReason">

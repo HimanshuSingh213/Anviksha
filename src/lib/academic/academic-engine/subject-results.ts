@@ -11,7 +11,7 @@ import type {
   ResultState,
   StatusSemantic,
   SubjectResult,
-} from "./types";
+} from "@/types/result";
 
 /**
  * Helper to wrap a computed value into a structured Metric object with support status and audit sources.
