@@ -1,129 +1,89 @@
 "use client";
 
 import React, { forwardRef, useMemo } from "react";
-import { StudentProfile } from "@/types/result";
-import { decodeStatus, resolvePaperCredit } from "@/lib/academic/academic-engine";
+import type {
+    ExamWebProfile,
+    EngineResult,
+    SemesterPerformance,
+} from "@/types/result";
 import { AnvikshaWatermark } from "./AnvikshaWatermark";
 
-function getGradeAndPoints(rawTotal: string | number | undefined) {
-    const total = Number(rawTotal);
-    if (isNaN(total)) return { grade: "F", points: 0, pass: false };
-    if (total >= 90) return { grade: "O", points: 10, pass: true };
-    if (total >= 75) return { grade: "A+", points: 9, pass: true };
-    if (total >= 65) return { grade: "A", points: 8, pass: true };
-    if (total >= 55) return { grade: "B+", points: 7, pass: true };
-    if (total >= 50) return { grade: "B", points: 6, pass: true };
-    if (total >= 45) return { grade: "C", points: 5, pass: true };
-    if (total >= 40) return { grade: "P", points: 4, pass: true };
-    return { grade: "F", points: 0, pass: false };
-}
-
-function getFallbackCredit(subjectTitle: string): number {
-    const title = (subjectTitle || "").toUpperCase();
-    if (title.includes("LAB") || title.includes("PRACTICAL") || title.includes("STUDIO")) return 1;
-    return 3;
-}
-
-function getDivision(cgpa: number, backlogs: number): string {
-    if (cgpa >= 10.0 && backlogs === 0) return "Exemplary Performance";
-    if (cgpa >= 6.50) return "First Division";
-    if (cgpa >= 5.00) return "Second Division";
-    if (cgpa >= 4.00) return "Third Division";
-    return "Unqualified for Degree (< 4.00)";
-}
-
 interface Props {
-    profile?: StudentProfile | null;
-    allResults: any[][];
-    customCredits?: Record<string, number | null>;
+    profile?: ExamWebProfile | null;
+    engine: EngineResult;
 }
 
 export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
-    ({ profile, allResults, customCredits = {} }, ref) => {
+    ({ profile, engine }, ref) => {
         const {
             semesterSummaries,
             sortedSemesters,
             overallTotalCredits,
             overallEarnedCredits,
-            overallCgpa,
-            overallPercentage,
+            overallHeadline,
+            overallSecondary,
             division,
             totalActiveBacklogs,
             currentDate,
+            gpaLabel,
+            gpaColumnLabel,
+            usesCgpa,
+            ordinanceLabel,
+            passRule,
         } = useMemo(() => {
-            // Group results semester-wise
-            const semMap: Record<number, any[]> = {};
-            allResults.forEach((row) => {
-                const semNum = Number(row[0]);
-                if (!semMap[semNum]) semMap[semNum] = [];
-                semMap[semNum].push(row);
-            });
+            const { analytics } = engine;
 
-            const sorted = Object.keys(semMap)
-                .map(Number)
-                .sort((a, b) => a - b);
+            const perf: SemesterPerformance[] = analytics.semesterPerformance;
+            const sorted = perf.map((p) => p.semester);
 
-            let totalCreds = 0;
-            let earnedCreds = 0;
-            let weightedPts = 0;
-            let activeBacks = 0;
+            const totalCreds = perf.reduce((sum, p) => sum + p.totalCredits, 0);
+            const earnedCreds = perf.reduce((sum, p) => sum + p.earnedCredits, 0);
+            const activeBacks = perf.reduce((sum, p) => sum + p.backlogCount, 0);
 
-            const summaries = sorted.map((semNum) => {
-                const rows = semMap[semNum];
-                let semCredits = 0;
-                let semEarnedCredits = 0;
-                let semPoints = 0;
-                let semObtained = 0;
-                let semBacklogs = 0;
+            // Labels follow the ordinance that governs this programme.
+            const scale = analytics.divisionPresentation.scale;
+            const usesCgpa = scale === "CGPA" || scale === "CPI";
+            const gpaLabel = scale === "CPI" ? "CPI" : "CGPA";
+            const gpaColumnLabel = scale === "CPI" ? "CPI" : "SGPA";
+            const ordinanceCode = engine.programme.ordinance;
+            const ordinanceLabel = ordinanceCode
+                ? ordinanceCode.startsWith("ORD_")
+                    ? `Ordinance ${ordinanceCode.replace("ORD_", "")}`
+                    : ordinanceCode
+                : "the governing ordinance";
+            const passRule = analytics.subjectPassRule.value;
 
-                rows.forEach((row) => {
-                    const rawTotal = row[5];
-                    const statusCode = row[6];
-                    const paperCode = row[1];
-                    const subjectTitle = row[2];
-                    const credit = resolvePaperCredit(paperCode, customCredits, getFallbackCredit(subjectTitle));
-
-                    const semantic = decodeStatus(statusCode, rawTotal);
-                    const { grade, points, pass } = getGradeAndPoints(rawTotal);
-
-                    const isPassed = (semantic === "PASS" || semantic === "CREDIT_SECURED" || semantic === "ALREADY_PASSED") || (pass && grade !== "F" && semantic !== "NOT_CLEARED" && semantic !== "ABSENT" && semantic !== "DETAINED");
-
-                    semCredits += credit;
-                    const numTot = Number(rawTotal);
-                    semObtained += !isNaN(numTot) ? numTot : 0;
-
-                    if (isPassed) {
-                        semEarnedCredits += credit;
-                        semPoints += points * credit;
-                    } else {
-                        semBacklogs += 1;
-                        activeBacks += 1;
-                    }
-                });
-
-                const semSgpa = semCredits > 0 ? (semPoints / semCredits).toFixed(2) : "0.00";
-                const semMax = rows.length * 100;
-
-                totalCreds += semCredits;
-                earnedCreds += semEarnedCredits;
-                weightedPts += semPoints;
+            const summaries = perf.map((p) => {
+                const semSgpa = analytics.sgpaBySemester.find(
+                    (g) => String(g.semester) === String(p.semester),
+                )?.sgpa?.value ?? null;
 
                 return {
-                    semNum,
-                    subjectCount: rows.length,
-                    totalCredits: semCredits,
-                    earnedCredits: semEarnedCredits,
-                    sgpa: semSgpa,
-                    obtainedMarks: semObtained,
-                    maxMarks: semMax,
-                    backlogs: semBacklogs,
-                    status: semBacklogs === 0 ? "PASS" : `BACK (${semBacklogs})`,
+                    semNum: p.semester,
+                    subjectCount: p.subjectCount,
+                    totalCredits: p.totalCredits,
+                    earnedCredits: p.earnedCredits,
+                    // Report the score on whichever scale the ordinance uses.
+                    scoreValue: usesCgpa && semSgpa !== null
+                        ? semSgpa.toFixed(2)
+                        : p.averagePercentage !== null
+                          ? `${p.averagePercentage.toFixed(2)}%`
+                          : semSgpa !== null
+                            ? semSgpa.toFixed(2)
+                            : "—",
+                    obtainedMarks: p.obtainedMarks,
+                    maxMarks: p.totalMaxMarks,
+                    backlogs: p.backlogCount,
+                    status: p.backlogCount === 0 ? "PASS" : `BACK (${p.backlogCount})`,
                 };
             });
 
-            const cgpa = totalCreds > 0 ? (weightedPts / totalCreds).toFixed(2) : "0.00";
-            const percent = (Number(cgpa) * 10).toFixed(2);
-            const division = getDivision(Number(cgpa), activeBacks);
+            const cgpaValue = analytics.cgpa.value;
+            const percentValue = analytics.percentage.value;
+            const headlineValue = usesCgpa ? cgpaValue : percentValue;
+            const headline = headlineValue !== null ? headlineValue.toFixed(2) : "—";
+            const secondary = usesCgpa ? percentValue : cgpaValue;
+            const division = analytics.division.value ?? "—";
 
             const date = new Date().toLocaleDateString("en-IN", {
                 day: "2-digit",
@@ -136,13 +96,18 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                 sortedSemesters: sorted,
                 overallTotalCredits: totalCreds,
                 overallEarnedCredits: earnedCreds,
-                overallCgpa: cgpa,
-                overallPercentage: percent,
+                overallHeadline: headline,
+                overallSecondary: secondary,
                 division,
                 totalActiveBacklogs: activeBacks,
                 currentDate: date,
+                gpaLabel,
+                gpaColumnLabel,
+                usesCgpa,
+                ordinanceLabel,
+                passRule,
             };
-        }, [allResults, customCredits]);
+        }, [engine]);
 
         return (
             <div
@@ -170,7 +135,7 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                                 Consolidated Academic Transcript
                             </h1>
                             <p className="text-[11px] font-medium text-neutral-600 uppercase tracking-wider font-mono">
-                                Cumulative Performance & Academic Standing (Ordinance 11)
+                                Cumulative Performance & Academic Standing ({ordinanceLabel})
                             </p>
                         </div>
                     </div>
@@ -217,7 +182,9 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                                     <th scope="col" className="border border-black p-2">Credits Offered</th>
                                     <th scope="col" className="border border-black p-2">Credits Earned</th>
                                     <th scope="col" className="border border-black p-2">Total Score</th>
-                                    <th scope="col" className="border border-black p-2">SGPA</th>
+                                    <th scope="col" className="border border-black p-2">
+                                        {gpaColumnLabel === "SGPA" ? "SGPA / %" : gpaColumnLabel}
+                                    </th>
                                     <th scope="col" className="border border-black p-2">Status</th>
                                 </tr>
                             </thead>
@@ -234,7 +201,7 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                                             {sem.obtainedMarks} / {sem.maxMarks}
                                         </td>
                                         <td className="border border-black p-2 font-extrabold text-amber-700 text-xs">
-                                            {sem.sgpa}
+                                            {sem.scoreValue}
                                         </td>
                                         <td className="border border-black p-2 font-bold">
                                             {sem.backlogs === 0 ? (
@@ -254,20 +221,38 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                         <div className="border-2 border-black bg-neutral-50 rounded-md p-3.5 space-y-3 font-mono">
                             <div className="text-[10px] font-bold uppercase tracking-widest text-neutral-700 border-b border-black pb-1.5 flex justify-between items-center">
                                 <span>Cumulative Academic Performance Summary</span>
-                                <span className="text-neutral-500 font-normal">GGSIPU Ordinance 11 Standard</span>
+                                <span className="text-neutral-500 font-normal">{ordinanceLabel} Standard</span>
                             </div>
 
                             <div className="grid grid-cols-4 gap-3 text-center">
                                 <div className="p-2 border border-neutral-300 rounded bg-white">
-                                    <div className="text-[9px] uppercase font-bold text-neutral-500">Cumulative CGPA</div>
-                                    <div className="text-xl font-extrabold text-amber-700 mt-0.5 leading-none">{overallCgpa}</div>
-                                    <div className="text-[8.5px] text-neutral-400 mt-1">out of 10.0 scale</div>
+                                    <div className="text-[9px] uppercase font-bold text-neutral-500">
+                                        {usesCgpa ? `Cumulative ${gpaLabel}` : "Cumulative Percentage"}
+                                    </div>
+                                    <div className="text-xl font-extrabold text-amber-700 mt-0.5 leading-none">
+                                        {overallHeadline === "—"
+                                            ? "—"
+                                            : `${overallHeadline}${usesCgpa ? "" : "%"}`}
+                                    </div>
+                                    <div className="text-[8.5px] text-neutral-400 mt-1">
+                                        {usesCgpa ? "out of 10.0 scale" : "direct percentage scale"}
+                                    </div>
                                 </div>
 
                                 <div className="p-2 border border-neutral-300 rounded bg-white">
-                                    <div className="text-[9px] uppercase font-bold text-neutral-500">Equivalent %</div>
-                                    <div className="text-xl font-extrabold text-black mt-0.5 leading-none">{overallPercentage}%</div>
-                                    <div className="text-[8.5px] text-neutral-400 mt-1">CGPA × 10.0 Formula</div>
+                                    <div className="text-[9px] uppercase font-bold text-neutral-500">
+                                        {usesCgpa ? "Equivalent %" : `Equivalent ${gpaLabel}`}
+                                    </div>
+                                    <div className="text-xl font-extrabold text-black mt-0.5 leading-none">
+                                        {overallSecondary === null
+                                            ? "Not applicable"
+                                            : `${overallSecondary.toFixed(2)}${usesCgpa ? "%" : ""}`}
+                                    </div>
+                                    <div className="text-[8.5px] text-neutral-400 mt-1">
+                                        {usesCgpa
+                                            ? `${gpaLabel} × 10.0 Formula`
+                                            : "Programme not graded on a 10-point scale"}
+                                    </div>
                                 </div>
 
                                 <div className="p-2 border border-neutral-300 rounded bg-white">
@@ -300,13 +285,25 @@ export const ConsolidatedMasterTranscript = forwardRef<HTMLDivElement, Props>(
                         </div>
                         <ul className="list-disc pl-4 space-y-0.5 leading-tight">
                             <li>
-                                <strong>Percentage Formula: </strong>Per GGSIPU Examination Gazette (Ordinance 11), equivalent percentage is computed as <code>Percentage = CGPA × 10.0</code>.
+                                <strong>Conversion Formula: </strong>
+                                {usesCgpa ? (
+                                    <>
+                                        Per {ordinanceLabel}, equivalent percentage is computed as{" "}
+                                        <code>Percentage = {gpaLabel} × 10.0</code>.
+                                    </>
+                                ) : (
+                                    <>
+                                        Under {ordinanceLabel}, standing is classified directly on the
+                                        cumulative percentage scale; no {gpaLabel} conversion applies.
+                                    </>
+                                )}
                             </li>
                             <li>
                                 <strong>Credit Allocation: </strong>Theory papers carry 3–4 credits, practical/laboratory sessions carry 1 credit per approved scheme.
                             </li>
                             <li>
-                                <strong>Passing Threshold: </strong>Ordinance 11 baseline passing grade is Grade P (40% aggregate marks) in each individual subject paper.
+                                <strong>Passing Threshold: </strong>
+                                {passRule ?? `No letter-grade threshold is published for ${ordinanceLabel}.`}
                             </li>
                         </ul>
                     </div>

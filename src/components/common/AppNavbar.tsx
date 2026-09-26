@@ -6,10 +6,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Home, HelpCircle, Bell } from "lucide-react";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
-import { StudentProfile } from "@/types/result";
+import type { ExamWebProfile } from "@/types/result";
 
 interface AppNavbarProps {
-    profile?: StudentProfile | null;
+    profile?: ExamWebProfile | null;
 }
 
 export default function AppNavbar({ profile }: AppNavbarProps) {

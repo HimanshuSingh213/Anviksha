@@ -10,8 +10,7 @@ import { toast } from "sonner";
 import Skeleton from "@/components/dashboard/Skeleton";
 import AppNavbar from "@/components/common/AppNavbar";
 import useResultStore from "@/store/result-store";
-import { type ResultData } from "@/types/result";
-import { analyzeResult } from "@/lib/academic/academic-engine";
+import type { EngineResult, ResultData } from "@/types/result";
 import { ProvenanceChip } from "@/components/analytics/ProvenanceChip";
 import ExplanationPanel from "@/components/analytics/ExplanationPanel";
 import PixelAvatar from "@/components/dashboard/PixelAvatar";
@@ -155,13 +154,11 @@ export default function DashboardPage() {
 
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [activeSem, setActiveSem] = useState<string>("100");
 
     const setFullResult = useResultStore((state) => state.setResult);
     const fullResult = useResultStore((state) => state.result);
     const clearResult = useResultStore((state) => state.clearResult);
-    const customCredit = useResultStore((state) => state.customCredits);
-    const setCustomCredit = useResultStore((state) => state.setCustomCredit);
+    const engine: EngineResult | null = useResultStore((state) => state.engineResult);
 
     const fetchResults = useCallback(async () => {
         setLoading(true);
@@ -217,12 +214,26 @@ export default function DashboardPage() {
         }
     }, [fullResult, fetchResults]);
 
-    const engine = useMemo(
-        () => analyzeResult(fullResult, customCredit),
-        [fullResult, customCredit]
-    );
+    if (loading || !engine) {
+        return <Skeleton />;
+    }
 
-    const { analytics, programme, subjectResults } = engine;
+    return <DashboardView engine={engine} loading={loading} error={error} />;
+}
+
+interface DashboardViewProps {
+    engine: EngineResult;
+    loading: boolean;
+    error: string | null;
+}
+
+function DashboardView({ engine, loading, error }: DashboardViewProps) {
+    const { analytics, programme, subjectResults, warnings } = engine;
+
+    const router = useRouter();
+    const setCustomCredit = useResultStore((state) => state.setCustomCredit);
+    const [activeSem, setActiveSem] = useState<string>("100");
+    const profile = engine.profile;
 
     const visibleSubjects = useMemo(() => {
         return activeSem === "100"
@@ -240,9 +251,7 @@ export default function DashboardPage() {
         const sorted = [...semSet].sort((a, b) => Number(a) - Number(b));
         if (sorted.length === 0) {
             return [
-                { label: "All", value: "100" },
-                { label: "I", value: "1" },
-                { label: "II", value: "2" },
+                { label: "All", value: "100" }
             ];
         }
         return [
@@ -334,9 +343,9 @@ export default function DashboardPage() {
     const semOfferedCredits = semKnownCredits.reduce((sum, s) => sum + (s.credits.value ?? 0), 0);
     const semEarnedCredits = semKnownCredits
         .filter((s) => s.semantic === "PASS" || s.semantic === "CREDIT_SECURED" || s.semantic === "ALREADY_PASSED")
-        .reduce((sum, s) => sum + (s.credits.value ?? 0), 0);
+        .reduce((sum, s) => sum + (s.credits.value?? 0), 0);
 
-    // Backlogs
+    // // Backlogs
     const allBacklogs = subjectResults.filter(
         (s) => s.semantic === "NOT_CLEARED" || s.semantic === "ABSENT" || s.semantic === "DETAINED"
     );
@@ -361,10 +370,6 @@ export default function DashboardPage() {
     const backlogsSub = hasBacklogs
         ? (backlogsCount === 1 ? "1 backlog" : `${backlogsCount} backlogs`)
         : "all cleared";
-
-    const profile = useMemo(() => fullResult?.stprofile, [fullResult?.stprofile]);
-
-    if (loading && !fullResult) return <Skeleton />;
 
     return (
         <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
@@ -392,7 +397,7 @@ export default function DashboardPage() {
                 </AnimatePresence>
 
                 {/* Academic Engine Statutory Warnings */}
-                {engine.warnings.length > 0 && (
+                {warnings && warnings.length > 0 && (
                     <motion.div
                         initial={{ opacity: 0, y: -6 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -400,7 +405,7 @@ export default function DashboardPage() {
                     >
                         <AlertTriangle size={15} className="shrink-0 mt-0.5 text-gold" />
                         <div className="space-y-1">
-                            {engine.warnings.map((w, idx) => (
+                            {warnings.map((w, idx) => (
                                 <p key={idx} className="leading-relaxed font-medium">{w.message}</p>
                             ))}
                         </div>
@@ -607,10 +612,10 @@ export default function DashboardPage() {
                             <span className="sm:hidden text-[10px] font-mono text-foreground-muted italic shrink-0">Scroll sideways →</span>
                         </div>
 
-                        <div className="flex items-center gap-1.5 text-[11px] font-mono text-gold bg-gold-surface border border-gold-border px-2.5 py-1 rounded-md shadow-sm w-full sm:w-auto">
+                       {!isPercentageFramework && (<div className="flex items-center gap-1.5 text-[11px] font-mono text-gold bg-gold-surface border border-gold-border px-2.5 py-1 rounded-md shadow-sm w-full sm:w-auto">
                             <Pencil size={11} className="animate-pulse shrink-0" />
                             <span>Click any credit value to edit & recalculate</span>
-                        </div>
+                        </div>)}
                     </div>
 
                     <div className="bg-surface border border-border-strong rounded-lg hover:border-gold-border/80 transition-all duration-200 shadow-xs">
@@ -628,7 +633,7 @@ export default function DashboardPage() {
                                         <caption className="sr-only">Detailed Subject Results and Grades</caption>
                                         <thead>
                                             <tr className="bg-surface-deep border-b border-border-strong">
-                                                {["Sem", "Code", "Subject", "Int.", "Ext.", "Total", "Credits", "Grade", "Status"].map((h) => (
+                                                {["Sem", "Code", "Subject", "Int.", "Ext.", "Total", "Credits", "Grade", "Status"].map((h) => (h !== "Credits" || (h === "Credits" && !isPercentageFramework)) && (
                                                     <th
                                                         key={h}
                                                         className={`px-4 py-3 text-[10px] font-mono uppercase tracking-widest ${h === "Credits" ? "text-gold font-bold" : "text-foreground-secondary font-bold"} ${["Int.", "Ext.", "Total", "Credits", "Grade", "Status"].includes(h) ? "text-center" : "text-left"}`}
@@ -644,7 +649,7 @@ export default function DashboardPage() {
                                                 ))}
                                             </tr>
                                         </thead>
-                                         <tbody>
+                                        <tbody>
                                             {visibleSubjects.map((s, idx) => {
                                                 const status = STATUS_LABEL[s.semantic] ?? STATUS_LABEL.UNKNOWN;
                                                 const isPassed = s.semantic === "PASS" || s.semantic === "CREDIT_SECURED" || s.semantic === "ALREADY_PASSED";
@@ -678,7 +683,8 @@ export default function DashboardPage() {
                                                                 <span className="ml-1 text-[9px] text-foreground-muted font-normal">/ {s.maxMarks}</span>
                                                             )}
                                                         </td>
-                                                        <td className="px-4 py-3 align-middle text-center">
+                                                        {!isPercentageFramework && (
+                                                            <td className="px-4 py-3 align-middle text-center">
                                                             <CreditInputCell
                                                                 paperCode={s.rawCode}
                                                                 courseName={s.name}
@@ -687,6 +693,8 @@ export default function DashboardPage() {
                                                                 onSetCredit={(code, val) => setCustomCredit(code, val)}
                                                             />
                                                         </td>
+                                                        )}
+                                                        
                                                         <td className="px-4 py-3 align-middle text-center">
                                                             {s.grade ? (
                                                                 <Tooltip content={s.grade.value === "Distinction" ? "More than 75% in the subject qualifies for distinction under Ordinance 15." : "Letter grade determined by the applicable GGSIPU ordinance."} position="top">

@@ -1,22 +1,9 @@
 "use client";
 
 import React, { forwardRef } from "react";
-import { StudentProfile } from "@/types/result";
-import { decodeStatus, resolvePaperCredit } from "@/lib/academic/academic-engine";
+import { isSubjectPassed } from "@/lib/academic/academic-engine";
+import type { ExamWebProfile, SubjectResult } from "@/types/result";
 import { AnvikshaWatermark } from "./AnvikshaWatermark";
-
-function getGradeAndPoints(rawTotal: string | number | undefined) {
-    const total = Number(rawTotal);
-    if (isNaN(total)) return { grade: "F", points: 0, pass: false };
-    if (total >= 90) return { grade: "O", points: 10, pass: true };
-    if (total >= 75) return { grade: "A+", points: 9, pass: true };
-    if (total >= 65) return { grade: "A", points: 8, pass: true };
-    if (total >= 55) return { grade: "B+", points: 7, pass: true };
-    if (total >= 50) return { grade: "B", points: 6, pass: true };
-    if (total >= 45) return { grade: "C", points: 5, pass: true };
-    if (total >= 40) return { grade: "P", points: 4, pass: true };
-    return { grade: "F", points: 0, pass: false };
-}
 
 function getGradeColorClass(grade: string): string {
     if (grade === "O" || grade === "A+" || grade === "A") {
@@ -28,63 +15,43 @@ function getGradeColorClass(grade: string): string {
     return "text-red-700 font-bold";
 }
 
-function getFallbackCredit(subjectTitle: string): number {
-    const title = (subjectTitle || "").toUpperCase();
-    if (title.includes("LAB") || title.includes("PRACTICAL") || title.includes("STUDIO")) return 1;
-    return 3;
-}
-
 interface ResultGradeSheetProps {
-    profile?: StudentProfile | null;
-    results: any[][];
+    profile?: ExamWebProfile | null;
+    subjectResults: SubjectResult[];
     activeSem: string;
-    customCredits?: Record<string, number | null>;
+    /** Engine-computed CGPA/SGPA for the rendered scope, or null when unavailable. */
+    gpa: number | null;
+    /** Label matching the ordinance's own scale (e.g. "Overall CGPA" or "Cumulative %"). */
+    gpaLabel: string;
 }
 
 export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps>(
-    ({ profile, results, activeSem, customCredits = {} }, ref) => {
-        let totalCredits = 0;
-        let earnedCredits = 0;
-        let totalPoints = 0;
+    ({ profile, subjectResults, activeSem, gpa, gpaLabel }, ref) => {
+        const totalCredits = subjectResults.reduce(
+            (sum, s) => sum + (s.credits.value ?? 0),
+            0,
+        );
+        const earnedCredits = subjectResults
+            .filter((s) => isSubjectPassed(s.semantic))
+            .reduce((sum, s) => sum + (s.credits.value ?? 0), 0);
 
-        const tableRows = results.map((row) => {
-            const sem = row[0];
-            const paperCode = row[1];
-            const subjectTitle = row[2];
-            const internalMarks = row[3];
-            const externalMarks = row[4];
-            const rawTotal = row[5];
-            const statusCode = row[6];
-
-            const credit = resolvePaperCredit(paperCode, customCredits, getFallbackCredit(subjectTitle));
-            const semantic = decodeStatus(statusCode, rawTotal);
-            const { grade, points, pass } = getGradeAndPoints(rawTotal);
-
-            const isPassed = (semantic === "PASS" || semantic === "CREDIT_SECURED" || semantic === "ALREADY_PASSED") || (pass && grade !== "F" && semantic !== "NOT_CLEARED" && semantic !== "ABSENT" && semantic !== "DETAINED");
-
-            totalCredits += credit;
-            if (isPassed) {
-                earnedCredits += credit;
-                totalPoints += points * credit;
-            }
-
-            const gradeColorClass = getGradeColorClass(grade);
-
+        const tableRows = subjectResults.map((s) => {
+            const grade = s.grade?.value ?? "F";
             return {
-                sem,
-                paperCode,
-                subjectTitle,
-                internalMarks,
-                externalMarks,
-                totalMarks: rawTotal || "–",
-                credit,
+                paperCode: s.rawCode,
+                subjectTitle: s.name,
+                internalMarks: s.internal,
+                externalMarks: s.external,
+                totalMarks: s.total ?? s.rawTotal ?? "–",
+                credit: s.credits.value ?? 0,
                 grade,
-                points,
-                gradeColorClass,
+                points: s.gradePointUsedForGpa ?? 0,
+                gradeColorClass: getGradeColorClass(grade),
             };
         });
 
-        const sgpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : "0.00";
+        const scoreDisplay =
+            gpa === null ? "Not applicable" : `${gpa.toFixed(2)}${gpaLabel.toLowerCase().includes("percentage") ? "%" : ""}`;
 
         const isOverall = activeSem === "100";
         const docTitle = isOverall ? "Cumulative Academic Record" : "Semester Grade Sheet";
@@ -200,9 +167,11 @@ export const ResultGradeSheet = forwardRef<HTMLDivElement, ResultGradeSheetProps
                         </div>
                         <div>
                             <span className="block text-[10px] text-neutral-600 uppercase font-bold">
-                                {isOverall ? "Overall CGPA" : "SGPA"}
+                                {gpaLabel}
                             </span>
-                            <span className="font-extrabold text-base text-amber-700">{sgpa}</span>
+                            <span className="font-extrabold text-base text-amber-700">
+                                {scoreDisplay}
+                            </span>
                         </div>
                     </div>
 
