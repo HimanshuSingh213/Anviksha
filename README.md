@@ -102,7 +102,7 @@ The heart of Anviksha is `src/lib/academic/` — a typed, data-driven layer that
 Raw ExamWeb JSON
       │
       ▼
-academic-engine.ts  →  analyzeResult(raw, userCredits, options)
+academic-engine/  →  analyzeResult(raw, userCredits, options)
       │                  • matches programme family + ordinance from academic-db.ts
       │                  • normalizes marks, statuses, and credits
       │                  • computes only what the ordinance's capabilities allow
@@ -195,7 +195,10 @@ anviksha/
 │   │
 │   ├── lib/academic/               # ▸ Ordinance-based academic engine (pure TypeScript)
 │   │   ├── academic-db.ts          #   Ordinance registry: capabilities, rule bands, clause sources
-│   │   ├── academic-engine.ts      #   analyzeResult(): normalization + verified computation
+│   │   ├── academic-engine/        #   analyzeResult(): normalization + verified computation
+│   │   │   ├── index.ts            #     orchestrator — composes every derived metric
+│   │   │   ├── subject-results.ts  #     row parsing, credits, status, grade mapping
+│   │   │   └── rules/              #     promotion, reappear, division, placement
 │   │   └── academic-engine.test.ts #   Engine unit tests
 │   │
 │   ├── app/                        # Next.js App Router
@@ -253,7 +256,7 @@ anviksha/
  Dashboard request ──────────────►  GET /api/(auth)/result ─────────►  student/search
         │                                 │  (euno=100 full fetch)         ?euno=100
         │                                 ▼
-        │                          academic-engine.ts
+        │                          academic-engine/
         │                          (analyzeResult + academic-db)
         ▼                                 ▼
  Zustand store (in-memory) ◄────── EngineResult with per-metric verification

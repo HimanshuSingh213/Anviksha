@@ -3,9 +3,9 @@
 import { KeyboardEvent, useEffect, useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { TrendingUp, ShieldCheck, Briefcase, Layers, FlaskConical, AlertTriangle } from "lucide-react";
+import { TrendingUp, ShieldCheck, Briefcase, Layers, FlaskConical, AlertTriangle, X } from "lucide-react";
 import useResultStore from "@/store/result-store";
-import { analyzeResult } from "@/lib/academic/academic-engine";
+import type { EngineResult, ExamWebProfile } from "@/types/result";
 import Skeleton from "@/components/dashboard/Skeleton";
 import AppNavbar from "@/components/common/AppNavbar";
 import SemesterSelector from "@/components/analytics/SemesterSelector";
@@ -29,24 +29,32 @@ type AnalyticsViewType = (typeof ANALYTICS_VIEWS)[number]["id"];
 
 export default function AnalyticsPage() {
     const router = useRouter();
-    const fullResult = useResultStore((state) => state.result);
     const customCredit = useResultStore((state) => state.customCredits);
+    const evaluatedEngineResult = useResultStore((state) => state.engineResult);
+
+    useEffect(() => {
+        if (!evaluatedEngineResult) router.push("/dashboard");
+    }, [evaluatedEngineResult, router]);
+
+    if (!evaluatedEngineResult) {
+        return <Skeleton />;
+    }
+
+    return <AnalyticsView engine={evaluatedEngineResult} customCredit={customCredit} />;
+}
+
+interface AnalyticsViewProps {
+    engine: EngineResult;
+    customCredit: Record<string, number | null>;
+}
+
+function AnalyticsView({ engine }: AnalyticsViewProps) {
     const [activeSem, setActiveSem] = useState<string>("100");
     const [activeView, setActiveView] = useState<AnalyticsViewType>("performance");
     const [showHighWarning, setShowHighWarning] = useState<boolean>(true);
 
-    useEffect(() => {
-        if (!fullResult) router.push("/dashboard");
-    }, [fullResult, router]);
-
-    const engine = useMemo(
-        () => analyzeResult(fullResult, customCredit),
-        [fullResult, customCredit]
-    );
-
-    const profile = useMemo(() => fullResult?.stprofile, [fullResult?.stprofile]);
-    const allResults = useMemo(() => fullResult?.stresult ?? [], [fullResult?.stresult]);
-    const { analytics, programme, subjectResults } = engine;
+    const { analytics, programme, subjectResults, warnings } = engine;
+    const profile: ExamWebProfile | null | undefined = useMemo(() => engine.profile, [engine.profile]);
     const isTech = programme.isTech;
     const isAnnual = programme.examinationSystem === "ANNUAL";
 
@@ -106,15 +114,12 @@ export default function AnalyticsPage() {
         return list.sort((a, b) => a - b);
     }, [subjectResults]);
 
-    const visibleSubjects = useMemo(
-        () => activeSem === "100" ? subjectResults : subjectResults.filter((s) => String(s.semester) === activeSem),
-        [subjectResults, activeSem]
-    );
 
     const filteredResults = useMemo(
-        () => allResults.filter((row: any[]) => activeSem === "100" || String(row[0]) === activeSem),
-        [allResults, activeSem]
+        () => subjectResults.filter((item) => activeSem === "100" || String(item.semester) === activeSem),
+        [subjectResults, activeSem]
     );
+    const visibleSubjects = filteredResults;
 
     const perSemesterSgpa = activeSem === "100"
         ? analytics.cgpa.value
@@ -127,7 +132,7 @@ export default function AnalyticsPage() {
         (s) => s.semantic === "NOT_CLEARED" || s.semantic === "ABSENT" || s.semantic === "DETAINED"
     );
 
-    const highWarnings = engine.warnings.filter((w) => w.severity === "HIGH");
+    const highWarnings = warnings.filter((w) => w.severity === "HIGH");
 
     const stats = useMemo(() => {
         const rawGpa = activeSem === "100" ? analytics.cgpa.value : perSemesterSgpa;
@@ -150,6 +155,8 @@ export default function AnalyticsPage() {
             obtainedMarks,
             totalMaxMarks,
             backlogs: backlogs.length,
+            passedCount: visibleSubjects.length - backlogs.length,
+            totalSubjects: visibleSubjects.length,
         };
     }, [activeSem, analytics.cgpa.value, perSemesterSgpa, visibleSubjects, backlogs.length]);
 
@@ -177,8 +184,6 @@ export default function AnalyticsPage() {
         percentSub = isOverall ? "CGPA × 10 (Ordinance 11)" : "SGPA × 10 (Ordinance 11)";
     }
 
-    if (!fullResult) return <Skeleton />;
-
     return (
         <div className="min-h-screen bg-background text-foreground">
             <AppNavbar profile={profile} />
@@ -196,7 +201,7 @@ export default function AnalyticsPage() {
                             className="shrink-0 opacity-70 hover:opacity-100"
                             aria-label="Dismiss notice"
                         >
-                            ✕
+                            <X size={12} aria-hidden />
                         </button>
                     </div>
                 )}
@@ -232,11 +237,10 @@ export default function AnalyticsPage() {
                                     setActiveView(tab.id);
                                 }}
                                 onKeyDown={(event) => handleViewKeyDown(event, index)}
-                                className={`relative flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 sm:py-1.5 rounded text-xs font-mono font-bold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-gold focus-visible:outline-none ${
-                                    isActive
+                                className={`relative flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-2 sm:py-1.5 rounded text-xs font-mono font-bold transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-gold focus-visible:outline-none ${isActive
                                         ? "text-background font-bold"
                                         : "text-foreground-secondary hover:text-foreground hover:bg-surface-elevated/70"
-                                }`}
+                                    }`}
                             >
                                 {isActive && (
                                     <motion.div
@@ -249,8 +253,8 @@ export default function AnalyticsPage() {
                                 <span className="relative z-10 hidden sm:inline">{tab.label}</span>
                                 <span className="relative z-10 sm:hidden">
                                     {tab.id === "performance" ? "Performance" :
-                                     tab.id === "standing" ? "Standing" :
-                                     tab.id === "placement" ? "Placement" : "All Insights"}
+                                        tab.id === "standing" ? "Standing" :
+                                            tab.id === "placement" ? "Placement" : "All Insights"}
                                 </span>
                             </button>
                         );
@@ -289,16 +293,17 @@ export default function AnalyticsPage() {
                                     />
 
                                     <QuickStatsDistribution
-                                        subjectResults={visibleSubjects}
-                                        totalCredits={stats.totalCredits}
-                                        earnedCredits={stats.earnedCredits}
+                                         subjectResults={visibleSubjects}
+                                         totalCredits={stats.totalCredits}
+                                         earnedCredits={stats.earnedCredits}
+                                         passedCount={stats.passedCount}
+                                         totalSubjects={stats.totalSubjects}
                                     />
 
                                     <SemesterTrendChart
+                                        sgpaBySemester={analytics.sgpaBySemester}
+                                        semesterPerformance={analytics.semesterPerformance}
                                         subjectResults={subjectResults}
-                                        allResults={allResults}
-                                        filteredResults={filteredResults}
-                                        customCredit={customCredit}
                                     />
                                 </>
                             )}
@@ -324,14 +329,12 @@ export default function AnalyticsPage() {
                                 <>
                                     {isDivisionVerified && (
                                         <DivisionClassificationCard
-                                            cgpa={stats.gpa}
-                                            percentage={percentage}
-                                            backlogsCount={stats.backlogs}
                                             isOverall={isOverall}
                                             divisionName={engine.analytics.division.value}
                                             divisionStatus={engine.analytics.division.status}
                                             ordinanceName={programme.ordinance}
                                             reason={engine.analytics.division.reason}
+                                            presentation={analytics.divisionPresentation}
                                         />
                                     )}
 
@@ -339,16 +342,10 @@ export default function AnalyticsPage() {
                                         <>
                                             <AcademicPromotionCard
                                                 promotion={engine.analytics.academicPromotion}
-                                                subjectResults={subjectResults}
-                                                allResults={allResults}
-                                                customCredit={customCredit}
                                             />
 
                                             <ReappearSessionPlanner
                                                 plan={engine.analytics.reappearPlan}
-                                                subjectResults={subjectResults}
-                                                allResults={allResults}
-                                                customCredit={customCredit}
                                             />
                                         </>
                                     )}
@@ -403,6 +400,7 @@ export default function AnalyticsPage() {
                             transition={{ duration: 0.18 }}
                             className="space-y-7 lg:space-y-8"
                         >
+
                             {isAnnual ? (
                                 <SpecialAnnualAnalytics engine={engine} />
                             ) : (
@@ -425,14 +423,12 @@ export default function AnalyticsPage() {
                                 <>
                                     {isDivisionVerified && (
                                         <DivisionClassificationCard
-                                            cgpa={stats.gpa}
-                                            percentage={percentage}
-                                            backlogsCount={stats.backlogs}
                                             isOverall={isOverall}
                                             divisionName={engine.analytics.division.value}
                                             divisionStatus={engine.analytics.division.status}
                                             ordinanceName={programme.ordinance}
                                             reason={engine.analytics.division.reason}
+                                            presentation={analytics.divisionPresentation}
                                         />
                                     )}
 
@@ -440,16 +436,10 @@ export default function AnalyticsPage() {
                                         <>
                                             <AcademicPromotionCard
                                                 promotion={engine.analytics.academicPromotion}
-                                                subjectResults={subjectResults}
-                                                allResults={allResults}
-                                                customCredit={customCredit}
                                             />
 
                                             <ReappearSessionPlanner
                                                 plan={engine.analytics.reappearPlan}
-                                                subjectResults={subjectResults}
-                                                allResults={allResults}
-                                                customCredit={customCredit}
                                             />
                                         </>
                                     )}
@@ -468,12 +458,14 @@ export default function AnalyticsPage() {
                                 subjectResults={visibleSubjects}
                                 totalCredits={stats.totalCredits}
                                 earnedCredits={stats.earnedCredits}
+                                passedCount={stats.passedCount}
+                                totalSubjects={stats.totalSubjects}
                             />
 
                             <SemesterTrendChart
-                                allResults={allResults}
-                                filteredResults={filteredResults}
-                                customCredit={customCredit}
+                                sgpaBySemester={analytics.sgpaBySemester}
+                                semesterPerformance={analytics.semesterPerformance}
+                                subjectResults={subjectResults}
                             />
                         </motion.div>
                     )}
@@ -495,7 +487,7 @@ export default function AnalyticsPage() {
     );
 }
 
-function SpecialAnnualAnalytics({ engine }: { engine: ReturnType<typeof analyzeResult> }) {
+function SpecialAnnualAnalytics({ engine }: { engine: EngineResult }) {
     const a = engine.analytics;
     const hasDistinction = (a.distinctionCount.value ?? 0) > 0;
     const hasCpi = a.division.status !== "NOT_APPLICABLE" && a.division.value !== null;
@@ -569,7 +561,7 @@ function SpecialAnnualAnalytics({ engine }: { engine: ReturnType<typeof analyzeR
     );
 }
 
-function SpecialAnnualStanding({ engine }: { engine: ReturnType<typeof analyzeResult> }) {
+function SpecialAnnualStanding({ engine }: { engine: EngineResult }) {
     const a = engine.analytics;
     const hasDivision = a.division.status !== "NOT_APPLICABLE" && a.division.value !== null;
     const progression = a.promotion.value?.[0]?.standing ?? "UNKNOWN";

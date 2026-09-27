@@ -71,16 +71,50 @@ export default function SemesterSelector({
     const printRef = useRef<HTMLDivElement>(null);
     const masterTranscriptRef = useRef<HTMLDivElement>(null);
     const [isExporting, setIsExporting] = useState(false);
-    const profile = useResultStore((state) => state.result?.stprofile);
-    const rawResults = useResultStore((state) => state.result?.stresult);
-    const allResults = useMemo(() => rawResults ?? [], [rawResults]);
-    const customCredits = useResultStore((state) => state.customCredits);
+    const engineResult = useResultStore((state) => state.engineResult);
 
     const downloadResults = useMemo(() => {
-        return allResults.filter(
-            (row) => downloadSem === "100" || row[0] === Number(downloadSem)
-        );
-    }, [allResults, downloadSem]);
+        if (!engineResult) return [];
+        return downloadSem === "100"
+            ? engineResult.subjectResults
+            : engineResult.subjectResults.filter(
+                  (s) => String(s.semester) === String(downloadSem),
+              );
+    }, [engineResult, downloadSem]);
+
+    // Headline score on the ordinance's own scale.
+    const downloadScore = useMemo(() => {
+        if (!engineResult) return null;
+        const { analytics } = engineResult;
+        const scale = analytics.divisionPresentation.scale;
+        const usesCgpa = scale === "CGPA" || scale === "CPI";
+
+        if (downloadSem === "100") {
+            return {
+                value: usesCgpa ? analytics.cgpa.value : analytics.percentage.value,
+                label: usesCgpa
+                    ? "Overall CGPA"
+                    : "Overall Percentage",
+            };
+        }
+
+        const semKey = String(downloadSem);
+        if (usesCgpa) {
+            return {
+                value:
+                    analytics.sgpaBySemester.find((g) => String(g.semester) === semKey)?.sgpa
+                        .value ?? null,
+                label: "SGPA",
+            };
+        }
+
+        return {
+            value:
+                analytics.semesterPerformance.find((p) => String(p.semester) === semKey)
+                    ?.averagePercentage ?? null,
+            label: "Semester Percentage",
+        };
+    }, [engineResult, downloadSem]);
 
     const handleDownloadPDF = useCallback(async () => {
         const isMaster = downloadSem === "master_transcript";
@@ -103,7 +137,7 @@ export default function SemesterSelector({
 
             pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
 
-            const safeName = (profile?.stname || "Student").trim().replace(/[^a-zA-Z0-9_-]/g, "_").replace(/_+/g, "_");
+            const safeName = (engineResult?.profile?.stname || "Student").trim().replace(/[^a-zA-Z0-9_-]/g, "_").replace(/_+/g, "_");
             let fileName = "";
             if (isMaster) {
                 fileName = `${safeName}_Consolidated_Transcript.pdf`;
@@ -127,7 +161,7 @@ export default function SemesterSelector({
         } finally {
             setIsExporting(false);
         }
-    }, [downloadSem, profile]);
+    }, [downloadSem, engineResult]);
 
     return (
         <>
@@ -135,10 +169,11 @@ export default function SemesterSelector({
             <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
                 <ResultGradeSheet
                     ref={printRef}
-                    profile={profile}
-                    results={downloadResults}
+                    profile={engineResult?.profile}
+                    subjectResults={downloadResults}
                     activeSem={downloadSem}
-                    customCredits={customCredits}
+                    gpa={downloadScore?.value ?? null}
+                    gpaLabel={downloadScore?.label ?? "Score"}
                 />
             </div>
 
@@ -146,9 +181,8 @@ export default function SemesterSelector({
             <div style={{ position: "absolute", left: "-9999px", top: "-9999px" }}>
                 <ConsolidatedMasterTranscript
                     ref={masterTranscriptRef}
-                    profile={profile}
-                    allResults={allResults}
-                    customCredits={customCredits}
+                    profile={engineResult?.profile}
+                    engine={engineResult!}
                 />
             </div>
 

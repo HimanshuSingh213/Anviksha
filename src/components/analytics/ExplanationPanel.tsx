@@ -1,7 +1,7 @@
 "use client";
 
 import { ShieldCheck, BookOpen, AlertTriangle, Scale } from "lucide-react";
-import type { EngineResult } from "@/lib/academic/academic-engine";
+import type { EngineResult } from "@/types/result";
 
 const STATUS_STYLE: Record<string, { label: string; shortLabel: string; className: string }> = {
   VERIFIED: {

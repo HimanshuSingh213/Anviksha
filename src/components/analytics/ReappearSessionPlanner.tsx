@@ -13,22 +13,9 @@ import {
     BookOpenCheck,
     HelpCircle,
 } from "lucide-react";
-import {
-    getReappearSessionPlan,
-    type ReappearSubject,
-    type ReappearSessionPlan,
-    type SubjectResult,
-} from "@/lib/academic/academic-engine";
+import type { ReappearSubject, ReappearSessionPlan } from "@/types/result";
 
 export type { ReappearSubject, ReappearSessionPlan };
-
-interface Props {
-    subjectResults?: SubjectResult[];
-    courses?: SubjectResult[];
-    allResults?: any[][];
-    customCredit?: Record<string, number | null>;
-    plan?: ReappearSessionPlan;
-}
 
 const tabs = [
     ["ALL", "All"],
@@ -36,21 +23,8 @@ const tabs = [
     ["EVEN", "Even"],
 ] as const;
 
-export default function ReappearSessionPlanner({
-    subjectResults,
-    courses,
-    allResults,
-    customCredit = {},
-    plan: propPlan,
-}: Props) {
+export default function ReappearSessionPlanner({ plan }: { plan: ReappearSessionPlan }) {
     const [selectedTab, setSelectedTab] = useState<"ALL" | "ODD" | "EVEN">("ALL");
-
-    const plan = useMemo(() => {
-        if (propPlan) return propPlan;
-        const subjects = subjectResults ?? courses;
-        if (subjects && subjects.length > 0) return getReappearSessionPlan(subjects, customCredit);
-        return getReappearSessionPlan(allResults ?? [], customCredit);
-    }, [propPlan, subjectResults, courses, allResults, customCredit]);
 
     const activeList = useMemo(() => {
         if (selectedTab === "ODD") return plan.oddTermBacklogs;
@@ -63,8 +37,6 @@ export default function ReappearSessionPlanner({
         ODD: plan.oddTermBacklogs.length,
         EVEN: plan.evenTermBacklogs.length,
     };
-
-    if ((courses?.length ?? allResults?.length ?? 0) === 0 && !propPlan) return null;
 
     return (
         <motion.section
@@ -104,11 +76,10 @@ export default function ReappearSessionPlanner({
                 </div>
 
                 <div
-                    className={`inline-flex w-fit items-center gap-2 rounded-md border px-2.5 py-1.5 text-[10px] sm:text-[11px] font-semibold ${
-                        plan.cleanRecord
-                            ? "border-grade-excellent-border bg-grade-excellent-surface text-grade-excellent"
-                            : "border-grade-fail-border bg-grade-fail-surface text-grade-fail"
-                    }`}
+                    className={`inline-flex w-fit items-center gap-2 rounded-md border px-2.5 py-1.5 text-[10px] sm:text-[11px] font-semibold ${plan.cleanRecord
+                        ? "border-grade-excellent-border bg-grade-excellent-surface text-grade-excellent"
+                        : "border-grade-fail-border bg-grade-fail-surface text-grade-fail"
+                        }`}
                 >
                     {plan.cleanRecord ? <ShieldCheck size={13} /> : <AlertTriangle size={13} />}
                     {plan.cleanRecord
@@ -168,11 +139,10 @@ export default function ReappearSessionPlanner({
                                     onClick={() => {
                                         setSelectedTab(value);
                                     }}
-                                    className={`flex-1 sm:flex-initial text-center rounded px-2.5 py-1 text-[10px] font-semibold transition-colors cursor-pointer ${
-                                        selectedTab === value
-                                            ? "bg-foreground text-background"
-                                            : "text-foreground-muted hover:bg-surface-hover hover:text-foreground"
-                                    }`}
+                                    className={`flex-1 sm:flex-initial text-center rounded px-2.5 py-1 text-[10px] font-semibold transition-colors cursor-pointer ${selectedTab === value
+                                        ? "bg-foreground text-background"
+                                        : "text-foreground-muted hover:bg-surface-hover hover:text-foreground"
+                                        }`}
                                 >
                                     {label} ({tabCounts[value]})
                                 </button>

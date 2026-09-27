@@ -12,21 +12,9 @@ import {
     GraduationCap,
     HelpCircle,
 } from "lucide-react";
-import { getAcademicPromotionStatus, type AcademicYearStatus, type SubjectResult } from "@/lib/academic/academic-engine";
+import type { AcademicPromotionStatus, AcademicYearStatus } from "@/types/result";
 
 export type { AcademicYearStatus };
-
-interface Props {
-    subjectResults?: SubjectResult[];
-    courses?: SubjectResult[];
-    allResults?: any[][];
-    customCredit?: Record<string, number | null>;
-    promotion?: {
-        years: AcademicYearStatus[];
-        hasDetentionRisk: boolean;
-        activeYear: number;
-    };
-}
 
 const statusTone = {
     PROMOTED: {
@@ -63,19 +51,7 @@ const statusTone = {
     },
 } as const;
 
-export default function AcademicPromotionCard({
-    subjectResults,
-    courses,
-    allResults,
-    customCredit = {},
-    promotion: propPromotion,
-}: Props) {
-    const promotion = useMemo(() => {
-        if (propPromotion) return propPromotion;
-        const subjects = subjectResults ?? courses;
-        if (subjects && subjects.length > 0) return getAcademicPromotionStatus(subjects, customCredit);
-        return getAcademicPromotionStatus(allResults ?? [], customCredit);
-    }, [propPromotion, subjectResults, courses, allResults, customCredit]);
+export default function AcademicPromotionCard({ promotion }: { promotion: AcademicPromotionStatus }) {
 
     const summary = useMemo(() => {
         let evaluatedYears = 0;
@@ -107,7 +83,7 @@ export default function AcademicPromotionCard({
         };
     }, [promotion.years]);
 
-    if ((courses?.length ?? allResults?.length ?? 0) === 0 && !propPromotion) return null;
+    if (promotion.years.length === 0) return null;
 
     const { years, hasDetentionRisk, activeYear } = promotion;
 
@@ -153,11 +129,10 @@ export default function AcademicPromotionCard({
                 </div>
 
                 <div
-                    className={`inline-flex w-fit items-center gap-2 rounded-md border px-2.5 py-1.5 text-[10px] sm:text-[11px] font-semibold ${
-                        hasDetentionRisk
+                    className={`inline-flex w-fit items-center gap-2 rounded-md border px-2.5 py-1.5 text-[10px] sm:text-[11px] font-semibold ${hasDetentionRisk
                             ? "border-grade-fail-border bg-grade-fail-surface text-grade-fail"
                             : "border-grade-excellent-border bg-grade-excellent-surface text-grade-excellent"
-                    }`}
+                        }`}
                 >
                     {hasDetentionRisk ? (
                         <AlertTriangle size={13} aria-hidden="true" />
@@ -200,19 +175,17 @@ export default function AcademicPromotionCard({
                 </div>
 
                 <div
-                    className={`rounded-lg border p-3 sm:p-3.5 ${
-                        summary.deficit > 0
+                    className={`rounded-lg border p-3 sm:p-3.5 ${summary.deficit > 0
                             ? "border-grade-fail-border bg-grade-fail-surface/25"
                             : "border-accent-mint-border bg-accent-mint-surface"
-                    }`}
+                        }`}
                 >
                     <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
                         Recovery deficit
                     </p>
                     <p
-                        className={`mt-1 font-mono text-xl sm:text-2xl font-semibold ${
-                            summary.deficit > 0 ? "text-grade-fail" : "text-accent-mint"
-                        }`}
+                        className={`mt-1 font-mono text-xl sm:text-2xl font-semibold ${summary.deficit > 0 ? "text-grade-fail" : "text-accent-mint"
+                            }`}
                     >
                         {summary.deficit} cr
                     </p>

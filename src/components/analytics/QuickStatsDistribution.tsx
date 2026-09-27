@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import type { SubjectResult } from "@/lib/academic/academic-engine";
+import type { SubjectResult } from "@/types/result";
 
 // Quick Stats + Grade Distribution donut chart
 
@@ -42,22 +42,29 @@ interface DistributionSlice {
 }
 
 interface Props {
-    subjectResults?: SubjectResult[];
-    courses?: SubjectResult[];
+    subjectResults: SubjectResult[];
     totalCredits: number;
     earnedCredits: number;
+    passedCount: number;
+    totalSubjects: number;
 }
 
-export default function QuickStatsDistribution({ subjectResults, courses, totalCredits, earnedCredits }: Props) {
+export default function QuickStatsDistribution({
+    subjectResults,
+    totalCredits,
+    earnedCredits,
+    passedCount,
+    totalSubjects,
+}: Props) {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
     }, []);
 
-    const subjects = subjectResults ?? courses ?? [];
+    const backlogs = totalSubjects - passedCount;
 
-    const { totalSubjects, totalMarks, totalMaxMarks, highest, lowest, backlogs, highestCourse, lowestCourse, chartData } = useMemo(() => {
+    const { totalMarks, totalMaxMarks, highest, lowest, highestCourse, lowestCourse, chartData } = useMemo(() => {
         // Distribution = one bucket per subject: engine letter grade when the
         // programme has one, official result status otherwise.
         const gradeBuckets = new Map<string, DistributionSlice>();
@@ -68,9 +75,8 @@ export default function QuickStatsDistribution({ subjectResults, courses, totalC
         let lowestValue = Infinity;
         let highestItem: SubjectResult | null = null;
         let lowestItem: SubjectResult | null = null;
-        let backlogCount = 0;
 
-        for (const subject of subjects) {
+        for (const subject of subjectResults) {
             if (subject.grade) {
                 const gradeValue = subject.grade.value;
                 const label = `Grade ${gradeValue}`;
@@ -106,12 +112,9 @@ export default function QuickStatsDistribution({ subjectResults, courses, totalC
                 }
             }
             if (subject.maxMarks !== null) maxMarksSum += subject.maxMarks;
-            if (subject.semantic === "NOT_CLEARED" || subject.semantic === "ABSENT" || subject.semantic === "DETAINED") {
-                backlogCount += 1;
-            }
         }
 
-        const totalCount = subjects.length;
+        const totalCount = subjectResults.length;
         const withGrades = [...gradeBuckets.values()].sort((a, b) => {
             const indexA = GRADE_ORDER.indexOf(a.grade ?? "");
             const indexB = GRADE_ORDER.indexOf(b.grade ?? "");
@@ -126,19 +129,15 @@ export default function QuickStatsDistribution({ subjectResults, courses, totalC
         }));
 
         return {
-            totalSubjects: totalCount,
             totalMarks: marksSum,
             totalMaxMarks: maxMarksSum,
             highest: highestItem ? (highestItem.total as number) : null,
             lowest: lowestItem ? (lowestItem.total as number) : null,
-            backlogs: backlogCount,
             highestCourse: highestItem,
             lowestCourse: lowestItem,
             chartData: chartSlices,
         };
-    }, [subjects]);
-
-    const passedCount = totalSubjects - backlogs;
+    }, [subjectResults]);
 
     return (
         <motion.div
@@ -228,7 +227,13 @@ export default function QuickStatsDistribution({ subjectResults, courses, totalC
                         </span>
                     </div>
 
-                    {mounted && chartData.length > 0 ? (
+                    {!mounted ? (
+                        <div className="relative h-44 w-full flex items-center justify-center">
+                            <div className="h-32 w-32 rounded-full border-4 border-border-strong/30 animate-pulse flex items-center justify-center">
+                                <div className="h-16 w-16 rounded-full border-2 border-border-strong/20" />
+                            </div>
+                        </div>
+                    ) : chartData.length > 0 ? (
                         <div
                             role="img"
                             aria-label={`Distribution donut chart showing breakdown across ${totalSubjects} subjects`}

@@ -13,7 +13,8 @@ import {
     Lock,
     HelpCircle,
 } from "lucide-react";
-import { getPlacementEligibility, type PlacementTier } from "@/lib/academic/academic-engine";
+import { getPlacementEligibility } from "@/lib/academic/academic-engine";
+import type { PlacementTier } from "@/types/result";
 
 export type { PlacementTier };
 

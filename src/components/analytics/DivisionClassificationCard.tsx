@@ -4,117 +4,64 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { HelpCircle } from "lucide-react";
-import { findOrdinance } from "@/lib/academic/academic-db";
+import type { DivisionPresentation } from "@/types/result";
 
 interface DivisionProps {
-    cgpa?: number | null;
-    percentage?: number | null;
-    backlogsCount: number;
     isOverall: boolean;
     divisionName?: string | null;
     divisionStatus?: string;
     ordinanceName?: string | null;
     reason?: string | null;
+    presentation: DivisionPresentation;
 }
 
+const SCALE_LABEL: Record<DivisionPresentation["scale"], string> = {
+    PERCENTAGE: "Percentage",
+    CGPA: "CGPA",
+    CPI: "CPI",
+    NONE: "",
+};
+
 export default function DivisionClassificationCard({
-    cgpa,
-    percentage,
-    backlogsCount,
     isOverall,
-    divisionName: propDivisionName,
+    divisionName,
     divisionStatus,
     ordinanceName,
+    reason,
+    presentation,
 }: DivisionProps) {
-    const ordinance = useMemo(() => findOrdinance(ordinanceName), [ordinanceName]);
-    const isPercentageScale = Boolean(
-        ordinance?.rules?.divisionFromPercentage ||
-        ordinance?.rules?.divisionFromCpi ||
-        (cgpa === null && percentage !== null)
-    );
+    const { scale, score, max, tiers } = presentation;
 
-    const { divisionName, activeFillColor, nextTierMessage, progressPercent, scoreDisplay, isPass } = useMemo(() => {
-        if (isPercentageScale) {
-            const scoreValue = percentage ?? ((cgpa ?? 0) * 10);
-            const isPass = scoreValue >= 50;
-            const activeFillColor = isPass ? "bg-foreground" : "bg-grade-fail";
-            const progressPercent = Math.min(100, Math.max(0, scoreValue));
-            const scoreDisplay = `${scoreValue.toFixed(2)}%`;
-
-            let nextTierMessage = "";
-            if (scoreValue >= 90) {
-                nextTierMessage = "Maximum exemplary performance tier achieved (≥90%)";
-            } else if (scoreValue >= 75) {
-                const gap = (90 - scoreValue).toFixed(2);
-                nextTierMessage = `+${gap}% needed for Exemplary (90%)`;
-            } else if (scoreValue >= 60) {
-                const gap = (75 - scoreValue).toFixed(2);
-                nextTierMessage = `+${gap}% needed for Distinction (75%)`;
-            } else if (scoreValue >= 50) {
-                const gap = (60 - scoreValue).toFixed(2);
-                nextTierMessage = `+${gap}% needed for First Division (60%)`;
-            } else {
-                const gap = (50 - scoreValue).toFixed(2);
-                nextTierMessage = `+${gap}% needed to clear passing threshold (50%)`;
-            }
-
+    // Bar segments are derived from the ordinance's declared bands.
+    const segments = useMemo(() => {
+        if (!tiers || !max) return [];
+        return tiers.map((tier, index) => {
+            const nextMin = tiers[index + 1]?.min ?? max;
+            const from = (tier.min / max) * 100;
+            const to = (nextMin / max) * 100;
             return {
-                divisionName: propDivisionName ?? (isPass ? "Passed" : "Failed"),
-                activeFillColor,
-                nextTierMessage,
-                progressPercent,
-                scoreDisplay,
-                isPass,
+                ...tier,
+                from,
+                width: Math.max(0, to - from),
+                label: tier.division ?? `Below ${tiers.find((t) => !t.isFail)?.min ?? 0}`,
             };
-        }
+        });
+    }, [tiers, max]);
 
-        // Standard CGPA-based division (e.g. Ordinance 11)
-        const validCgpa = cgpa ?? 0;
-        let division = "Unqualified for Degree (< 4.00)";
-        let nextTierMessage = "";
-        let isPass = false;
+    const passFloor = tiers?.find((t) => !t.isFail)?.min ?? 0;
+    const isPass = score !== null && score >= passFloor;
+    const activeFillColor = isPass ? "bg-foreground" : "bg-grade-fail";
+    const progressPercent =
+        score !== null && max ? Math.min(100, Math.max(0, (score / max) * 100)) : 0;
+    const scoreDisplay =
+        score !== null
+            ? scale === "PERCENTAGE"
+                ? `${score.toFixed(2)}%`
+                : `${score.toFixed(2)} ${SCALE_LABEL[scale] || "Score"}`
+            : "—";
+    const nextTierMessage = reason ?? "—";
 
-        if (validCgpa >= 10.0 && backlogsCount === 0) {
-            division = "Exemplary Performance";
-            nextTierMessage = "Maximum distinction tier achieved (CGPA 10.00)";
-            isPass = true;
-        } else if (validCgpa >= 6.50) {
-            division = "First Division";
-            const gap = (10.0 - validCgpa).toFixed(2);
-            nextTierMessage = backlogsCount > 0 ? "Clear active backlogs for clean standing" : `+${gap} CGPA to reach 10.00 scale max`;
-            isPass = true;
-        } else if (validCgpa >= 5.00) {
-            division = "Second Division";
-            const gap = (6.50 - validCgpa).toFixed(2);
-            nextTierMessage = `+${gap} CGPA needed for First Division (6.50)`;
-            isPass = true;
-        } else if (validCgpa >= 4.00) {
-            division = "Third Division";
-            const gap = (5.00 - validCgpa).toFixed(2);
-            nextTierMessage = `+${gap} CGPA needed for Second Division (5.00)`;
-            isPass = true;
-        } else {
-            division = "Unqualified for Degree (< 4.00)";
-            const gap = (4.00 - validCgpa).toFixed(2);
-            nextTierMessage = `+${gap} CGPA needed for passing threshold (4.00)`;
-            isPass = false;
-        }
-
-        const effectiveName = propDivisionName ?? division;
-        const activeFillColor = isPass ? "bg-foreground" : "bg-grade-fail";
-        const progressPercent = Math.min(100, Math.max(0, (validCgpa / 10) * 100));
-
-        return {
-            divisionName: effectiveName,
-            activeFillColor,
-            nextTierMessage,
-            progressPercent,
-            scoreDisplay: `${validCgpa.toFixed(2)} CGPA`,
-            isPass,
-        };
-    }, [isPercentageScale, percentage, cgpa, backlogsCount, propDivisionName]);
-
-    if (divisionStatus === "NOT_APPLICABLE" || !divisionName) {
+    if (divisionStatus === "NOT_APPLICABLE" || !divisionName || !tiers) {
         return null;
     }
 
@@ -175,84 +122,52 @@ export default function DivisionClassificationCard({
             </div>
 
             <div className="space-y-1.5 pt-0.5">
-                {isPercentageScale ? (
-                    <>
-                        <div className="relative h-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-foreground-secondary">
-                            <span className="absolute left-0 text-grade-fail font-bold">Fail (&lt;50%)</span>
-                            <span className="absolute left-[50%] -translate-x-1/2">
-                                <span className="hidden sm:inline">2nd (50%)</span>
-                                <span className="sm:hidden">2nd</span>
+                <div className="relative h-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-foreground-secondary">
+                    {segments.map((segment, i) => (
+                        <span
+                            key={`lbl-${i}`}
+                            className={`absolute whitespace-nowrap ${
+                                segment.isFail
+                                    ? "left-0 text-grade-fail font-bold"
+                                    : i === segments.length - 1
+                                      ? "right-0 text-foreground font-bold"
+                                      : "-translate-x-1/2 text-foreground-secondary"
+                            }`}
+                            style={i === segments.length - 1 || segment.isFail ? undefined : { left: `${segment.from}%` }}
+                        >
+                            <span className="hidden sm:inline">{segment.label}</span>
+                            <span className="sm:hidden">
+                                {segment.division ? segment.division.split(" ")[0] : "Fail"}
                             </span>
-                            <span className="absolute left-[60%] -translate-x-1/2">
-                                <span className="hidden sm:inline">1st (60%)</span>
-                                <span className="sm:hidden">1st</span>
-                            </span>
-                            <span className="absolute left-[75%] -translate-x-1/2">
-                                <span className="hidden sm:inline">Dist. (75%)</span>
-                                <span className="sm:hidden">Dist.</span>
-                            </span>
-                            <span className="absolute right-0 text-foreground font-bold">
-                                <span className="hidden sm:inline">Exemplary (90%)</span>
-                                <span className="sm:hidden">Top (90%)</span>
-                            </span>
-                        </div>
+                        </span>
+                    ))}
+                </div>
 
-                        <div className="relative h-3.5 bg-surface-deep rounded-full border border-border-strong overflow-hidden">
-                            <div className="absolute inset-0 flex">
-                                <div className="w-[50%] bg-grade-fail/10 border-r-2 sm:border-r-3 border-border-strong" title="Fail (< 50%)" />
-                                <div className="w-[10%] bg-foreground/10 border-r-2 sm:border-r-3 border-border-strong" title="2nd Division (50% - 59.99%)" />
-                                <div className="w-[15%] bg-foreground/10 border-r-2 sm:border-r-3 border-border-strong" title="First Division (60% - 74.99%)" />
-                                <div className="w-[15%] bg-foreground/10 border-r-2 sm:border-r-3 border-border-strong" title="Distinction (75% - 89.99%)" />
-                                <div className="w-[10%] bg-foreground/10" title="Exemplary (≥ 90%)" />
-                            </div>
-
-                            <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progressPercent}%` }}
-                                transition={{ duration: 0.6, ease: "easeOut" }}
-                                className={`h-full ${activeFillColor}`}
+                <div className="relative h-3.5 bg-surface-deep rounded-full border border-border-strong overflow-hidden">
+                    <div className="absolute inset-0 flex">
+                        {segments.map((segment, i) => (
+                            <div
+                                key={`seg-${i}`}
+                                className={`${segment.isFail ? "bg-grade-fail/10" : "bg-foreground/10"} ${
+                                    i === segments.length - 1 ? "" : "border-r-2 sm:border-r-3 border-border-strong"
+                                }`}
+                                style={{ width: `${segment.width}%` }}
+                                title={
+                                    segment.max !== null
+                                        ? `${segment.label} (${segment.min} - ${segment.max})`
+                                        : `${segment.label} (≥ ${segment.min})`
+                                }
                             />
-                        </div>
-                    </>
-                ) : (
-                    <>
-                        <div className="relative h-4 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-foreground-secondary">
-                            <span className="absolute left-0 text-grade-fail font-bold">Fail (&lt;4.0)</span>
-                            <span className="absolute left-[40%] -translate-x-1/2">
-                                <span className="hidden sm:inline">3rd (4.0)</span>
-                                <span className="sm:hidden">3rd</span>
-                            </span>
-                            <span className="absolute left-[50%] -translate-x-1/2">
-                                <span className="hidden sm:inline">2nd (5.0)</span>
-                                <span className="sm:hidden">2nd</span>
-                            </span>
-                            <span className="absolute left-[65%] -translate-x-1/2">
-                                <span className="hidden sm:inline">1st (6.5)</span>
-                                <span className="sm:hidden">1st</span>
-                            </span>
-                            <span className="absolute right-0 text-foreground font-bold">
-                                <span className="hidden sm:inline">Exemplary (10.0)</span>
-                                <span className="sm:hidden">Top (10.0)</span>
-                            </span>
-                        </div>
+                        ))}
+                    </div>
 
-                        <div className="relative h-3.5 bg-surface-deep rounded-full border border-border-strong overflow-hidden">
-                            <div className="absolute inset-0 flex">
-                                <div className="w-[40%] bg-grade-fail/10 border-r-2 sm:border-r-3 border-border-strong" title="Fail (< 4.00)" />
-                                <div className="w-[10%] bg-foreground/10 border-r-2 sm:border-r-3 border-border-strong" title="3rd Division (4.00 - 4.99)" />
-                                <div className="w-[15%] bg-foreground/10 border-r-2 sm:border-r-3 border-border-strong" title="2nd Division (5.00 - 6.49)" />
-                                <div className="w-[35%] bg-foreground/10" title="1st Division (6.50 - 10.00)" />
-                            </div>
-
-                            <motion.div
-                                initial={{ width: 0 }}
-                                animate={{ width: `${progressPercent}%` }}
-                                transition={{ duration: 0.6, ease: "easeOut" }}
-                                className={`h-full ${activeFillColor}`}
-                            />
-                        </div>
-                    </>
-                )}
+                    <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progressPercent}%` }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
+                        className={`h-full ${activeFillColor}`}
+                    />
+                </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs pt-1">
                     <span className="text-foreground font-bold">
