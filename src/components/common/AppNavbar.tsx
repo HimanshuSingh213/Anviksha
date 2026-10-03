@@ -22,7 +22,7 @@ export default function AppNavbar({ profile }: AppNavbarProps) {
             initial={{ y: -12, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
-            className="sticky top-0 z-30 border-b border-border-strong bg-surface-deep/85 backdrop-blur-xl"
+            className="sticky top-(--status-strip-offset) z-30 border-b border-border-strong bg-surface-deep/85 backdrop-blur-xl"
         >
             <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 flex items-center justify-between gap-2 sm:gap-4">
                 <AnimatePresence mode="wait">

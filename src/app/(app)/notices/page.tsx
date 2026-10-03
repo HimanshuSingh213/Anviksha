@@ -82,7 +82,7 @@ export default async function NoticesPage() {
       />
 
       {/* Header */}
-      <header className="sticky top-0 z-30 border-b border-border-strong bg-surface-deep/90 backdrop-blur-md">
+      <header className="sticky top-(--status-strip-offset) z-30 border-b border-border-strong bg-surface-deep/90 backdrop-blur-md">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           <Link
             href="/"

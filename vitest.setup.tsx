@@ -37,6 +37,7 @@ vi.mock("framer-motion", () => ({
     button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
   },
   AnimatePresence: ({ children }: any) => <>{children}</>,
+  useReducedMotion: () => false,
 }));
 
 // Mock lucide-react icons

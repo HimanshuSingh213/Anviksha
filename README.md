@@ -6,7 +6,7 @@
 [![React](https://img.shields.io/badge/React-19.2-23272F?style=flat&logo=react&logoColor=61DAFB)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-0B1120?style=flat&logo=tailwindcss&logoColor=38BDF8)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-75_Tests_Passing-1E293B?style=flat&logo=vitest&logoColor=FCC72B)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-97_Tests_Passing-1E293B?style=flat&logo=vitest&logoColor=FCC72B)](https://vitest.dev/)
 [![Security](https://img.shields.io/badge/Security-Zero--Storage_Proxy-064E3B?style=flat&logo=auth0&logoColor=34D399)]()
 
 ## Overview
@@ -88,7 +88,13 @@ Rather than showing only a raw table of marks, Anviksha interprets result data t
 - **Semester Marksheets:** Detailed individual marksheets for print/PDF.
 - **Zero-Server Rendering:** Generated entirely in the browser with `html2canvas-pro` + `jspdf` — exports never touch a server.
 
-### 6. Landing & SEO Layer
+### 6. Real-Time Global System Status Indicator
+- **Live Health Monitoring (`/api/health`):** Browser measures roundtrip latency to the internal proxy endpoint; automatically classifies states into `Operational` (healthy), `Slow` (> 1000ms), and `Offline` (server error, timeout after 8s, or network failure).
+- **Subtle, Non-Intrusive Alerting:** Stays retracted and hidden during healthy operation; smoothly slides down into view on distinct problem transitions (`Slow`, `Offline`) or upon recovery (`Back Online`), remaining visible for 12 seconds before retracting.
+- **Navbar Offset Coordination:** Employs CSS custom property `--status-strip-offset` and layout spacing so sticky headers smoothly shift without obscuring page content or navigation.
+- **Power & Visibility Conscious:** Halts polling intervals and aborts in-flight requests when the browser tab is hidden; resumes checks upon visibility restoration, with immediate offline/online event interception.
+
+### 7. Landing & SEO Layer
 - Animated landing page (Framer Motion) with ordinance-mapping table, grade-scale card, FAQ, and a dashboard hero mockup.
 - `sitemap.ts`, `robots.ts`, `manifest.ts`, JSON-LD structured data (WebApplication + FAQPage), OpenGraph/Twitter cards, and a transparent methodology guide at `/calculations`.
 
@@ -213,6 +219,7 @@ anviksha/
 │   │   │   └── report/             #   User feedback & diagnostics
 │   │   └── api/(auth)/
 │   │       ├── captcha/route.ts    #   Captcha image relay + JSESSIONID capture
+│   │       ├── health/route.ts     #   Stateless heartbeat & server responsiveness ping
 │   │       ├── login/route.ts      #   Credential proxy → upstream /web/login
 │   │       ├── logout/route.ts     #   Session destruction + upstream /web/logout
 │   │       └── result/route.ts     #   Full result fetch (euno=100) + normalization
@@ -225,7 +232,7 @@ anviksha/
 │   │   │                           #   ExplanationPanel, QuickStats cards
 │   │   ├── export/                 #   ConsolidatedMasterTranscript, ResultGradeSheet
 │   │   ├── notices/                #   NoticesClientView (search + categories)
-│   │   └── common/                 #   AppNavbar, ErrorBoundary, FloatingReport, StructuredData
+│   │   └── common/                 #   AppNavbar, SystemStatusStrip, ErrorBoundary, FloatingReport
 │   │
 │   ├── helpers/
 │   │   └── notices.ts              #   IPU notices fetcher & category classifier
@@ -310,10 +317,10 @@ anviksha/
 
 ## Testing & Verification
 
-The project maintains a **75-test** automated suite (5 files) covering the academic engine, notices scraper, validators, and API routes:
+The project maintains a **97-test** automated suite (6 files) covering the academic engine, notices scraper, system status strip, validators, and API routes:
 
 ```bash
-npm test              # 75 tests, currently 100% green
+npm test              # 97 tests, currently 100% green
 npx tsc --noEmit      # clean
 npm run lint          # 0 errors
 npm run build         # production bundle
@@ -322,6 +329,7 @@ npm run build         # production bundle
 | Suite | Focus |
 | :--- | :--- |
 | `lib/academic/academic-engine.test.ts` | Ordinance rules, grades, SGPA/CGPA, CS/AP exclusion, promotion |
+| `components/common/SystemStatusStrip.test.tsx` | Heartbeat latency, Slow/Offline classification, 12s timer, tab visibility, network events |
 | `helpers/notices.test.ts` | Notices fetching & categorization |
 | `validations/login.validation.test.ts` | Credential schema validation |
 | `app/api/(auth)/login\|result route tests` | Proxy route behaviour & error paths |

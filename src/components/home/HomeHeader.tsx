@@ -19,7 +19,7 @@ export default function HomeHeader({ isAuthenticated }: { isAuthenticated: boole
   const reducedMotion = useReducedMotion() ?? false;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur-xl">
+    <header className="sticky top-(--status-strip-offset) z-40 border-b border-border bg-background/85 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Link href="/" aria-label="Anviksha home" onClick={() => setOpen(false)}>
           <Image src="/navbar-logo.png" alt="Anviksha" width={150} height={40} className="h-8 w-auto object-contain" priority />

@@ -372,7 +372,7 @@ function DashboardView({ engine, loading, error }: DashboardViewProps) {
         : "all cleared";
 
     return (
-        <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
+        <div className="relative min-h-screen bg-background text-foreground overflow-x-clip">
             {/* Ambient background glow */}
             <div className="pointer-events-none absolute -top-32 -left-24 h-96 w-96 rounded-full bg-gold opacity-[0.06] blur-3xl" aria-hidden="true" />
 
