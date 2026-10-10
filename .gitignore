@@ -61,6 +61,8 @@ execution-flow.md
 # Test routes — local testing only, never published
 src/app/(app)/test/
 src/app/test/
+src/components/home-old/
 setup-redesign.js
 ordinances
 Reports/
+*.zip

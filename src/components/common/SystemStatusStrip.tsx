@@ -7,7 +7,7 @@ export type SystemStatus = "Checking" | "Operational" | "Slow" | "Offline";
 const TIMEOUT_MS = 8000;
 const SLOW_AFTER_MS = 1000;
 const CHECK_EVERY_MS = 45000;
-const SHOW_FOR_MS = 12000;
+const SHOW_FOR_MS = 6000;
 
 function labelFor(status: SystemStatus): string {
   if (status === "Operational") return "Back Online";

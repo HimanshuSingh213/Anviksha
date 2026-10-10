@@ -141,9 +141,9 @@ describe("SystemStatusStrip", () => {
     });
     expect(screen.getByText("Offline")).toBeInTheDocument();
 
-    // Let the alert finish its 12 seconds.
+    // Let the alert finish its 6 seconds.
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(12000);
+      await vi.advanceTimersByTimeAsync(6000);
     });
     expect(
       screen.getByRole("status", { hidden: true })
@@ -205,7 +205,7 @@ describe("SystemStatusStrip", () => {
     expect(screen.queryByRole("status")).toBeNull();
   });
 
-  it("hides after 12 seconds of status change", async () => {
+  it("hides after 6 seconds of status change", async () => {
     mockFailFetch();
     render(<SystemStatusStrip />);
 
@@ -218,7 +218,7 @@ describe("SystemStatusStrip", () => {
     );
 
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(12000);
+      await vi.advanceTimersByTimeAsync(6000);
     });
 
     expect(
@@ -239,9 +239,9 @@ describe("SystemStatusStrip", () => {
       "false"
     );
 
-    // Advance 12s -> slides up (hidden).
+    // Advance 6s -> slides up (hidden).
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(12000);
+      await vi.advanceTimersByTimeAsync(6000);
     });
     expect(
       screen.getByRole("status", { hidden: true })
@@ -249,7 +249,7 @@ describe("SystemStatusStrip", () => {
 
     // Advance to 45s (next periodic poll, same Offline result).
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(33000);
+      await vi.advanceTimersByTimeAsync(39000);
     });
 
     // Strip MUST REMAIN HIDDEN behind navbar.
@@ -351,7 +351,7 @@ describe("SystemStatusStrip", () => {
 
     // Let it hide, then internet returns -> green Back Online strip.
     await act(async () => {
-      await vi.advanceTimersByTimeAsync(12000);
+      await vi.advanceTimersByTimeAsync(6000);
     });
     await act(async () => {
       window.dispatchEvent(new Event("online"));
