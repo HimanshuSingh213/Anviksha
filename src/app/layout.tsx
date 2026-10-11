@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     template: "%s | Anviksha",
   },
   description:
-    "GGSIPU results, SGPA/CGPA calculations, promotion standing, and academic analytics for IPU students. Check semester marks and generate consolidated transcripts.",
+    "GGSIPU results, SGPA/CGPA calculations, promotion standing, and academic analytics for IPU students. Check semester marks and generate grade sheets and transcripts.",
   applicationName: "Anviksha",
   authors: [{ name: "Himanshu Singh" }],
   creator: "Himanshu Singh",
@@ -82,7 +82,7 @@ export const metadata: Metadata = {
     siteName: "Anviksha",
     title: "Anviksha — GGSIPU Results, SGPA/CGPA Calculator & Academic Analytics",
     description:
-      "GGSIPU results, SGPA/CGPA calculations, promotion standing, and academic analytics for IPU students. Check semester marks and generate consolidated transcripts.",
+      "GGSIPU results, SGPA/CGPA calculations, promotion standing, and academic analytics for IPU students. Check semester marks and generate grade sheets and transcripts.",
     images: [
       {
         url: "/og-image.png",
@@ -97,7 +97,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Anviksha — GGSIPU Results, SGPA/CGPA Calculator & Academic Analytics",
     description:
-      "GGSIPU results, SGPA/CGPA calculations, promotion standing, and academic analytics for IPU students. Check semester marks and generate consolidated transcripts.",
+      "GGSIPU results, SGPA/CGPA calculations, promotion standing, and academic analytics for IPU students. Check semester marks and generate grade sheets and transcripts.",
     images: ["/og-image.png"],
     creator: "@HimanshuSingh",
   },

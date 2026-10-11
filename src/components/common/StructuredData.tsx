@@ -17,7 +17,7 @@ export default function StructuredData() {
         "browserRequirements": "Requires HTML5 and JavaScript",
         "softwareVersion": version,
         "description":
-          "Privacy-first academic results and analytics platform for Guru Gobind Singh Indraprastha University (GGSIPU) students. Ordinance-based SGPA/CGPA calculations with verification badges, promotion monitoring under each programme's own ordinance, campus placement cutoff gatekeeper, and consolidated transcript generation.",
+          "Privacy-first academic results and analytics platform for Guru Gobind Singh Indraprastha University (GGSIPU) students. Ordinance-based SGPA/CGPA calculations with verification badges, promotion monitoring under each programme's own ordinance, campus placement cutoff gatekeeper, and semester grade sheet plus consolidated transcript generation.",
         "inLanguage": "en-IN",
         "isAccessibleForFree": true,
         "offers": {

@@ -5,7 +5,7 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.verce
 export const metadata: Metadata = {
   title: "Sign In — GGSIPU Results & Academic Portal",
   description:
-    "Sign in with your GGSIPU enrollment credentials to access semester examination results, SGPA/CGPA calculations, and consolidated academic transcripts.",
+    "Sign in with your GGSIPU enrollment credentials to access semester examination results, SGPA/CGPA calculations, semester grade sheets, and transcripts.",
   alternates: {
     canonical: `${appUrl}/login`,
   },
