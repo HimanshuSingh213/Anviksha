@@ -6,117 +6,78 @@ import { ArrowRight, Bell, ShieldCheck } from "lucide-react";
 import DossierCard from "./DossierCard";
 
 interface Cta { label: string; href: string; }
-interface Notice { title: string; url: string; }
-interface Props { isAuthenticated: boolean; cta: Cta; notices?: Notice[]; }
+interface Props { isAuthenticated: boolean; cta: Cta; }
 
-const GOLD_BTN =
-  "inline-flex items-center gap-2 rounded-md border border-gold bg-gold px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider text-background shadow-[0_0_24px_rgba(201,169,97,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:border-gold-bright hover:bg-gold-bright active:scale-95";
-
-const FALLBACK_CIRCULAR_TITLES = [
-  "Ordinance 11 verified", "Every affiliated institute", "15-min circulars sync",
-  "Zero-database architecture", "Clause-cited calculations", "Odd / even reappear planning",
-  "Placement cutoff benchmarks", "Universal programme support",
+const FACTS = [
+  { value: "under 10s", label: "from sign-in to full dossier" },
+  { value: "9", label: "ordinances in the verified registry" },
+  { value: "15 min", label: "circulars refresh cycle" },
+  { value: "0", label: "bytes of your data stored" },
 ];
 
-const STATS = [
-  { value: "10s", prefix: "under", label: "from sign-in to full dossier" },
-  { value: "9", prefix: "", label: "ordinances in the verified registry" },
-  { value: "15", prefix: "min", label: "circulars refresh cycle" },
-  { value: "0", prefix: "", label: "bytes of your data stored" },
-];
+export default function HeroSection({ isAuthenticated, cta }: Props) {
+  // Fast load sequence (~300ms): everything rises once, headlines first.
+  const EASE = "easeOut" as const;
 
-export default function HeroSection({ isAuthenticated, cta, notices = [] }: Props) {
-  const circularTitles = notices.length > 0 ? notices.slice(0, 8).map((notice) => notice.title) : FALLBACK_CIRCULAR_TITLES;
+  const rise = (delay: number) => ({
+    initial: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.3, ease: EASE, delay },
+  });
 
   return (
-    <>
-      <section className="relative w-full">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-          <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle,var(--color-border-strong)_1px,transparent_1px)] bg-size-[28px_28px] mask-[radial-gradient(ellipse_80%_60%_at_50%_0%,black_20%,transparent_100%)]" />
-          <div className="absolute -top-32 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-gold opacity-[0.07] blur-3xl" />
-        </div>
+    <section className="relative">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-14 px-4 pb-20 pt-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,35rem)] lg:gap-16 lg:pb-28 lg:pt-16">
+        <div className="flex flex-col">
+          <motion.p {...rise(0)} className="flex items-baseline justify-center gap-3 text-sm text-foreground-muted lg:justify-start">
+            <span lang="hi" className="text-lg text-foreground-secondary">अन्वीक्षा</span>
+            <span className="h-3 w-px translate-y-0.5 bg-border-strong" aria-hidden="true" />
+            <span className="font-mono text-xs">noun: analytical enquiry</span>
+          </motion.p>
 
-        <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-4 pb-20 pt-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14 lg:pb-24 lg:pt-14">
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="flex flex-col items-center space-y-6 text-center lg:items-start lg:text-left"
-          >
-            <p className="inline-flex items-center gap-2 rounded-full border border-border px-3 py-1 font-mono text-[11px] uppercase tracking-wider text-foreground-muted">
-              अन्वीक्षा · noun: analytical enquiry
-            </p>
-
-            <h1 className="w-full max-w-2xl text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl lg:max-w-lg">
+          <h1 className="mt-6 text-center text-[clamp(2.1rem,3.7vw,3.4rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-balance lg:text-left">
+            <motion.span {...rise(0)} className="block text-foreground">
               GGSIPU gives you a marksheet.
-              <span className="block text-gold">Anviksha gives you the verdict.</span>
-            </h1>
+            </motion.span>
+            <motion.span {...rise(0.08)} className="block text-gold">
+              Anviksha gives you the verdict.
+            </motion.span>
+          </h1>
 
-            <p className="w-full max-w-2xl text-base leading-7 text-foreground-secondary sm:text-lg lg:max-w-md lg:text-base">
-              A results engine for GGSIPU students: SGPA and CGPA under Ordinance 11, promotion standing against the 50% credit rule, placement eligibility at 60 / 65 / 70 / 75, and a consolidated master transcript, in under ten seconds.
-            </p>
+          <motion.p {...rise(0.12)} className="mt-6 max-w-xl text-center text-base leading-7 text-foreground-secondary lg:text-left">
+            A results engine for GGSIPU students: SGPA and CGPA under your programme&apos;s own ordinance, promotion standing against the credit rules, placement eligibility at 60 / 65 / 70 / 75, and semester grade sheets plus a consolidated master transcript, in under ten seconds.
+          </motion.p>
 
-            <div className="flex flex-wrap items-center justify-center gap-4 pt-2 lg:justify-start">
-              <Link href={cta.href} className={GOLD_BTN}>
-                {cta.label}
-                <ArrowRight size={14} aria-hidden="true" />
-              </Link>
-              <Link href="/notices" className="inline-flex items-center gap-1.5 font-mono text-xs font-semibold text-foreground-secondary transition-colors hover:text-gold">
-                <Bell size={13} aria-hidden="true" />
-                Live circulars
-                <ArrowRight size={12} aria-hidden="true" />
-              </Link>
-            </div>
-
-            <p className="flex items-center justify-center gap-2 font-mono text-xs text-foreground-muted lg:justify-start">
-              <ShieldCheck size={14} className="shrink-0 text-positive" aria-hidden="true" />
-              {isAuthenticated ? "Welcome back: your dossier is where you left it." : "No signup · Nothing stored · Under 10 seconds"}
-            </p>
+          <motion.div {...rise(0.16)} className="mt-8 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+            <Link href={cta.href} className="group inline-flex items-center justify-center gap-2 rounded-md border border-gold-bright/40 bg-linear-to-b from-gold-bright to-gold px-6 py-3 font-mono text-[13px] font-semibold whitespace-nowrap text-background shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_1px_2px_rgba(0,0,0,0.5)] transition-[filter,transform,color,border-color] duration-200 hover:brightness-110 active:scale-[0.98]">
+              {cta.label}
+              <ArrowRight size={14} aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-0.5" />
+            </Link>
+            <Link href="/notices" className="group inline-flex items-center justify-center gap-2 rounded-md border border-border-strong bg-surface px-6 py-3 font-mono text-[13px] font-semibold whitespace-nowrap text-foreground-secondary transition-[filter,transform,color,border-color] duration-200 hover:border-gold-border hover:text-gold active:scale-[0.98]">
+              <Bell size={13} aria-hidden="true" />
+              Live circulars
+            </Link>
           </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.15, ease: "easeOut" }}
-            className="w-full max-w-2xl mx-auto lg:max-w-none"
-          >
-            <DossierCard />
-          </motion.div>
-        </div>
-      </section>
+          <motion.p {...rise(0.2)} className="mt-5 flex items-center justify-center gap-2 font-mono text-xs text-foreground-muted lg:justify-start">
+            <ShieldCheck size={14} className="shrink-0 text-positive" aria-hidden="true" />
+            {isAuthenticated ? "Welcome back: your dossier is where you left it." : "No signup · Nothing stored · Under 10 seconds"}
+          </motion.p>
 
-      <section className="relative overflow-hidden border-y border-border bg-surface/60">
-        <Link
-          href="/notices"
-          className="absolute left-0 top-0 z-10 flex h-full items-center gap-1.5 border-r border-border bg-surface px-3 font-mono text-[11px] uppercase tracking-wider text-foreground-secondary transition-colors hover:text-gold sm:px-6"
-        >
-          <Bell size={13} aria-hidden="true" />
-          <span className="hidden sm:inline">View all circulars</span>
-          <span className="sm:hidden">Circulars</span>
-        </Link>
-        <div className="ticker-track flex w-max items-center gap-8 pl-28 pr-6 py-3 sm:pl-48 sm:pr-6" aria-hidden="true">
-          {circularTitles.concat(circularTitles).map((title, i) => (
-            <span key={i} className="flex items-center gap-8 whitespace-nowrap font-mono text-[11px] uppercase tracking-wider text-foreground-muted">
-              {title}
-              <span className="text-gold-dim">·</span>
-            </span>
-          ))}
+          <motion.dl {...rise(0.24)} className="mt-14 grid max-w-xl grid-cols-2 gap-x-8 lg:mt-auto lg:pt-14">
+            {FACTS.map((fact) => (
+              <div key={fact.label} className="flex flex-col-reverse justify-end border-t border-border py-4">
+                <dt className="mt-1 text-xs leading-5 text-foreground-secondary">{fact.label}</dt>
+                <dd className="tnum font-mono text-sm font-semibold text-foreground">{fact.value}</dd>
+              </div>
+            ))}
+          </motion.dl>
         </div>
-      </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20">
-        <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
-          {STATS.map((s, i) => (
-            <motion.div key={s.label} initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.4, delay: i * 0.06 }}>
-              <p className="tnum text-3xl font-semibold text-foreground sm:text-4xl">
-                {s.prefix ? <span className="mr-1 text-base font-normal text-foreground-muted">{s.prefix}</span> : null}
-                {s.value}
-              </p>
-              <p className="mt-2 font-mono text-xs leading-5 text-foreground-secondary">{s.label}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-    </>
+        <motion.div {...rise(0.1)} className="mx-auto w-full max-w-xl lg:max-w-none">
+          <DossierCard />
+        </motion.div>
+      </div>
+    </section>
   );
 }

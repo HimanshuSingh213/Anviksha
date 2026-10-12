@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { fetchGGSIPUNotices } from "@/helpers/notices";
 import HomeHeader from "@/components/home/HomeHeader";
 import HeroSection from "@/components/home/HeroSection";
+import NoticeTicker from "@/components/home/NoticeTicker";
 import FeaturesSection from "@/components/home/FeaturesSection";
 import CoverageSection from "@/components/home/CoverageSection";
 import TrustSection from "@/components/home/TrustSection";
@@ -15,14 +16,14 @@ const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.verce
 export const metadata: Metadata = {
   title: "Anviksha · GGSIPU Results, SGPA/CGPA Calculator & Academic Analytics",
   description:
-    "Check your GGSIPU result instantly and get SGPA/CGPA calculated under Ordinance 11, promotion standing, placement eligibility, and a consolidated transcript. Official ExamWeb data, nothing stored.",
+    "Check your GGSIPU result instantly and get SGPA/CGPA calculated under Ordinance 11, promotion standing, placement eligibility, plus semester grade sheets and transcripts. Official ExamWeb data, nothing stored.",
   alternates: {
     canonical: appUrl,
   },
   openGraph: {
     title: "Anviksha · GGSIPU Results, SGPA/CGPA Calculator & Academic Analytics",
     description:
-      "Your GGSIPU result, actually explained. SGPA/CGPA under Ordinance 11, promotion standing, placement eligibility, and consolidated transcripts, instantly after login.",
+      "Your GGSIPU result, actually explained. SGPA/CGPA under Ordinance 11, promotion standing, placement eligibility, and semester grade sheets plus transcripts, instantly after login.",
     url: appUrl,
     type: "website",
     siteName: "Anviksha",
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Anviksha · GGSIPU Results, SGPA/CGPA Calculator & Academic Analytics",
     description:
-      "Your GGSIPU result, actually explained. SGPA/CGPA under Ordinance 11, promotion standing, placement eligibility, and consolidated transcripts, instantly after login.",
+      "Your GGSIPU result, actually explained. SGPA/CGPA under Ordinance 11, promotion standing, placement eligibility, and semester grade sheets plus transcripts, instantly after login.",
     images: ["/favicon.png"],
   },
   robots: {
@@ -46,11 +47,11 @@ export default async function Home() {
   const cookieStore = await cookies();
   const isAuthenticated = Boolean(cookieStore.get("auth_session")?.value);
 
-  let heroNotices: { title: string; url: string }[] = [];
+  let notices: { title: string; url: string }[] = [];
   try {
-    heroNotices = (await fetchGGSIPUNotices()).slice(0, 8).map(({ title, url }) => ({ title, url }));
+    notices = (await fetchGGSIPUNotices()).slice(0, 8).map(({ title, url }) => ({ title, url }));
   } catch {
-    heroNotices = [];
+    notices = [];
   }
 
   const cta = isAuthenticated
@@ -78,9 +79,10 @@ export default async function Home() {
       />
       <HomeHeader isAuthenticated={isAuthenticated} />
       <main id="main-content" className="flex-1">
-        <HeroSection isAuthenticated={isAuthenticated} cta={cta} notices={heroNotices} />
+        <HeroSection isAuthenticated={isAuthenticated} cta={cta} />
+        <NoticeTicker notices={notices} />
         <FeaturesSection />
-        <CoverageSection />
+        <CoverageSection notices={notices} />
         <TrustSection />
         <FaqCtaSection cta={cta} />
       </main>

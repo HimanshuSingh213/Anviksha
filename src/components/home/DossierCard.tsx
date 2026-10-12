@@ -1,275 +1,264 @@
 "use client";
 
-import { useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useState, type KeyboardEvent } from "react";
+import { motion } from "framer-motion";
+import { PLACEMENT_CUTOFFS, SEMESTERS, TONE, calculateSgpa, divisionFor } from "./sample-data";
 
-const EXCELLENT = "text-grade-excellent border-grade-excellent-border bg-grade-excellent-surface";
-const GOOD = "text-grade-good border-grade-good-border bg-grade-good-surface";
-const AVERAGE = "text-grade-average border-grade-average-border bg-grade-average-surface";
-const PASS = "text-grade-pass border-grade-pass-border bg-grade-pass-surface";
-
-// Sample B.Tech CSE marksheet. The card runs the real Clause 13 formula on
-// these rows, so every number it shows is honestly computed.
-const SEMESTERS: Array<Array<{ code: string; name: string; credits: number; grade: string; gradePoints: number; gradeStyle: string }>> = [
-  [
-    { code: "ICT-101", name: "Engineering Mathematics I", credits: 4, grade: "A", gradePoints: 8, gradeStyle: GOOD },
-    { code: "ICT-103", name: "Programming Fundamentals", credits: 4, grade: "O", gradePoints: 10, gradeStyle: EXCELLENT },
-    { code: "ICT-105", name: "Digital Design", credits: 3, grade: "B+", gradePoints: 7, gradeStyle: GOOD },
-    { code: "ICT-151", name: "Physics Lab", credits: 1, grade: "A", gradePoints: 8, gradeStyle: GOOD },
-  ],
-  [
-    { code: "ICT-201", name: "Object Oriented Programming", credits: 4, grade: "A+", gradePoints: 9, gradeStyle: EXCELLENT },
-    { code: "ICT-203", name: "Discrete Structures", credits: 4, grade: "A", gradePoints: 8, gradeStyle: GOOD },
-    { code: "ICT-205", name: "Computer Architecture", credits: 3, grade: "B+", gradePoints: 7, gradeStyle: GOOD },
-    { code: "HS-201", name: "Humanities Elective", credits: 2, grade: "P", gradePoints: 4, gradeStyle: PASS },
-  ],
-  [
-    { code: "ICT-301", name: "Data Structures", credits: 4, grade: "A+", gradePoints: 9, gradeStyle: EXCELLENT },
-    { code: "ICT-303", name: "Operating Systems", credits: 4, grade: "A", gradePoints: 8, gradeStyle: GOOD },
-    { code: "ICT-305", name: "Theory of Computation", credits: 3, grade: "B", gradePoints: 6, gradeStyle: AVERAGE },
-    { code: "ICT-351", name: "Data Structures Lab", credits: 1, grade: "O", gradePoints: 10, gradeStyle: EXCELLENT },
-  ],
-  [
-    { code: "ICT-401", name: "DBMS", credits: 4, grade: "A", gradePoints: 8, gradeStyle: GOOD },
-    { code: "ICT-403", name: "Design & Analysis of Algorithms", credits: 4, grade: "A+", gradePoints: 9, gradeStyle: EXCELLENT },
-    { code: "ITME-401", name: "Microprocessors", credits: 3, grade: "B+", gradePoints: 7, gradeStyle: GOOD },
-    { code: "ICT-451", name: "DBMS Lab", credits: 1, grade: "A+", gradePoints: 9, gradeStyle: EXCELLENT },
-  ],
-];
-
-/**
- * Calculates Semester Grade Point Average (SGPA) for the interactive preview dossier:
- * SGPA = Σ(credits × gradePoints) / Σ credits, per Ordinance 11, Clause 13.
- *
- * @param subjects - Array of semester subjects with grades and points
- * @param credits - Array of credit weights corresponding to the subjects
- * @returns Computed SGPA value, or null if total credits is zero
- */
-function calculateSgpa(subjects: typeof SEMESTERS[number], credits: number[]) {
-  const qualityPoints = subjects.reduce((sum, subject, index) => sum + credits[index] * subject.gradePoints, 0);
-  const totalCredits = credits.reduce((sum, credit) => sum + credit, 0);
-  return totalCredits > 0 ? qualityPoints / totalCredits : null;
-}
+// Sparkline geometry. The y axis spans SGPA 6 to 9 so a rising term is visible.
+const SPARK_W = 184;
+const SPARK_H = 84;
+const SPARK_TOP = 12;
+const SPARK_BASE = 62;
+const sparkX = (index: number) => 12 + index * ((SPARK_W - 24) / (SEMESTERS.length - 1));
+const sparkY = (sgpa: number | null) => {
+  const clamped = Math.min(9, Math.max(6, sgpa ?? 6));
+  return SPARK_BASE - ((clamped - 6) / 3) * (SPARK_BASE - SPARK_TOP);
+};
 
 export default function DossierCard() {
-  const [activeSemester, setActiveSemester] = useState(3);
-  const [editableCredits, setEditableCredits] = useState<number[][]>(() =>
-    SEMESTERS.map((semester) => semester.map((subject) => subject.credits))
-  );
-  const prefersReducedMotion = useReducedMotion();
+  const [activeSemester, setActiveSemester] = useState(SEMESTERS.length - 1);
 
-  const semesterSgpas = SEMESTERS.map((semester, index) => calculateSgpa(semester, editableCredits[index]));
+  // SGPA per semester, straight from the sample rows.
+  const semesterSgpas = SEMESTERS.map((semester) => calculateSgpa(semester));
   const activeSgpa = semesterSgpas[activeSemester];
+  const activeSubjects = SEMESTERS[activeSemester];
 
   // CGPA = same weighting over every semester shown so far.
   let cumulativeQualityPoints = 0;
   let cumulativeCredits = 0;
   for (let semesterIndex = 0; semesterIndex <= activeSemester; semesterIndex++) {
-    SEMESTERS[semesterIndex].forEach((subject, subjectIndex) => {
-      cumulativeQualityPoints += editableCredits[semesterIndex][subjectIndex] * subject.gradePoints;
-      cumulativeCredits += editableCredits[semesterIndex][subjectIndex];
+    SEMESTERS[semesterIndex].forEach((subject) => {
+      cumulativeQualityPoints += subject.credits * subject.gradePoints;
+      cumulativeCredits += subject.credits;
     });
   }
   const cumulativeCgpa = cumulativeCredits > 0 ? cumulativeQualityPoints / cumulativeCredits : null;
+  const equivalentPercent = cumulativeCgpa === null ? null : cumulativeCgpa * 10;
+  const division = divisionFor(cumulativeCgpa);
+  const clearedCutoff = equivalentPercent === null ? undefined : PLACEMENT_CUTOFFS.find((cutoff) => equivalentPercent >= cutoff);
 
   // The selected semester belongs to one academic year; promotion needs 50%
   // of that year's credits earned (Clause 11.3(v)).
   const activeYear = Math.floor(activeSemester / 2);
   const yearSemesterIndexes = [activeYear * 2, activeYear * 2 + 1].filter((index) => index < SEMESTERS.length);
   const yearCreditsOffered = yearSemesterIndexes.reduce(
-    (sum, semesterIndex) => sum + editableCredits[semesterIndex].reduce((a, b) => a + b, 0),
+    (sum, semesterIndex) => sum + SEMESTERS[semesterIndex].reduce((a, subject) => a + subject.credits, 0),
     0
   );
   const yearCreditsEarned = yearSemesterIndexes.reduce(
     (sum, semesterIndex) =>
-      sum + SEMESTERS[semesterIndex].reduce((s, subject, subjectIndex) => s + (subject.grade === "F" ? 0 : editableCredits[semesterIndex][subjectIndex]), 0),
+      sum + SEMESTERS[semesterIndex].reduce((s, subject) => s + (subject.grade === "F" ? 0 : subject.credits), 0),
     0
   );
   const yearPercentEarned = yearCreditsOffered > 0 ? Math.round((yearCreditsEarned / yearCreditsOffered) * 100) : 0;
   const isPromoted = yearPercentEarned >= 50;
 
-  function changeCredits(targetSemesterIndex: number, targetSubjectIndex: number, amount: number) {
-    setEditableCredits((previousCredits) =>
-      previousCredits.map((semesterCredits, semesterIndex) =>
-        semesterIndex !== targetSemesterIndex
-          ? semesterCredits
-          : semesterCredits.map((credit, subjectIndex) =>
-              subjectIndex === targetSubjectIndex ? Math.min(6, Math.max(0, credit + amount)) : credit
-            )
-      )
-    );
+  function handleTabKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    const lastIndex = SEMESTERS.length - 1;
+    let next: number | null = null;
+    if (event.key === "ArrowRight") next = activeSemester === lastIndex ? 0 : activeSemester + 1;
+    if (event.key === "ArrowLeft") next = activeSemester === 0 ? lastIndex : activeSemester - 1;
+    if (event.key === "Home") next = 0;
+    if (event.key === "End") next = lastIndex;
+    if (next === null) return;
+    event.preventDefault();
+    setActiveSemester(next);
+    document.getElementById(`dossier-tab-${next}`)?.focus();
   }
 
-  return (
-    <div className="relative w-full overflow-hidden rounded-xl border border-border-strong bg-linear-to-b from-surface to-surface-deep shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8)]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-gold/40 to-transparent" aria-hidden="true" />
+  const sparkPoints = semesterSgpas.map((sgpa, index) => ({ x: sparkX(index), y: sparkY(sgpa) }));
+  const linePath = sparkPoints.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+  const fillPath = `${linePath} L${sparkPoints[sparkPoints.length - 1].x},${SPARK_BASE} L${sparkPoints[0].x},${SPARK_BASE} Z`;
 
-      <div className="p-5 sm:p-6">
-        <div className="flex items-center justify-between gap-3">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-foreground-muted">Semester dossier</span>
-          <span className="inline-flex items-center rounded-full border border-grade-excellent-border bg-grade-excellent-surface px-2 py-0.5 font-mono text-[10px] text-grade-excellent">
-            Computed live
+  return (
+    <div className="home-panel p-5 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="flex items-center gap-2.5">
+          <h2 className="whitespace-nowrap text-sm font-semibold text-foreground">Semester dossier</h2>
+          <span className="whitespace-nowrap rounded border border-border-strong px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-foreground-muted">
+            Sample data
           </span>
         </div>
+      </div>
 
-        <div className="mt-3 flex items-center justify-between gap-3">
-          <p className="font-mono text-xs text-foreground-secondary">B.Tech CSE · Sem {activeSemester + 1} · USICT</p>
-          <span className="font-mono text-[9px] uppercase tracking-wider text-foreground-muted">Sample data</span>
-        </div>
+      <p className="mt-2 text-[13px] text-foreground-secondary">B.Tech CSE · Sem {activeSemester + 1} · USICT</p>
 
-        <div role="tablist" aria-label="Sample semesters" className="mt-4 grid grid-cols-4 gap-1 rounded-lg border border-border bg-surface-deep p-1">
-          {SEMESTERS.map((_, semesterIndex) => {
-            const isSelected = activeSemester === semesterIndex;
-            return (
-              <button
-                key={semesterIndex}
-                type="button"
-                role="tab"
-                aria-selected={isSelected}
-                onClick={() => setActiveSemester(semesterIndex)}
-                className={`relative rounded-md px-2 py-1.5 font-mono text-[11px] font-semibold transition-colors ${
-                  isSelected ? "text-gold" : "text-foreground-muted hover:text-foreground-secondary"
-                }`}
-              >
-                {isSelected && (
-                  <motion.span
-                    layoutId="dossier-semester-tab"
-                    transition={{ duration: 0.25, ease: "easeOut" }}
-                    className="absolute inset-0 rounded-md border border-gold-border bg-gold-surface"
-                    aria-hidden="true"
-                  />
-                )}
-                <span className="relative">S{semesterIndex + 1}</span>
-              </button>
-            );
-          })}
-        </div>
+      <div
+        role="tablist"
+        aria-label="Sample semesters"
+        onKeyDown={handleTabKeyDown}
+        className="mt-5 flex border-b border-border"
+      >
+        {SEMESTERS.map((_, semesterIndex) => {
+          const isSelected = activeSemester === semesterIndex;
+          return (
+            <button
+              key={semesterIndex}
+              id={`dossier-tab-${semesterIndex}`}
+              type="button"
+              role="tab"
+              aria-selected={isSelected}
+              aria-controls="dossier-panel"
+              tabIndex={isSelected ? 0 : -1}
+              onClick={() => setActiveSemester(semesterIndex)}
+              className={`relative px-4 py-2.5 font-mono text-xs font-semibold transition-colors ${
+                isSelected ? "text-foreground" : "text-foreground-muted hover:text-foreground-secondary"
+              }`}
+            >
+              Sem {semesterIndex + 1}
+              {isSelected && (
+                <motion.span
+                  layoutId="home-dossier-tab"
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                  className="absolute inset-x-3 -bottom-px h-px bg-gold"
+                  aria-hidden="true"
+                />
+              )}
+            </button>
+          );
+        })}
+      </div>
 
-        <div className="mt-4 grid grid-cols-[1fr_auto] gap-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="analytics-card p-3 sm:p-4">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-foreground-muted">SGPA</p>
-              <motion.p
-                key={activeSgpa}
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
-                className="tnum mt-1.5 text-3xl font-semibold text-gold-bright sm:text-4xl"
-              >
-                {activeSgpa === null ? "--" : activeSgpa.toFixed(2)}
-              </motion.p>
-            </div>
-            <div className="analytics-card p-3 sm:p-4">
-              <p className="font-mono text-[10px] uppercase tracking-wider text-foreground-muted">CGPA</p>
-              <motion.p
-                key={cumulativeCgpa}
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
-                className="tnum mt-1.5 text-3xl font-semibold text-foreground sm:text-4xl"
-              >
-                {cumulativeCgpa === null ? "--" : cumulativeCgpa.toFixed(2)}
-              </motion.p>
-            </div>
+      <div id="dossier-panel" role="tabpanel" aria-labelledby={`dossier-tab-${activeSemester}`}>
+        {/* Headline numbers + trend */}
+        <div className="mt-6 grid grid-cols-2 items-end gap-x-6 gap-y-6 sm:grid-cols-[auto_auto_1fr]">
+          <div>
+            <p className="font-mono text-xs text-foreground-muted">SGPA</p>
+            <p className="tnum mt-1.5 text-4xl font-semibold leading-none tracking-[-0.04em] text-gold-bright sm:text-5xl">
+              {activeSgpa === null ? "--" : activeSgpa.toFixed(2)}
+            </p>
           </div>
-
-          <div className="flex h-full flex-col items-center justify-end gap-1.5 self-stretch" aria-hidden="true">
-            <div className="flex h-17.5 items-end gap-1.5">
-              {semesterSgpas.map((sgpa, index) => (
-                <div key={index} className="flex flex-col items-center gap-1">
-                  <motion.div
-                    animate={{ height: sgpa === null ? 2 : 14 + (sgpa / 10) * 56 }}
-                    transition={{ duration: prefersReducedMotion ? 0 : 0.4, ease: "easeOut" }}
-                    className={`w-2.5 rounded-t ${index === activeSemester ? "bg-gold" : "bg-gold-dim/50"}`}
-                  />
-                  <span className={`font-mono text-[8px] ${index === activeSemester ? "text-gold" : "text-foreground-muted"}`}>
-                    {index + 1}
-                  </span>
-                </div>
+          <div>
+            <p className="font-mono text-xs text-foreground-muted">
+              CGPA{equivalentPercent === null ? "" : ` · ${equivalentPercent.toFixed(1)}%`}
+            </p>
+            <p className="tnum mt-1.5 text-4xl font-semibold leading-none tracking-[-0.04em] text-foreground sm:text-5xl">
+              {cumulativeCgpa === null ? "--" : cumulativeCgpa.toFixed(2)}
+            </p>
+          </div>
+          <div className="col-span-2 sm:col-span-1">
+            <svg viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} className="h-20 w-full" role="img" aria-label="SGPA across the four sample semesters">
+              <defs>
+                <linearGradient id="home-spark-area" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--gold)" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="var(--gold)" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <line x1="0" x2={SPARK_W} y1={SPARK_BASE} y2={SPARK_BASE} stroke="var(--border-strong)" strokeWidth="1" />
+              <path d={fillPath} fill="url(#home-spark-area)" />
+              <path
+                d={linePath}
+                fill="none"
+                stroke="var(--gold)"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+              />
+              {sparkPoints.map((point, index) => (
+                <circle
+                  key={index}
+                  cx={point.x}
+                  cy={point.y}
+                  r={index === activeSemester ? 4 : 2.5}
+                  fill={index === activeSemester ? "var(--gold-bright)" : "var(--surface)"}
+                  stroke={index === activeSemester ? "none" : "var(--gold-dim)"}
+                  strokeWidth="1.5"
+                />
               ))}
-            </div>
-            <span className="font-mono text-[8px] uppercase tracking-wider text-foreground-muted">SGPA trend</span>
+              {sparkPoints.map((point, index) => (
+                <text
+                  key={`label-${index}`}
+                  x={point.x}
+                  y={SPARK_H - 4}
+                  textAnchor="middle"
+                  fontSize="9"
+                  className="font-mono"
+                  fill={index === activeSemester ? "var(--gold)" : "var(--foreground-muted)"}
+                >
+                  S{index + 1}
+                </text>
+              ))}
+            </svg>
           </div>
         </div>
 
-        <div className="mt-4 space-y-2">
-          <div className="flex items-center justify-between font-mono text-[10px] text-foreground-muted">
-            <span>Year {activeYear + 1} · 50% credit rule</span>
-            <span className={`font-mono font-bold tracking-wider ${isPromoted ? "text-grade-excellent" : "text-grade-fail"}`}>
+        {/* Promotion */}
+        <div className="mt-7">
+          <div className="flex items-center justify-between font-mono text-xs">
+            <span className="text-foreground-muted">Year {activeYear + 1} · 50% credit rule</span>
+            <span className={`font-bold tracking-wider ${isPromoted ? "text-grade-excellent" : "text-grade-fail"}`}>
               {isPromoted ? "PROMOTED" : "AT RISK"}
             </span>
           </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-hover">
+          <div className="relative mt-2.5 h-1.5 w-full rounded-full bg-border-strong">
             <motion.div
               animate={{ width: `${yearPercentEarned}%` }}
-              transition={{ duration: prefersReducedMotion ? 0 : 0.5, ease: "easeOut" }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
               className={`h-full rounded-full ${isPromoted ? "bg-grade-excellent" : "bg-grade-fail"}`}
             />
+            <span className="absolute -bottom-1 -top-1 left-1/2 w-px bg-foreground-secondary" aria-hidden="true" />
           </div>
-          <p className="font-mono text-[10px] text-foreground-secondary">
+          <p className="mt-2 text-xs text-foreground-secondary">
             {yearCreditsEarned} of {yearCreditsOffered} annual credits cleared
           </p>
         </div>
 
-        <div className="mt-4 border-t border-border pt-3">
-          <div className="flex items-center justify-between pb-1.5">
-            <p className="font-mono text-[9px] uppercase tracking-wider text-foreground-muted">Subjects · Clause 11.5 grades</p>
-            <p className="font-mono text-[9px] uppercase tracking-wider text-foreground-muted">Credits</p>
+        {/* Subjects */}
+        <div className="mt-6 border-t border-border pt-4">
+          <div className="flex items-center justify-between pb-1 font-mono text-[11px] text-foreground-muted">
+            <p>Subjects · Clause 11.5 grades</p>
+            <p>Credits</p>
           </div>
-
-          <div className="space-y-1.5">
-            {SEMESTERS[activeSemester].map((subject, subjectIndex) => (
-              <motion.div
+          <ul className="divide-y divide-border">
+            {activeSubjects.map((subject, subjectIndex) => (
+              <motion.li
                 key={`${activeSemester}-${subject.code}`}
-                initial={prefersReducedMotion ? false : { opacity: 0, y: 6 }}
+                initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, delay: subjectIndex * 0.04 }}
-                className="flex items-center justify-between gap-2 rounded-md border border-border bg-surface-deep px-2.5 py-2 font-mono text-[11px] transition-colors hover:border-border-strong"
+                transition={{ duration: 0.28, delay: subjectIndex * 0.04, ease: "easeOut" }}
+                className="flex items-center gap-3 py-2.5"
               >
-                <span className="min-w-0 flex-1 truncate text-foreground-secondary">
-                  <span className="text-foreground-muted">{subject.code}</span> · {subject.name}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] text-foreground-secondary">
+                    <span className="font-mono text-[11px] text-foreground-muted">{subject.code}</span>
+                    <span className="mx-1.5 text-foreground-muted" aria-hidden="true">·</span>
+                    {subject.name}
+                  </p>
+                </div>
+                <span className="tnum w-4 shrink-0 text-center text-[13px] text-foreground">
+                  {subject.credits}
                 </span>
-                <span className="flex shrink-0 items-center gap-1">
-                  <button
-                    type="button"
-                    aria-label={`Decrease credits for ${subject.name}`}
-                    onClick={() => changeCredits(activeSemester, subjectIndex, -1)}
-                    className="flex h-5 w-5 items-center justify-center rounded border border-border text-foreground-muted transition-colors hover:border-gold-border hover:text-gold"
-                  >
-                    −
-                  </button>
-                  <span className="tnum w-4 text-center text-foreground">{editableCredits[activeSemester][subjectIndex]}</span>
-                  <button
-                    type="button"
-                    aria-label={`Increase credits for ${subject.name}`}
-                    onClick={() => changeCredits(activeSemester, subjectIndex, 1)}
-                    className="flex h-5 w-5 items-center justify-center rounded border border-border text-foreground-muted transition-colors hover:border-gold-border hover:text-gold"
-                  >
-                    +
-                  </button>
+                <span className={`w-10 shrink-0 rounded-md px-2 py-1 text-center text-xs font-semibold ring-1 ring-inset ${TONE[subject.tone]}`}>
+                  {subject.grade}
                 </span>
-                <span className={`w-9 shrink-0 rounded border px-1.5 py-0.5 text-center ${subject.gradeStyle}`}>{subject.grade}</span>
-              </motion.div>
+              </motion.li>
             ))}
-          </div>
+          </ul>
         </div>
 
-        <div className="mt-4 flex flex-col gap-1.5 border-t border-border pt-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="font-mono text-[10px] text-foreground-muted">
-            Marksheets don&apos;t print credits. Adjust any value and SGPA recomputes.
-          </p>
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="rounded border border-gold-border bg-gold-surface px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-gold">
-              Estimate
-            </span>
-            <span className="font-mono text-[10px] text-foreground-muted">Ordinance 11, Cl. 13</span>
+        {/* Verdicts derived from the same numbers */}
+        <dl className="mt-5 grid grid-cols-2 divide-x divide-border border-y border-border">
+          <div className="py-3 pr-4">
+            <dt className="font-mono text-[11px] text-foreground-muted">Division</dt>
+            <dd className="mt-1 text-sm font-medium text-foreground">{division ?? "Not classified"}</dd>
           </div>
-        </div>
-
-        <p className="mt-3 font-mono text-[10px] text-foreground-muted">
-          Computed client-side · nothing leaves your session
-        </p>
+          <div className="py-3 pl-4">
+            <dt className="font-mono text-[11px] text-foreground-muted">Placement</dt>
+            <dd className="mt-1 text-sm font-medium text-foreground">
+              {clearedCutoff ? `Eligible · ≥ ${clearedCutoff}%` : "Below 60% cutoff"}
+            </dd>
+          </div>
+        </dl>
       </div>
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-foreground-muted">Sample numbers — sign in and your own SGPA recomputes live.</p>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="rounded border border-gold-border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide text-gold">Estimate</span>
+          <span className="whitespace-nowrap text-xs text-foreground-muted">Ordinance 11, Cl. 13</span>
+        </div>
+      </div>
+
+      <p className="mt-3 text-xs text-foreground-muted">Computed client-side · nothing leaves your session</p>
     </div>
   );
 }

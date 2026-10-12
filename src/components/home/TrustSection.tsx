@@ -1,8 +1,10 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import { motion, useScroll, useSpring } from "framer-motion";
 import { Calculator, Lock, RefreshCw, ShieldCheck, Timer } from "lucide-react";
 import SectionHead from "./SectionHead";
+import { TONE_COLOR, type Tone } from "./sample-data";
 
 const CLAUSES = [
   { ref: "Ord. 11, Cl. 13", text: "SGPA is the credit-weighted mean: Σ (credits × grade points) / Σ credits." },
@@ -11,15 +13,15 @@ const CLAUSES = [
   { ref: "Ord. 11, Cl. 11.3(v)", text: "Promotion requires earning at least 50% of the existing academic year's credits." },
 ];
 
-const GRADES = [
-  { label: "O", points: 10, cls: "text-grade-excellent bg-grade-excellent-surface border-grade-excellent-border" },
-  { label: "A+", points: 9, cls: "text-grade-excellent bg-grade-excellent-surface border-grade-excellent-border" },
-  { label: "A", points: 8, cls: "text-grade-good bg-grade-good-surface border-grade-good-border" },
-  { label: "B+", points: 7, cls: "text-grade-good bg-grade-good-surface border-grade-good-border" },
-  { label: "B", points: 6, cls: "text-grade-average bg-grade-average-surface border-grade-average-border" },
-  { label: "C", points: 5, cls: "text-grade-average bg-grade-average-surface border-grade-average-border" },
-  { label: "P", points: 4, cls: "text-grade-pass bg-grade-pass-surface border-grade-pass-border" },
-  { label: "F", points: 0, cls: "text-grade-fail bg-grade-fail-surface border-grade-fail-border" },
+const GRADES: { label: string; points: number; tone: Tone }[] = [
+  { label: "O", points: 10, tone: "excellent" },
+  { label: "A+", points: 9, tone: "excellent" },
+  { label: "A", points: 8, tone: "good" },
+  { label: "B+", points: 7, tone: "good" },
+  { label: "B", points: 6, tone: "average" },
+  { label: "C", points: 5, tone: "average" },
+  { label: "P", points: 4, tone: "pass" },
+  { label: "F", points: 0, tone: "fail" },
 ];
 
 const LIFECYCLE = [
@@ -30,61 +32,110 @@ const LIFECYCLE = [
   { icon: Timer, t: "Dissolve", d: "Logout destroys the session upstream and locally. Otherwise the session cookie expires on its own after one hour." },
 ];
 
+/** Grade scale drawn as bars, height = grade points. */
+function GradeLadder() {
+  return (
+    <div className="mt-6 flex h-56 items-end gap-2 sm:gap-3" role="img" aria-label="Official grade scale: O 10, A+ 9, A 8, B+ 7, B 6, C 5, P 4, F 0">
+      {GRADES.map((grade, index) => {
+        const color = TONE_COLOR[grade.tone];
+        return (
+          <div key={grade.label} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
+            <span className="tnum font-mono text-xs text-foreground-muted">{grade.points}</span>
+            <motion.div
+              initial={{ height: 0 }}
+              whileInView={{ height: `${Math.max(grade.points * 8.5, 3)}%` }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.9, delay: index * 0.06, ease: "easeOut" }}
+              className="w-full rounded-t-sm"
+              style={{
+                background: `color-mix(in srgb, ${color} 26%, transparent)`,
+                borderTop: `2px solid ${color}`,
+              }}
+            />
+            <span className="text-sm font-semibold" style={{ color }}>{grade.label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Privacy lifecycle: a line that fills as you scroll through the five steps. */
+function Lifecycle() {
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 75%", "end 55%"] });
+  const scale = useSpring(scrollYProgress, { stiffness: 120, damping: 28, mass: 0.4 });
+
+  return (
+    <div ref={ref} className="relative mt-14">
+      {/* Rails: horizontal on desktop, vertical on small screens */}
+      <div className="absolute bottom-2 left-5 top-2 w-px bg-border-strong lg:hidden" aria-hidden="true">
+        <motion.div style={{ scaleY: scale, transformOrigin: "top" }} className="h-full w-full bg-gold" />
+      </div>
+      <div className="absolute left-2 right-0 top-[7px] hidden h-px bg-border-strong lg:block" aria-hidden="true">
+        <motion.div style={{ scaleX: scale, transformOrigin: "left" }} className="h-full w-full bg-gold" />
+      </div>
+
+      <ol className="relative grid gap-10 lg:grid-cols-5 lg:gap-8">
+        {LIFECYCLE.map((step, index) => (
+          <li key={step.t} className="flex gap-5 lg:block">
+            <span className="flex w-10 shrink-0 justify-center pt-1.5 lg:block lg:w-auto lg:pt-0">
+              <span className="block size-3.5 rounded-full border-2 border-gold bg-background ring-4 ring-background" aria-hidden="true" />
+            </span>
+            <div className="lg:mt-6">
+              <p className="tnum font-mono text-xs text-gold">{String(index + 1).padStart(2, "0")}</p>
+              <h3 className="mt-2 flex items-center gap-2 text-base font-semibold text-foreground">
+                <step.icon size={15} className="shrink-0 text-foreground-muted" aria-hidden="true" />
+                {step.t}
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-foreground-secondary">{step.d}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 export default function TrustSection() {
   return (
-    <div className="w-full border-t border-border bg-surface/40">
-      <section id="ordinance" className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
+    <div className="relative w-full">
+      <section id="ordinance" className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
         <SectionHead
-          index="03"
           kicker="Built on the actual ordinances"
           title="Cited, not approximated."
           desc="Every grade, average and division follows the official GGSIPU semester framework. The scale below is the university's own."
         />
-        <div className="mt-10 grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16">
-          <div className="space-y-3">
-            {CLAUSES.map((c, i) => (
-              <motion.div key={c.ref} initial={{ opacity: 0, x: -10 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.35, delay: i * 0.06 }} className="flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-4 border-l border-border-strong py-1 pl-4 sm:pl-5">
-                <p className="shrink-0 pt-0.5 font-mono text-[11px] uppercase tracking-wider text-gold sm:w-40">{c.ref}</p>
-                <p className="text-sm leading-6 text-foreground-secondary">{c.text}</p>
-              </motion.div>
-            ))}
-          </div>
-          <div>
-            <p className="font-mono text-[11px] uppercase tracking-wider text-foreground-muted">Official grade scale</p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {GRADES.map((g) => (
-                <motion.span key={g.label} whileHover={{ scale: 1.08 }} className={"tnum cursor-default rounded-md border px-3.5 py-2 font-mono text-sm font-bold " + g.cls}>
-                  {g.label} · {g.points}
-                </motion.span>
+        <div className="mt-14 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="home-panel p-6 sm:p-8">
+            <ul className="divide-y divide-border">
+              {CLAUSES.map((clause) => (
+                <li key={clause.ref} className="flex flex-col gap-1.5 py-5 first:pt-0 last:pb-0 sm:flex-row sm:gap-6">
+                  <p className="shrink-0 pt-0.5 font-mono text-xs text-gold sm:w-40">{clause.ref}</p>
+                  <p className="text-[15px] leading-7 text-foreground-secondary">{clause.text}</p>
+                </li>
               ))}
-            </div>
-            <p className="mt-4 font-mono text-[11px] leading-5 text-foreground-muted">
+            </ul>
+          </div>
+
+          <div className="home-panel p-6 sm:p-8">
+            <p className="font-mono text-xs text-foreground-muted">Official grade scale</p>
+            <GradeLadder />
+            <p className="mt-5 border-t border-border pt-4 font-mono text-xs leading-5 text-foreground-muted">
               O 10 · A+ 9 · A 8 · B+ 7 · B 6 · C 5 · P 4 · F 0 · divisions auto-classified from CGPA.
             </p>
           </div>
         </div>
       </section>
 
-      <section id="privacy" className="w-full border-t border-border">
-        <div className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-24">
+      <section id="privacy" className="mx-auto w-full max-w-7xl px-4 pb-14 sm:px-6 sm:pb-20">
+        <div className="border-t border-border pt-14 sm:pt-20">
           <SectionHead
-            index="04"
             kicker="Privacy is the feature"
             title="A proxy, not a platform."
             desc="Anviksha has no database. Your session lasts only until you log out or the one-hour cookie expires."
           />
-          <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-5">
-            {LIFECYCLE.map((s, i) => (
-              <motion.div key={s.t} initial={{ opacity: 0, y: 14 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.35, delay: i * 0.07 }} className="border-t border-border-strong pt-5">
-                <div className="flex items-center gap-2">
-                  <span className="tnum font-mono text-[10px] text-gold">0{i + 1}</span>
-                  <s.icon size={15} className="text-foreground-secondary" aria-hidden="true" />
-                </div>
-                <h3 className="mt-3 text-sm font-semibold text-foreground">{s.t}</h3>
-                <p className="mt-1.5 text-xs leading-5 text-foreground-secondary">{s.d}</p>
-              </motion.div>
-            ))}
-          </div>
+          <Lifecycle />
         </div>
       </section>
     </div>
