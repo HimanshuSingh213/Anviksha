@@ -8,7 +8,6 @@ import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Percent, BarChart2, BookOpen, Pencil, ArrowRight, FileDown } from "lucide-react";
 import { toast } from "sonner";
 import Skeleton from "@/components/dashboard/Skeleton";
-import AppNavbar from "@/components/common/AppNavbar";
 import useResultStore from "@/store/result-store";
 import type { EngineResult, ResultData } from "@/types/result";
 import { ProvenanceChip } from "@/components/analytics/ProvenanceChip";
@@ -376,7 +375,6 @@ function DashboardView({ engine, loading, error }: DashboardViewProps) {
             {/* Ambient background glow */}
             <div className="pointer-events-none absolute -top-32 -left-24 h-96 w-96 rounded-full bg-gold opacity-[0.06] blur-3xl" aria-hidden="true" />
 
-            <AppNavbar profile={profile} />
             <CreditTipModal />
 
             <main id="main-content" className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">

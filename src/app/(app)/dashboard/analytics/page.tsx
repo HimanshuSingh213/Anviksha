@@ -5,9 +5,8 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { TrendingUp, ShieldCheck, Briefcase, Layers, FlaskConical, AlertTriangle, X } from "lucide-react";
 import useResultStore from "@/store/result-store";
-import type { EngineResult, ExamWebProfile } from "@/types/result";
+import type { EngineResult } from "@/types/result";
 import Skeleton from "@/components/dashboard/Skeleton";
-import AppNavbar from "@/components/common/AppNavbar";
 import SemesterSelector from "@/components/analytics/SemesterSelector";
 import AnalyticsOverview from "@/components/analytics/AnalyticsOverview";
 import DivisionClassificationCard from "@/components/analytics/DivisionClassificationCard";
@@ -54,7 +53,6 @@ function AnalyticsView({ engine }: AnalyticsViewProps) {
     const [showHighWarning, setShowHighWarning] = useState<boolean>(true);
 
     const { analytics, programme, subjectResults, warnings } = engine;
-    const profile: ExamWebProfile | null | undefined = useMemo(() => engine.profile, [engine.profile]);
     const isTech = programme.isTech;
     const isAnnual = programme.examinationSystem === "ANNUAL";
 
@@ -186,7 +184,6 @@ function AnalyticsView({ engine }: AnalyticsViewProps) {
 
     return (
         <div className="min-h-screen bg-background text-foreground">
-            <AppNavbar profile={profile} />
 
             <main id="main-content" className="mx-auto max-w-7xl space-y-8 px-4 py-8 sm:px-6 sm:py-10 lg:space-y-10">
 

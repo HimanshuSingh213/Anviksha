@@ -1,6 +1,5 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
 import { ArrowLeft, Bell, RefreshCw } from "lucide-react";
 import { fetchGGSIPUNotices } from "@/helpers/notices";
 import NoticesClientView from "@/components/notices/NoticesClientView";
@@ -80,42 +79,6 @@ export default async function NoticesPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-
-      {/* Header */}
-      <header className="sticky top-(--status-strip-offset) z-30 border-b border-border-strong bg-surface-deep/90 backdrop-blur-md">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-foreground-secondary hover:text-foreground transition-colors group"
-          >
-            <Image
-              src="/icon-192.png"
-              alt="Anviksha"
-              width={24}
-              height={24}
-              className="rounded object-contain opacity-90 group-hover:opacity-100 transition-opacity"
-            />
-            <span className="font-mono text-sm font-bold tracking-wider text-foreground">
-              ANVIKSHA
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <Link
-              href="/calculations"
-              className="text-xs font-mono text-foreground-muted hover:text-gold transition-colors hidden sm:inline"
-            >
-              Calculations Guide
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-black text-xs font-mono font-bold hover:bg-neutral-200 transition-colors uppercase tracking-wider shadow-xs"
-            >
-              <span>Student Login</span>
-            </Link>
-          </div>
-        </div>
-      </header>
 
       {/* Main Content */}
       <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6">

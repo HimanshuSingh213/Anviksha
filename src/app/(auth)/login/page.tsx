@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
 import Link from "next/link";
 import {
   Hash,
@@ -10,7 +9,6 @@ import {
   ChevronDown,
   Info,
   ShieldCheck,
-  Bell,
 } from "lucide-react";
 import { LoginForm } from "@/components/login/LoginForm";
 
@@ -64,54 +62,16 @@ export default function LoginPage() {
         ))}
       </div>
 
-      {/* Header */}
-      <header className="relative z-10 border-b border-border bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link href="/" title="Go to Homepage" className="flex items-center gap-3 group cursor-pointer">
-            <div className="h-9 w-9 overflow-hidden rounded-lg border border-border shadow-sm transition-opacity group-hover:opacity-85">
-              <Image
-                src="/favicon.png"
-                alt="Anviksha"
-                width={36}
-                height={36}
-                className="object-cover"
-                priority
-              />
-            </div>
-            <div>
-              <span className="font-mono text-xs font-semibold tracking-widest text-foreground transition-colors group-hover:text-gold">
-                ANVIKSHA
-              </span>
-              <p className="font-mono text-[10px] text-foreground-muted">
-                GGSIPU Exam Portal
-              </p>
-            </div>
-          </Link>
-
-          <div className="flex items-center gap-2.5">
-            <Link
-              href="/notices"
-              title="Live GGSIPU Result Circulars & Date-Sheets"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors shadow-xs"
-            >
-              <Bell size={13} className="text-gold" />
-              <span className="hidden sm:inline">Exam Circulars</span>
-            </Link>
-
-            <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-foreground-muted">
-              <ShieldCheck size={14} className="text-positive" />
-              <span className="font-mono text-[11px]">Secure Access</span>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main Container */}
       <main id="main-content" className="relative z-10 flex flex-1 items-center justify-center px-4 py-10">
         <div className="w-full max-w-md">
 
           {/* Title */}
           <div className="mb-6 text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-foreground-muted">
+              <ShieldCheck size={14} className="text-positive" />
+              <span className="font-mono text-[11px]">Secure Access</span>
+            </div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
               Sign In to <span className="text-gold">Exam Portal</span>
             </h1>

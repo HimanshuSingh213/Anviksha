@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Metadata } from "next";
-import { MessageSquare, ShieldCheck, Home, Bell } from "lucide-react";
+import { MessageSquare, ShieldCheck } from "lucide-react";
 import ReportForm from "@/components/report/ReportForm";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.vercel.app";
@@ -82,50 +81,6 @@ export default function ReportPage() {
         <div className="absolute -top-32 -left-20 h-96 w-96 rounded-full bg-gold opacity-10 blur-3xl" />
         <div className="absolute top-1/2 -right-20 h-96 w-96 rounded-full bg-cat-blue opacity-10 blur-3xl" />
       </div>
-
-      {/* Header Navbar */}
-      <header className="sticky top-(--status-strip-offset) z-30 border-b border-border-strong bg-surface-deep/85 backdrop-blur-xl">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          <Link href="/" title="Go to Homepage" className="flex items-center gap-2 shrink-0 group">
-            <Image
-              src="/navbar-logo.png"
-              alt="Anviksha"
-              width={150}
-              height={40}
-              className="object-contain h-7.5 w-auto transition-opacity group-hover:opacity-85"
-              priority
-            />
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <Link
-              href="/notices"
-              title="Live GGSIPU Result Circulars & Date-Sheets"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors shadow-xs shrink-0"
-            >
-              <Bell size={13} className="text-gold" />
-              <span className="hidden sm:inline">Exam Circulars</span>
-            </Link>
-
-            <Link
-              href="/calculations"
-              title="How Calculations Work"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors shadow-xs shrink-0"
-            >
-              <span className="hidden sm:inline">Calculations</span>
-            </Link>
-
-            <Link
-              href="/"
-              title="Go to Homepage"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors cursor-pointer shrink-0 shadow-xs"
-            >
-              <Home size={13} />
-              <span className="hidden sm:inline">Home</span>
-            </Link>
-          </div>
-        </div>
-      </header>
 
       {/* Main Content Area */}
       <main id="main-content" className="relative z-10 flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 space-y-6">

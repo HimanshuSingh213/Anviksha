@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Metadata } from "next";
 import {
   GraduationCap,
@@ -12,8 +11,6 @@ import {
   Briefcase,
   Layers,
   HelpCircle,
-  Bell,
-  Home,
   ShieldCheck,
 } from "lucide-react";
 
@@ -153,52 +150,6 @@ export default function CalculationsPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(CALCULATIONS_JSON_LD) }}
       />
-      {/* Header */}
-      <header className="sticky top-(--status-strip-offset) z-30 border-b border-border-strong bg-surface-deep/90 backdrop-blur-md">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-foreground-secondary hover:text-foreground transition-colors group"
-          >
-            <Image
-              src="/navbar-logo.png"
-              alt="Anviksha"
-              width={140}
-              height={38}
-              className="object-contain h-7 w-auto transition-opacity group-hover:opacity-85"
-            />
-          </Link>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              href="/notices"
-              title="Live GGSIPU Result Circulars & Date-Sheets"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors shadow-xs"
-            >
-              <Bell size={13} className="text-gold" />
-              <span className="hidden sm:inline">Exam Circulars</span>
-            </Link>
-
-            <Link
-              href="/"
-              title="Go to Homepage"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-border-strong bg-surface text-xs font-mono font-semibold text-foreground-secondary hover:text-gold hover:border-gold-border transition-colors shadow-xs"
-            >
-              <Home size={13} />
-              <span className="hidden sm:inline">Home</span>
-            </Link>
-
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded bg-white text-black text-xs font-mono font-bold hover:bg-neutral-200 transition-colors uppercase tracking-wider shadow-xs shrink-0"
-            >
-              <span className="hidden sm:inline">Student Login</span>
-              <span className="sm:hidden">Login</span>
-            </Link>
-          </div>
-        </div>
-      </header>
-
       {/* Hero Banner */}
       <section className="border-b border-border-strong bg-surface-deep py-10 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto space-y-3">

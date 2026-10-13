@@ -6,6 +6,7 @@ import ErrorBoundary from "@/components/common/ErrorBoundary";
 import StructuredData from "@/components/common/StructuredData";
 import FloatingReportButton from "@/components/common/FloatingReportButton";
 import SystemStatusStrip from "@/components/common/SystemStatusStrip";
+import AppNavbar from "@/components/common/AppNavbar";
 import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
@@ -155,6 +156,7 @@ export default function RootLayout({
         </a>
         <StructuredData />
         <SystemStatusStrip />
+        <AppNavbar />
         <ErrorBoundary>{children}</ErrorBoundary>
         <FloatingReportButton />
         <Toaster theme="dark" position="bottom-right" richColors />

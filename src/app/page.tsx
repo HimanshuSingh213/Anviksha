@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { fetchGGSIPUNotices } from "@/helpers/notices";
-import HomeHeader from "@/components/home/HomeHeader";
 import HeroSection from "@/components/home/HeroSection";
 import NoticeTicker from "@/components/home/NoticeTicker";
 import FeaturesSection from "@/components/home/FeaturesSection";
@@ -77,7 +76,6 @@ export default async function Home() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
-      <HomeHeader isAuthenticated={isAuthenticated} />
       <main id="main-content" className="flex-1">
         <HeroSection isAuthenticated={isAuthenticated} cta={cta} />
         <NoticeTicker notices={notices} />
