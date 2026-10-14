@@ -3,15 +3,23 @@ import type { Metadata } from "next";
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.vercel.app";
 
 export const metadata: Metadata = {
-  title: "Sign In — GGSIPU Results & Academic Portal",
+  title: "Anviksha Sign In — Use Your GGSIPU ExamWeb Login",
   description:
-    "Sign in with your GGSIPU enrollment credentials to access semester examination results, SGPA/CGPA calculations, semester grade sheets, and transcripts.",
+    "Sign in to Anviksha with your existing GGSIPU ExamWeb enrollment number and password. Live CAPTCHA, direct university connection, no new account and no passwords saved.",
   alternates: {
     canonical: `${appUrl}/login`,
   },
+  openGraph: {
+    title: "Anviksha Sign In — Use Your GGSIPU ExamWeb Login",
+    description:
+      "No new account. Use your ExamWeb enrollment number and password with a live CAPTCHA to open your result dossier.",
+    url: `${appUrl}/login`,
+    type: "website",
+    siteName: "Anviksha",
+  },
   robots: {
-    index: false,
-    follow: false,
+    index: true,
+    follow: true,
   },
 };
 

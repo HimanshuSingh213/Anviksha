@@ -9,146 +9,157 @@ import {
   ChevronDown,
   Info,
   ShieldCheck,
+  Bell,
+  FileText,
 } from "lucide-react";
 import { LoginForm } from "@/components/login/LoginForm";
+import HomeFooter from "@/components/home/HomeFooter";
 
-// Floating grade pills in background
-const FLOATING_PILLS = [
-  { label: "O · 10 pts", cls: "text-grade-excellent bg-grade-excellent-surface border-grade-excellent-border top-[12%] left-[4%]", delay: 0 },
-  { label: "A+ · 9 pts", cls: "text-grade-excellent bg-grade-excellent-surface border-grade-excellent-border top-[28%] left-[3%]", delay: 0.3 },
-  { label: "SGPA 8.9 ▲", cls: "text-gold bg-gold-surface border-gold-border top-[48%] left-[5%]", delay: 0.6 },
-  { label: "Sem 6", cls: "text-cat-blue bg-cat-blue-surface border-cat-blue-border top-[68%] left-[4%]", delay: 0.9 },
-  { label: "B+ · 7 pts", cls: "text-grade-good bg-grade-good-surface border-grade-good-border top-[16%] right-[4%]", delay: 0.2 },
-  { label: "Rank #3", cls: "text-cat-violet bg-cat-violet-surface border-cat-violet-border top-[34%] right-[3%]", delay: 0.5 },
-  { label: "9.1 CGPA", cls: "text-gold-bright bg-gold-surface border-gold-border top-[54%] right-[4%]", delay: 0.8 },
-  { label: "0 Backlogs", cls: "text-grade-excellent bg-grade-excellent-surface border-grade-excellent-border top-[74%] right-[3%]", delay: 1.1 },
+// What to know before signing in. Practical checklist, not the homepage feature list.
+const STEPS = [
+  {
+    title: "Keep these ready",
+    body: "11-digit enrollment number, ExamWeb password, and one minute for the CAPTCHA.",
+  },
+  {
+    title: "Direct ExamWeb pass-through",
+    body: "Credentials go straight to examweb.ggsipu.ac.in over a short live session.",
+  },
+  {
+    title: "If sign in fails",
+    body: "Refresh the CAPTCHA, retry once, then reset the password on ExamWeb itself.",
+  },
 ];
 
 export default function LoginPage() {
   const [showHelper, setShowHelper] = useState(false);
 
+  // Same fast rise as the homepage hero.
+  const rise = (delay: number) => ({
+    initial: { opacity: 0, y: 12 },
+    animate: { opacity: 1, y: 0 },
+    transition: { duration: 0.3, ease: "easeOut" as const, delay },
+  });
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-background text-foreground">
-      {/* Background Dot Grid */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        <div className="absolute inset-0 opacity-40 bg-[radial-gradient(circle,var(--color-border-strong)_1.5px,transparent_1.5px)] bg-size-[28px_28px] mask-[radial-gradient(ellipse_80%_80%_at_50%_50%,black_30%,transparent_100%)]" />
-      </div>
+    <div className="relative flex min-h-screen flex-col overflow-x-clip bg-background text-foreground">
+      <main id="main-content" className="flex-1">
+        <section className="relative">
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-14 px-4 pb-20 pt-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)] lg:gap-16 lg:pb-28 lg:pt-16">
+            {/* Left copy */}
+            <div className="flex flex-col">
+              <motion.p {...rise(0)} className="flex items-baseline justify-center gap-3 text-sm text-foreground-muted lg:justify-start">
+                <span lang="hi" className="text-lg text-foreground-secondary">अन्वीक्षा</span>
+                <span className="h-3 w-px translate-y-0.5 bg-border-strong" aria-hidden="true" />
+                <span className="font-mono text-xs">noun: analytical enquiry</span>
+              </motion.p>
 
-      {/* Ambient background glows */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        <div className="absolute -top-32 -left-20 h-96 w-96 rounded-full bg-gold opacity-20 filter blur-3xl" />
-        <div className="absolute top-1/3 -right-20 h-96 w-96 rounded-full bg-cat-violet opacity-10 filter blur-3xl" />
-      </div>
+              <h1 className="mt-6 text-center text-[clamp(2.1rem,3.7vw,3.4rem)] font-semibold leading-[1.08] tracking-[-0.03em] text-balance lg:text-left">
+                <motion.span {...rise(0)} className="block text-foreground">
+                  Use your ExamWeb login.
+                </motion.span>
+                <motion.span {...rise(0.08)} className="block text-gold">
+                  Nothing new to register.
+                </motion.span>
+              </h1>
 
-      {/* Floating Grade Badges in Background */}
-      <div className="pointer-events-none absolute inset-0 hidden xl:block overflow-hidden">
-        {FLOATING_PILLS.map((pill, idx) => (
-          <motion.div
-            key={idx}
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: pill.delay, duration: 0.6 }}
-            className={`absolute border rounded-lg px-3 py-1 text-xs font-mono font-medium backdrop-blur-md shadow-md ${pill.cls}`}
-          >
-            <motion.span
-              animate={{ y: [0, -6, 0] }}
-              transition={{ repeat: Infinity, duration: 3.5 + idx * 0.4, ease: "easeInOut" }}
-              className="block"
-            >
-              {pill.label}
-            </motion.span>
-          </motion.div>
-        ))}
-      </div>
+              <motion.p {...rise(0.12)} className="mt-6 max-w-xl text-center text-base leading-7 text-foreground-secondary lg:text-left">
+                Anviksha has no accounts of its own. Sign in with the same enrollment number and
+                password you use on the university portal, solve the live CAPTCHA, and your
+                session opens the dossier on the next screen.
+              </motion.p>
 
-      {/* Main Container */}
-      <main id="main-content" className="relative z-10 flex flex-1 items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md">
+              <motion.ol {...rise(0.16)} className="mt-10 grid max-w-xl grid-cols-1 gap-x-8 sm:grid-cols-3 lg:mt-12">
+                {STEPS.map((step, index) => (
+                  <li key={step.title} className="border-t border-border py-4">
+                    <p className="font-mono text-xs font-semibold text-gold">0{index + 1}</p>
+                    <p className="mt-2 text-sm font-medium text-foreground">{step.title}</p>
+                    <p className="mt-1 text-xs leading-5 text-foreground-secondary">{step.body}</p>
+                  </li>
+                ))}
+              </motion.ol>
 
-          {/* Title */}
-          <div className="mb-6 text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-foreground-muted">
-              <ShieldCheck size={14} className="text-positive" />
-              <span className="font-mono text-[11px]">Secure Access</span>
+              <motion.p {...rise(0.2)} className="mt-6 flex items-center justify-center gap-2 font-mono text-xs text-foreground-muted lg:justify-start">
+                <ShieldCheck size={14} className="shrink-0 text-positive" aria-hidden="true" />
+                Direct to ExamWeb · No password saved · Auto sign-out
+              </motion.p>
+
+              <motion.div {...rise(0.24)} className="mt-6 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
+                <Link href="/notices" className="group inline-flex items-center justify-center gap-2 rounded-md border border-border-strong bg-surface px-5 py-2.5 font-mono text-[13px] font-semibold whitespace-nowrap text-foreground-secondary transition-[filter,transform,color,border-color] duration-200 hover:border-gold-border hover:text-gold active:scale-[0.98]">
+                  <Bell size={13} aria-hidden="true" />
+                  Live circulars
+                </Link>
+                <Link href="/calculations" className="group inline-flex items-center justify-center gap-2 rounded-md border border-border-strong bg-surface px-5 py-2.5 font-mono text-[13px] font-semibold whitespace-nowrap text-foreground-secondary transition-[filter,transform,color,border-color] duration-200 hover:border-gold-border hover:text-gold active:scale-[0.98]">
+                  <FileText size={13} aria-hidden="true" />
+                  Calculation Guide
+                </Link>
+              </motion.div>
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">
-              Sign In to <span className="text-gold">Exam Portal</span>
-            </h1>
-            <p className="mt-2 text-sm text-foreground-secondary">
-              Enter your GGSIPU credentials to fetch your semester results.
-            </p>
+
+            {/* Right card */}
+            <motion.div {...rise(0.1)} className="mx-auto w-full max-w-xl lg:max-w-none">
+              <div className="home-panel p-5 sm:p-6">
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                  <h2 className="text-sm font-semibold text-foreground">Exam portal sign in</h2>
+                  <span className="whitespace-nowrap rounded border border-border-strong px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-foreground-muted">
+                    Session only
+                  </span>
+                </div>
+                <p className="mt-2 text-[13px] text-foreground-secondary">Live connection to examweb.ggsipu.ac.in</p>
+
+                {/* Credentials helper */}
+                <div className="mt-5 overflow-hidden rounded-lg border border-border bg-background/40">
+                  <button
+                    type="button"
+                    onClick={() => setShowHelper(!showHelper)}
+                    className="flex w-full items-center justify-between px-4 py-3 text-xs font-semibold text-foreground-secondary transition hover:text-foreground"
+                  >
+                    <span className="flex items-center gap-2">
+                      <Info size={14} className="text-gold" />
+                      Login Credentials & Default Password Guide
+                    </span>
+                    <motion.span
+                      animate={{ rotate: showHelper ? 180 : 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                      <ChevronDown size={16} />
+                    </motion.span>
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {showHelper && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: "easeOut" }}
+                        className="overflow-hidden"
+                      >
+                        <div className="border-t border-border px-4 py-3 text-xs leading-relaxed text-foreground-secondary">
+                          <p className="mb-2 flex items-center gap-1.5 font-medium text-foreground">
+                            <Hash size={14} className="text-gold" />
+                            <strong className="text-gold">Username: </strong>Your 11-digit GGSIPU Enrollment Number.
+                          </p>
+                          <p className="flex items-center gap-1.5 font-medium text-foreground">
+                            <KeyRound size={14} className="text-gold" />
+                            <strong className="text-gold">Default Password: </strong>Your father&apos;s full name with spaces between first, middle, and surname (if not changed by you).
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <div className="mt-5 border-t border-border pt-5">
+                  <LoginForm />
+                </div>
+              </div>
+              <p className="mt-4 text-center text-xs text-foreground-muted lg:text-left">Closes with your session · passwords are never saved</p>
+            </motion.div>
           </div>
-
-          {/* Collapsible Login Credentials Guide Bar */}
-          <div className="mb-5 rounded-xl border border-border-strong bg-surface backdrop-blur-md overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setShowHelper(!showHelper)}
-              suppressHydrationWarning
-              className="flex w-full items-center justify-between px-4 py-3 text-xs font-semibold text-foreground-secondary hover:text-foreground transition"
-            >
-              <span className="flex items-center gap-2">
-                <Info size={14} className="text-gold" />
-                Login Credentials & Default Password Guide
-              </span>
-              <motion.span
-                animate={{ rotate: showHelper ? 180 : 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-              >
-                <ChevronDown size={16} />
-              </motion.span>
-            </button>
-
-            {/* info roller div */}
-            <AnimatePresence initial={false}>
-              {showHelper && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
-                  className="overflow-hidden"
-                >
-                  <div className="border-t border-border bg-background/40 px-4 py-3 text-xs leading-relaxed text-foreground-secondary">
-                    <p className="mb-2 flex items-center gap-1.5 font-medium text-foreground">
-                      <Hash size={14} className="text-gold" />
-                      <strong className="text-gold">Username: </strong>Your 11-digit GGSIPU Enrollment Number.
-                    </p>
-                    <p className="flex items-center gap-1.5 font-medium text-foreground">
-                      <KeyRound size={14} className="text-gold" />
-                      <strong className="text-gold">Default Password: </strong>Your father&apos;s full name with spaces between first, middle, and surname (if not changed by you).
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Login Card */}
-          <div className="rounded-2xl border border-border-strong bg-surface p-8 backdrop-blur-xl shadow-[0_12px_40px_rgba(0,0,0,0.45)]">
-            <LoginForm/>
-          </div>
-
-        </div>
+        </section>
       </main>
-
-      {/* Simple Footer */}
-      <footer className="relative z-10 border-t border-border py-4 text-center text-xs text-foreground-muted flex flex-wrap items-center justify-center gap-3">
-        <span>Anviksha · Unofficial GGSIPU Results Portal</span>
-        <span className="text-border-strong">·</span>
-        <Link href="/notices" className="hover:text-gold transition-colors">
-          Live Circulars & Notices
-        </Link>
-        <span className="text-border-strong">·</span>
-        <Link href="/calculations" className="hover:text-gold transition-colors">
-          How Calculations Work
-        </Link>
-        <span className="text-border-strong">·</span>
-        <Link href="/" className="hover:text-gold transition-colors">
-          Home
-        </Link>
-      </footer>
+      <HomeFooter />
     </div>
   );
 }

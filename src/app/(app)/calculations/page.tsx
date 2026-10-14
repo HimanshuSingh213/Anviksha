@@ -208,7 +208,7 @@ export default function CalculationsPage() {
               GGSIPU does not use one universal rule. Anviksha identifies your programme family from the official programme name and applies the correct statutory framework — keeping your raw ExamWeb programme code untouched:
             </p>
             <div className="overflow-x-auto pt-1">
-              <table className="w-full min-w-[560px] sm:min-w-full text-xs font-mono border-collapse border border-border-strong text-center">
+              <table className="w-full min-w-140 sm:min-w-full text-xs font-mono border-collapse border border-border-strong text-center">
                 <thead>
                   <tr className="bg-surface-deep border-b border-border-strong text-foreground">
                     <th className="p-2 border border-border-strong">Programme Family</th>
@@ -289,7 +289,7 @@ export default function CalculationsPage() {
             <p>Your official total marks (out of 100) are mapped to the standard GGSIPU letter grade and numerical grade point.</p>
 
             <div className="overflow-x-auto pt-2">
-              <table className="w-full min-w-[420px] sm:min-w-full text-xs font-mono border-collapse border border-border-strong text-center">
+              <table className="w-full min-w-105 sm:min-w-full text-xs font-mono border-collapse border border-border-strong text-center">
                 <thead>
                   <tr className="bg-surface-deep border-b border-border-strong text-foreground">
                     <th className="p-2 border border-border-strong">Marks Range</th>
@@ -502,7 +502,7 @@ export default function CalculationsPage() {
           <div className="space-y-3 text-sm text-foreground-secondary leading-relaxed">
             <p>The revised GGSIPU Ordinance 11 defines the following division standings based on final cumulative CGPA:</p>
             <div className="overflow-x-auto pt-1">
-              <table className="w-full min-w-[400px] sm:min-w-full text-xs font-mono border-collapse border border-border-strong text-center">
+              <table className="w-full min-w-100 sm:min-w-full text-xs font-mono border-collapse border border-border-strong text-center">
                 <thead>
                   <tr className="bg-surface-deep border-b border-border-strong text-foreground">
                     <th className="p-2 border border-border-strong">CGPA Range</th>

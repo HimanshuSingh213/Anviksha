@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, HelpCircle, Home, Menu, X } from "lucide-react";
+import { Bell, HelpCircle, Home, Menu, ShieldCheck, X } from "lucide-react";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
 
 // Section links for visitors. Anchors point at the homepage, so they work from any page.
@@ -15,6 +15,14 @@ const PUBLIC_LINKS = [
     { href: "/#ordinance", label: "Ordinance" },
     { href: "/#privacy", label: "Privacy" },
     { href: "/notices", label: "Circulars" },
+    { href: "/calculations", label: "Calculation Guide" },
+];
+
+// Standalone pages have no homepage sections, so they link to each other plus Home.
+const STANDALONE_LINKS = [
+    { href: "/", label: "Home" },
+    { href: "/notices", label: "Circulars" },
+    { href: "/calculations", label: "Calculation Guide" },
 ];
 
 // Primary navigation tabs for authenticated dashboard views.
@@ -35,9 +43,11 @@ export default function AppNavbar() {
 
     const loggedIn = isAuthenticated;
     const isDashboard = pathname === "/dashboard" || pathname === "/dashboard/analytics";
+    const isLoginPage = pathname === "/login";
+    const isStandalonePage = pathname === "/notices" || pathname === "/report" || pathname === "/calculations";
 
-    // Dashboard pages show tabs, everywhere else shows section links.
-    const middleLinks = isDashboard ? DASHBOARD_TABS : PUBLIC_LINKS;
+    // Dashboard shows tabs, standalone shows its trio, login shows none, everywhere else shows section links.
+    const middleLinks = isDashboard ? DASHBOARD_TABS : isStandalonePage ? STANDALONE_LINKS : PUBLIC_LINKS;
     const authHref = loggedIn ? "/dashboard" : "/login";
     const authLabel = loggedIn ? "Dashboard" : "Sign in";
 
@@ -75,7 +85,21 @@ export default function AppNavbar() {
                                 </Link>
                             );
                         })
-                    ) : (
+                    ) : isStandalonePage ? (
+                        STANDALONE_LINKS.map((link) => {
+                            const isActive = pathname === link.href;
+                            return (
+                                <Link
+                                    key={link.label}
+                                    href={link.href}
+                                    aria-current={isActive ? "page" : undefined}
+                                    className={`px-3 py-2 transition-colors ${isActive ? "text-foreground" : "text-foreground-secondary hover:text-foreground"}`}
+                                >
+                                    {link.label}
+                                </Link>
+                            );
+                        })
+                    ) : !isLoginPage ? (
                         PUBLIC_LINKS.map((link) => {
                             const isActive = pathname === link.href;
                             return (
@@ -89,7 +113,7 @@ export default function AppNavbar() {
                                 </Link>
                             );
                         })
-                    )}
+                    ) : null}
                 </nav>
 
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
@@ -112,8 +136,7 @@ export default function AppNavbar() {
                                 className="flex items-center gap-1.5 rounded-full px-2 sm:px-2.5 py-1.5 text-xs font-mono font-semibold text-foreground-secondary transition-colors hover:bg-surface-elevated hover:text-gold"
                             >
                                 <HelpCircle size={13} aria-hidden="true" />
-                                <span className="hidden lg:inline">How Calculations Work</span>
-                                <span className="hidden sm:inline lg:hidden">Guide</span>
+                                <span className="hidden sm:inline">Calculation Guide</span>
                             </Link>
 
                             <Link
@@ -129,7 +152,12 @@ export default function AppNavbar() {
                             <span aria-hidden="true" className="h-5 w-px shrink-0 bg-border-strong" />
                             <LogoutButton />
                         </div>
-                    ) : pathname === "/login" ? null : (
+                    ) : isLoginPage ? (
+                        <div className="flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-foreground-muted">
+                            <ShieldCheck size={14} className="text-positive" aria-hidden="true" />
+                            <span className="font-mono text-[11px]">Secure Access</span>
+                        </div>
+                    ) : (
                         <Link
                             href={authHref}
                             className="hidden sm:inline-flex items-center justify-center gap-2 rounded-md border border-border-strong bg-surface px-3.5 py-2 font-mono text-xs font-semibold whitespace-nowrap text-foreground-secondary transition-colors hover:border-gold-border hover:text-gold"
@@ -138,6 +166,7 @@ export default function AppNavbar() {
                         </Link>
                     )}
 
+                    {!isLoginPage && (
                     <button
                         type="button"
                         aria-expanded={open}
@@ -156,6 +185,7 @@ export default function AppNavbar() {
                             {open ? <X size={16} /> : <Menu size={16} />}
                         </motion.span>
                     </button>
+                    )}
                 </div>
             </div>
 
@@ -201,7 +231,7 @@ export default function AppNavbar() {
                                         How Calculations Work
                                     </Link>
                                 </>
-                            ) : pathname === "/login" ? null : (
+                            ) : isLoginPage ? null : (
                                 <Link
                                     href={authHref}
                                     onClick={() => setOpen(false)}

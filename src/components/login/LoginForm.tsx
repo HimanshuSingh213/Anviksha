@@ -271,7 +271,7 @@ export const LoginForm = () => {
                     disabled={isSubmitting}
                     aria-busy={isSubmitting}
                     suppressHydrationWarning
-                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-gold-border bg-gold-surface py-3 text-sm font-semibold text-gold transition hover:bg-gold-border active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-md border border-gold-bright/40 bg-linear-to-b from-gold-bright to-gold px-6 py-3 font-mono text-[13px] font-semibold text-background shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_1px_2px_rgba(0,0,0,0.5)] transition hover:brightness-110 active:scale-[0.98] disabled:opacity-50 cursor-pointer"
                 >
                     {isSubmitting ? (
                         <>

@@ -64,6 +64,19 @@ export default function StructuredData() {
         ],
       },
       {
+        "@type": "Organization",
+        "@id": `${appUrl}/#organization`,
+        "name": "Anviksha",
+        "url": appUrl,
+        "description": "Privacy-first academic results and analytics portal for GGSIPU students.",
+        "logo": {
+          "@type": "ImageObject",
+          "url": `${appUrl}/icon-192.png`,
+          "width": 192,
+          "height": 192,
+        },
+      },
+      {
         "@type": "WebSite",
         "@id": `${appUrl}/#website`,
         "url": appUrl,
@@ -77,10 +90,9 @@ export default function StructuredData() {
         ],
         "description": "GGSIPU Academic Analytics, Examination Results & Transcript Portal",
         "publisher": {
-          "@type": "Person",
-          "name": "Himanshu Singh",
-          "url": "https://himanshusinghdangi.vercel.app",
+          "@id": `${appUrl}/#organization`,
         },
+        "inLanguage": "en-IN",
       },
     ],
   };
