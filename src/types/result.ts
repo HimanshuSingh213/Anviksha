@@ -81,6 +81,12 @@ export interface SubjectResult {
   grade: { value: string; point: number } | null;
   gradePointUsedForGpa: number | null;
   ruleCheck: "PASS" | "FAIL" | "UNTESTABLE";
+  /**
+   * Every marksheet row for this subject, in the order ExamWeb printed them.
+   * Filled only when the subject appears more than once (reappear attempts).
+   * This row itself is the best attempt, chosen for all calculations.
+   */
+  attempts?: SubjectResult[];
 }
 
 /* -------------------------------------------------------------------------- */

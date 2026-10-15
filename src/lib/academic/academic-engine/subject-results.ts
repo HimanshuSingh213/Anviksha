@@ -462,7 +462,87 @@ export function parseSubjectResultRow(
 }
 
 /**
+ * Merges repeated marksheet rows (reappear attempts) of the same subject into one row.
+ * Rows are grouped by paper code + subject name, and the row kept for calculations is
+ * the best attempt: cleared beats failed, then higher marks, then the first row printed.
+ * The full attempt list stays on the winner's "attempts" field for the dashboard.
+ *
+ * @param subjects - Every parsed subject row from the marksheet
+ * @returns One row per subject code + name, with its attempts attached
+ */
+export function mergeRepeatedSubjects(subjects: SubjectResult[]): SubjectResult[] {
+  // One folder per subject code + name: its best attempt and every attempt seen.
+  const folders: { subjectKey: string; best: SubjectResult; attempts: SubjectResult[] }[] = [];
+
+  for (const subject of subjects) {
+    const subjectKey = `${subject.rawCode.trim()}|${subject.name.trim()}`;
+    const subjectFolder = getFolder(folders, subjectKey);
+
+    // First time seeing this subject → open its folder with this row.
+    if (subjectFolder === undefined) {
+      folders.push({ subjectKey, best: subject, attempts: [subject] });
+      continue;
+    }
+
+    // Same subject again → file the row and keep whichever attempt is better.
+    subjectFolder.attempts.push(subject);
+
+    const bestPassed = isSubjectPassed(subjectFolder.best.semantic);
+    const currentPassed = isSubjectPassed(subject.semantic);
+
+    // A cleared attempt beats a failed one.
+    if (currentPassed && !bestPassed) {
+      subjectFolder.best = subject;
+      continue;
+    }
+
+    // Same pass state → higher marks wins (rows without marks count as -1).
+    const bestMarks = subjectFolder.best.total === undefined ? -1 : subjectFolder.best.total;
+    const currentMarks = subject.total === undefined ? -1 : subject.total;
+
+    if (currentPassed === bestPassed && currentMarks > bestMarks) {
+      subjectFolder.best = subject;
+    }
+  }
+
+  // Keep one row per folder, with the attempt history attached.
+  const mergedSubjects: SubjectResult[] = [];
+
+  for (const subjectFolder of folders) {
+    if (subjectFolder.attempts.length > 1) {
+      // Copy every attempt, and the kept row, so no object references itself —
+      // the result gets JSON-stringified for sessionStorage, which cannot
+      // survive a circular reference.
+      const attemptCopies = [];
+      for (const attempt of subjectFolder.attempts) {
+        attemptCopies.push({ ...attempt });
+      }
+      const mergedSubject = { ...subjectFolder.best, attempts: attemptCopies };
+      mergedSubjects.push(mergedSubject);
+    } else {
+      mergedSubjects.push(subjectFolder.best);
+    }
+  }
+
+  return mergedSubjects;
+}
+
+/**
+ * Finds the folder with the given subject key, or undefined when none exists yet.
+ *
+ * @param folders - Every folder opened so far
+ * @param subjectKey - The label to look for ("code|name")
+ */
+function getFolder(
+  folders: { subjectKey: string; best: SubjectResult; attempts: SubjectResult[] }[],
+  subjectKey: string
+) {
+  return folders.find((folder) => folder.subjectKey === subjectKey);
+}
+
+/**
  * Transforms raw marksheet table rows into structured, graded subject results.
+ * Repeated subject rows (reappear attempts) are merged into one canonical row per subject.
  *
  * @param rawMarksheetRows - 2D array of raw marksheet rows from ExamWeb
  * @param ordinance - Authoritative OrdinanceEntry or null
@@ -478,7 +558,9 @@ export function parseSubjectResults(
   userCredits: Record<string, number | null>,
   allowFallbackCredits: boolean = true
 ): SubjectResult[] {
-  return rawMarksheetRows.map((row) =>
-    parseSubjectResultRow(row, ordinance, programme, userCredits, allowFallbackCredits)
+  return mergeRepeatedSubjects(
+    rawMarksheetRows.map((row) =>
+      parseSubjectResultRow(row, ordinance, programme, userCredits, allowFallbackCredits)
+    )
   );
 }

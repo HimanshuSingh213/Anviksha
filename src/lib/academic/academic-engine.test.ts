@@ -15,8 +15,8 @@ import {
 // The real 498 payload shape (spec §37 fixtures)
 const REAL_498 = {
   stprofile: {
-    nrollno: "40216449825",
-    stname: "HIMANSHU SINGH",
+    nrollno: "00116449825",
+    stname: "SAMPLE STUDENT",
     byoa: 2025,
     yoa: 2025,
     prgcode: "498",
@@ -925,5 +925,60 @@ describe("Semester performance exposes per-semester percentages", () => {
     // Percentage ordinances classify division on the percentage scale.
     const r = analyzeResult(baslp);
     expect(r.analytics.divisionPresentation.scale).toBe("PERCENTAGE");
+  });
+});
+describe("Repeated subjects merge into one row with the best attempt", () => {
+  // Reuse the 498 profile so ordinance/programme resolution matches the fixtures above.
+  // Here ICT104 exists twice (May 2025 failed and Dec 2025 cleared reappear), which is exactly how ExamWeb prints a cleared backlog.
+  const REAPPEAR_RESULT = {
+    stprofile: REAL_498.stprofile,
+    stresult: [
+      [1, "ICT101", "PROGRAMMING FOR PROBLEM SOLVING", "33", "35", "68", "08", "12,2025", "2026-02-03"],
+      [2, "ICT104", "DATA STRUCTURES & ALGORITHMS", "10", "8", "18", "09", "05,2025", "2025-07-14"],
+      [2, "ICT104", "DATA STRUCTURES & ALGORITHMS", "22", "44", "66", "08", "12,2025", "2026-02-03"],
+    ],
+  };
+
+  it("the passed reappear becomes the one row, and the old back row stays as history", () => {
+    const r = analyzeResult(REAPPEAR_RESULT);
+    const dataStructures = r.subjectResults.find((s) => s.rawCode === "ICT104");
+
+    // Two subjects in total: ICT101 (never repeated) + ICT104 (merged from two rows).
+    expect(r.subjectResults).toHaveLength(2);
+    expect(dataStructures?.semantic).toBe("PASS");
+    expect(dataStructures?.total).toBe(66);
+    expect(dataStructures?.attempts).toHaveLength(2);
+    expect(dataStructures?.attempts?.[0]?.total).toBe(18);
+
+    // The paper is cleared - nothing counts as a backlog downstream.
+    expect(r.analytics.notClearedCount.value).toBe(0);
+    expect(r.analytics.reappearPlan.totalBacklogs).toBe(0);
+  });
+
+  it("subjects that were never repeated keep no attempts list", () => {
+    const r = analyzeResult(REAPPEAR_RESULT);
+    const programming = r.subjectResults.find((s) => s.rawCode === "ICT101");
+    expect(programming?.attempts).toBeUndefined();
+  });
+
+  it("with both attempts failed, the higher-marks row counts as the single backlog", () => {
+    // Both reappear attempts are below 40. The 26-mark row is the one shown and counted.
+    const BOTH_FAILED_RESULT = {
+      stprofile: REAL_498.stprofile,
+      stresult: [
+        [1, "ICT101", "PROGRAMMING FOR PROBLEM SOLVING", "33", "35", "68", "08", "12,2025", "2026-02-03"],
+        [2, "ICT104", "DATA STRUCTURES & ALGORITHMS", "10", "8", "18", "09", "05,2025", "2025-07-14"],
+        [2, "ICT104", "DATA STRUCTURES & ALGORITHMS", "12", "14", "26", "09", "12,2025", "2026-02-03"],
+      ],
+    };
+    const r = analyzeResult(BOTH_FAILED_RESULT);
+    const dataStructures = r.subjectResults.find((s) => s.rawCode === "ICT104");
+
+    // Two subjects in total: ICT101 (never repeated) + ICT104 (merged from two rows).
+    expect(r.subjectResults).toHaveLength(2);
+    expect(dataStructures?.semantic).toBe("NOT_CLEARED");
+    expect(dataStructures?.total).toBe(26);
+    expect(dataStructures?.attempts).toHaveLength(2);
+    expect(r.analytics.reappearPlan.totalBacklogs).toBe(1);
   });
 });
