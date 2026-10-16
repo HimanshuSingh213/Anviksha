@@ -100,8 +100,8 @@ export default function ExplanationPanel({
   ];
 
   return (
-    <section className="rounded-lg border border-border-strong bg-surface-deep/40 text-foreground overflow-hidden shadow-xs font-mono text-xs">
-      <div className="border-b border-border-strong bg-surface-deep/80 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <section className="home-panel overflow-hidden font-mono text-xs text-foreground">
+      <div className="border-b border-border bg-surface-deep/80 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Scale size={14} className="text-gold shrink-0" />
           <h2 className="font-bold text-foreground uppercase tracking-wider text-xs">
@@ -134,7 +134,7 @@ export default function ExplanationPanel({
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[480px] sm:min-w-full">
           <thead>
-            <tr className="bg-surface-deep border-b border-border-strong text-[10px] uppercase tracking-wider text-foreground-secondary font-bold">
+            <tr className="bg-surface-deep border-b border-border text-[10px] uppercase tracking-wider text-foreground-secondary font-bold">
               <th className="py-2.5 px-2 sm:px-4 w-[13%] sm:w-[16%]">Metric</th>
               <th className="py-2.5 px-1.5 sm:px-3 w-[11%] sm:w-[12%]">Status</th>
               <th className="py-2.5 px-3 sm:px-4 w-[52%] sm:w-[42%]">
@@ -147,7 +147,7 @@ export default function ExplanationPanel({
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border-strong/40">
+          <tbody className="divide-y divide-border">
             {metrics.map((m) => {
               const badge = STATUS_STYLE[m.status] ?? STATUS_STYLE.UNAVAILABLE;
               return (
@@ -196,7 +196,7 @@ export default function ExplanationPanel({
       </div>
 
       {engine.warnings.length > 0 && (
-        <div className="p-3 sm:p-3 border-t border-border-strong bg-surface-deep/60 space-y-2 sm:space-y-1.5">
+        <div className="p-3 sm:p-3 border-t border-border bg-surface-deep/60 space-y-2 sm:space-y-1.5">
           {engine.warnings.map((w, i) => (
             <div
               key={i}
@@ -216,12 +216,12 @@ export default function ExplanationPanel({
       )}
 
       {p.programmeFamily && (
-        <div className="border-t border-border-strong bg-surface-deep/40 px-4 py-2.5 sm:py-2 text-[11px] leading-5 sm:leading-normal text-foreground-secondary">
+        <div className="border-t border-border bg-surface-deep/40 px-4 py-2.5 sm:py-2 text-[11px] leading-5 sm:leading-normal text-foreground-secondary">
           {p.programmeName ? p.programmeName.split("(")[0].trim() : (p.programmeCode || "Programme")} program is generalized in {p.programmeFamily} family.
         </div>
       )}
 
-      <div className="border-t border-border-strong bg-surface px-4 py-3.5 sm:py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-2 text-[11px] text-foreground-muted">
+      <div className="border-t border-border bg-surface px-4 py-3.5 sm:py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-2 text-[11px] text-foreground-muted">
         <div className="flex items-start sm:items-center gap-2">
           <ShieldCheck size={13} className="text-positive shrink-0 mt-0.5 sm:mt-0" />
           <span className="leading-5 sm:leading-relaxed">

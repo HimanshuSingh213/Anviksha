@@ -34,7 +34,7 @@ export default function CreditTipModal() {
         <AnimatePresence>
             {isOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 font-mono select-none">
-                    {/* Backdrop - intentionally does NOT close on click */}
+                    {/* Backdrop triggers shake feedback instead of dismissing */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -44,7 +44,6 @@ export default function CreditTipModal() {
                         className="absolute inset-0 bg-black/75 backdrop-blur-xs cursor-default"
                     />
 
-                    {/* Modal Box */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.94, y: 12 }}
                         animate={{
@@ -60,7 +59,6 @@ export default function CreditTipModal() {
                         }}
                         className="relative z-10 w-full max-w-sm bg-surface border border-border-strong rounded-lg p-5 shadow-2xl space-y-4"
                     >
-                        {/* Header */}
                         <div className="flex items-center justify-between border-b border-border-strong pb-3">
                             <div className="flex items-center gap-2">
                                 <span className="w-2 h-2 rounded-full bg-gold animate-pulse inline-block" />
@@ -78,7 +76,6 @@ export default function CreditTipModal() {
                             </button>
                         </div>
 
-                        {/* Title & Body */}
                         <div className="space-y-2">
                             <h3 className="text-sm font-bold text-foreground">
                                 Edit Subject Credits
@@ -88,7 +85,6 @@ export default function CreditTipModal() {
                             </p>
                         </div>
 
-                        {/* Dismiss Action */}
                         <div className="pt-1">
                             <button
                                 type="button"

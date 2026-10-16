@@ -7,6 +7,7 @@ import StructuredData from "@/components/common/StructuredData";
 import FloatingReportButton from "@/components/common/FloatingReportButton";
 import SystemStatusStrip from "@/components/common/SystemStatusStrip";
 import AppNavbar from "@/components/common/AppNavbar";
+import RouteScrollReset from "@/components/common/RouteScrollReset";
 import { Analytics } from "@vercel/analytics/next";
 
 const geistSans = Geist({
@@ -157,6 +158,7 @@ export default function RootLayout({
         <StructuredData />
         <SystemStatusStrip />
         <AppNavbar />
+        <RouteScrollReset />
         <ErrorBoundary>{children}</ErrorBoundary>
         <FloatingReportButton />
         <Toaster theme="dark" position="bottom-right" richColors />

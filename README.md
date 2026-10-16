@@ -52,7 +52,7 @@ Rather than showing only a raw table of marks, Anviksha interprets result data t
 1. **Zero-Storage Privacy** — Credentials, marks, and personal data are proxied, never persisted. There is no database anywhere in the stack.
 2. **Honesty Over Guesswork** — Every calculated metric carries a verification state: `VERIFIED` (statutory rule confirmed), `RESULT_DERIVED` (computed directly from official marks), `WARNING` (depends on estimated/user credits), `NOT_APPLICABLE` (the programme's ordinance doesn't define it), `UNAVAILABLE` (withheld rather than guessed), or `AMBIGUOUS` (programme framework unclear).
 3. **Fail-Closed Rendering** — If a programme's rules aren't verified, analytics aren't shown — Ordinance-11-shaped math is never silently applied to a medical or allied-health programme where it doesn't belong.
-4. **Tested Evolution** — The engine (`src/lib/academic/`) is type-checked and unit-tested (75 automated tests) and grows as ordinance verification progresses.
+4. **Tested Evolution** — The engine (`src/lib/academic/`) is type-checked and unit-tested (108 automated tests) and grows as ordinance verification progresses.
 
 ---
 
@@ -111,6 +111,7 @@ Raw ExamWeb JSON
 academic-engine/  →  analyzeResult(raw, userCredits, options)
       │                  • matches programme family + ordinance from academic-db.ts
       │                  • normalizes marks, statuses, and credits
+      │                  • merges repeated marksheet rows (cleared reappears win)
       │                  • computes only what the ordinance's capabilities allow
       ▼
 EngineResult        →  every metric is a Metric<T>:
@@ -125,6 +126,7 @@ Dashboard & Analytics  →  render strictly within capabilities;
 - **Ordinance Database (`academic-db.ts`):** One registry entry per ordinance — ORD_10, ORD_11, ORD_15, ORD_16, ORD_22, ORD_24, ORD_25, ORD_31, ORD_38 — each with its examination system, capability flags, rule bands, and clause-level sources. Programme families (B.Tech, BCA, MBA, Law, MBBS, BPT…) map to their ordinance via keyword matching, with unrecognized names left `AMBIGUOUS` rather than defaulted.
 - **Clause Citations:** Rules cite the specific clause they implement (e.g. Ordinance 11 Clause 11.5 for the grade table, Clause 13 for SGPA/CGPA/percentage/division, Clause 11.3(v) for the 50% promotion baseline) — verified directly against the printed ordinance text.
 - **Warnings as UI:** Estimates, ambiguities, and unverified rules are structured objects rendered as badges and explanation panels — transparency is a first-class output, not a log line.
+- **Reappear Merge (`mergeRepeatedSubjects` in `subject-results.ts`):** ExamWeb prints a repeated subject once per attempt, so a cleared backlog sits next to its own old back row. Rows grouped by paper code + subject name are collapsed to one: a passed attempt beats a failed one, then higher marks, then the first printed row. The dashboard counts one backlog per still-failed paper, shows the winning attempt in SGPA/CGPA, and lists the earlier attempts as history sub-rows with a green **Backlog cleared** badge.
 
 ---
 
@@ -203,7 +205,7 @@ anviksha/
 │   │   ├── academic-db.ts          #   Ordinance registry: capabilities, rule bands, clause sources
 │   │   ├── academic-engine/        #   analyzeResult(): normalization + verified computation
 │   │   │   ├── index.ts            #     orchestrator — composes every derived metric
-│   │   │   ├── subject-results.ts  #     row parsing, credits, status, grade mapping
+│   │   │   ├── subject-results.ts  #     row parsing, credits, status, grades, reappear merge
 │   │   │   └── rules/              #     promotion, reappear, division, placement
 │   │   └── academic-engine.test.ts #   Engine unit tests
 │   │
@@ -317,10 +319,10 @@ anviksha/
 
 ## Testing & Verification
 
-The project maintains a **97-test** automated suite (6 files) covering the academic engine, notices scraper, system status strip, validators, and API routes:
+The project maintains a **108-test** automated suite (7 files) covering the academic engine, notices scraper, system status strip, validators, and API routes:
 
 ```bash
-npm test              # 97 tests, currently 100% green
+npm test              # 108 tests, currently 100% green
 npx tsc --noEmit      # clean
 npm run lint          # 0 errors
 npm run build         # production bundle
@@ -328,7 +330,8 @@ npm run build         # production bundle
 
 | Suite | Focus |
 | :--- | :--- |
-| `lib/academic/academic-engine.test.ts` | Ordinance rules, grades, SGPA/CGPA, CS/AP exclusion, promotion |
+| `lib/academic/academic-engine.test.ts` | Ordinance rules, grades, SGPA/CGPA, CS/AP exclusion, promotion, reappear merge |
+| `components/dashboard/dashboard-metrics.test.ts` | Dashboard tabs, backlog counting after a cleared reappear |
 | `components/common/SystemStatusStrip.test.tsx` | Heartbeat latency, Slow/Offline classification, 12s timer, tab visibility, network events |
 | `helpers/notices.test.ts` | Notices fetching & categorization |
 | `validations/login.validation.test.ts` | Credential schema validation |
