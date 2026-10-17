@@ -154,11 +154,6 @@ export function getDefaultCredit(subjectTitle: string): number {
 }
 
 /**
- * Alias for getDefaultCredit heuristic.
- */
-export const getFallbackCredit = getDefaultCredit;
-
-/**
  * Maps total marks or status codes directly to a 10-point letter grade and grade point.
  *
  * @param rawTotal - Raw marks total or legend
