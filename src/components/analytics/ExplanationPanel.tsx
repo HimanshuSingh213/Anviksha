@@ -36,6 +36,7 @@ const STATUS_STYLE: Record<string, { label: string; shortLabel: string; classNam
   },
 };
 
+// Statutory verification breakdown and source citations for academic engine calculations.
 export default function ExplanationPanel({
   engine,
 }: {
@@ -130,21 +131,19 @@ export default function ExplanationPanel({
         </div>
       </div>
 
-      {/* ── Per-Metric Verification & Statutory Sources Table ── */}
+      {/* Per-metric verification and statutory sources table */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[480px] sm:min-w-full">
+        <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-surface-deep border-b border-border text-[10px] uppercase tracking-wider text-foreground-secondary font-bold">
-              <th className="py-2.5 px-2 sm:px-4 w-[13%] sm:w-[16%]">Metric</th>
-              <th className="py-2.5 px-1.5 sm:px-3 w-[11%] sm:w-[12%]">Status</th>
-              <th className="py-2.5 px-3 sm:px-4 w-[52%] sm:w-[42%]">
-                <span className="sm:hidden">Logic &amp; Criteria</span>
+              <th className="py-2.5 px-3 sm:px-4 w-[20%] sm:w-[16%]">Metric</th>
+              <th className="py-2.5 px-1.5 sm:px-3 w-[18%] sm:w-[12%]">Status</th>
+              <th className="py-2.5 px-3 sm:px-4 sm:w-[42%]">
+                <span className="sm:hidden">Logic &amp; Sources</span>
                 <span className="hidden sm:inline">Calculation Logic &amp; Criteria</span>
               </th>
-              <th className="py-2.5 px-2 sm:px-4 w-[24%] sm:w-[30%]">
-                <span className="sm:hidden">Sources</span>
-                <span className="hidden sm:inline">Statutory Sources</span>
-              </th>
+              {/* Statutory sources column: rendered on desktop breakpoints */}
+              <th className="hidden sm:table-cell py-2.5 px-4 sm:w-[30%]">Statutory Sources</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
@@ -152,7 +151,7 @@ export default function ExplanationPanel({
               const badge = STATUS_STYLE[m.status] ?? STATUS_STYLE.UNAVAILABLE;
               return (
                 <tr key={m.name} className="hover:bg-surface/50 transition-colors">
-                  <td className="py-2.5 px-2 sm:py-3 sm:px-4 font-semibold sm:font-bold text-foreground text-[11px] sm:text-xs align-top">
+                  <td className="py-2.5 px-3 sm:py-3 sm:px-4 font-semibold sm:font-bold text-foreground text-[11px] sm:text-xs align-top">
                     {m.shortName ? (
                       <>
                         <span className="sm:hidden">{m.shortName}</span>
@@ -170,8 +169,22 @@ export default function ExplanationPanel({
                   </td>
                   <td className="py-3 px-3 sm:py-3 sm:px-4 text-foreground-secondary text-[11px] sm:text-xs leading-5 sm:leading-relaxed align-top">
                     {m.reason}
+                    {/* Mobile breakpoint inline source citations */}
+                    {Array.from(new Set(m.sources)).length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5 sm:hidden">
+                        {Array.from(new Set(m.sources)).map((src, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center gap-1 rounded bg-surface border border-border-strong px-1.5 py-0.5 text-[9px] font-mono text-foreground-secondary"
+                          >
+                            <BookOpen size={9} className="text-gold shrink-0" />
+                            <span>{src}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </td>
-                  <td className="py-3 px-2 sm:py-3 sm:px-4 align-top">
+                  <td className="hidden sm:table-cell py-3 px-4 align-top">
                     <div className="flex flex-wrap gap-1.5">
                       {Array.from(new Set(m.sources)).length > 0 ? (
                         Array.from(new Set(m.sources)).map((src, idx) => (

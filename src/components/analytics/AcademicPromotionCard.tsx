@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import {
     ShieldCheck,
@@ -10,47 +9,49 @@ import {
     CheckCircle2,
     ArrowUpRight,
     GraduationCap,
-    HelpCircle,
 } from "lucide-react";
+import Chip, { type ChipTone } from "@/components/analytics/Chip";
+import PanelHeader from "@/components/analytics/PanelHeader";
 import type { AcademicPromotionStatus, AcademicYearStatus } from "@/types/result";
 
 export type { AcademicYearStatus };
 
-const statusTone = {
+// Status styling and icons for each academic progression state.
+const statusTone: Record<
+    AcademicYearStatus["status"],
+    { label: string; icon: typeof CheckCircle2; chip: ChipTone; text: string; bar: string }
+> = {
     PROMOTED: {
         label: "Promoted",
         icon: CheckCircle2,
-        card: "border-grade-excellent-border/70 bg-grade-excellent-surface/20",
+        chip: "good",
         text: "text-grade-excellent",
-        soft: "border-grade-excellent-border bg-grade-excellent-surface text-grade-excellent",
         bar: "bg-grade-excellent",
     },
     YEAR_BACK_RISK: {
         label: "Year-back risk",
         icon: AlertTriangle,
-        card: "border-grade-fail-border/80 bg-grade-fail-surface/20",
+        chip: "bad",
         text: "text-grade-fail",
-        soft: "border-grade-fail-border bg-grade-fail-surface text-grade-fail",
         bar: "bg-grade-fail",
     },
     IN_PROGRESS: {
         label: "In progress",
         icon: Clock,
-        card: "border-cat-blue-border/70 bg-cat-blue-surface/18",
+        chip: "blue",
         text: "text-cat-blue",
-        soft: "border-cat-blue-border bg-cat-blue-surface text-cat-blue",
         bar: "bg-cat-blue",
     },
     UPCOMING: {
         label: "Upcoming",
         icon: Clock,
-        card: "border-border bg-surface-deep/80",
+        chip: "muted",
         text: "text-foreground-muted",
-        soft: "border-border-strong bg-surface text-foreground-muted",
         bar: "bg-cat-slate",
     },
-} as const;
+};
 
+// Tracks annual credit progress and evaluates promotion standing against the 50% threshold.
 export default function AcademicPromotionCard({ promotion }: { promotion: AcademicPromotionStatus }) {
 
     const summary = useMemo(() => {
@@ -87,251 +88,195 @@ export default function AcademicPromotionCard({ promotion }: { promotion: Academ
 
     const { years, hasDetentionRisk, activeYear } = promotion;
 
+    const summaryCells = [
+        {
+            label: "Credit progress",
+            value: String(summary.earnedCredits),
+            suffix: `/${summary.totalCredits}`,
+            note: `${summary.overallPercent}% credit completion`,
+            color: "text-foreground",
+        },
+        {
+            label: "Promoted years",
+            value: String(summary.promotedYears),
+            suffix: `/${summary.evaluatedYears || 0}`,
+            note: "Completed annual checkpoints",
+            color: "text-foreground",
+        },
+        {
+            label: "Recovery deficit",
+            value: `${summary.deficit} cr`,
+            suffix: "",
+            note: "Credits needed to restore promotion safety",
+            color: summary.deficit > 0 ? "text-grade-fail" : "text-accent-mint",
+        },
+    ];
+
     return (
-        <motion.section
-            aria-labelledby="academic-promotion-heading"
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-            className="analytics-panel space-y-4 sm:space-y-5 p-3.5 sm:p-5 lg:p-6"
-        >
-            <header className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-3xl space-y-2 sm:space-y-2.5">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-md border border-gold-border bg-gold-surface text-gold shrink-0">
-                            <GraduationCap size={16} strokeWidth={1.8} aria-hidden="true" />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold">
-                                    Academic Standing
-                                </div>
-                                <Link
-                                    href="/calculations#promotion"
-                                    title="How is promotion calculated?"
-                                    className="inline-flex items-center gap-1 text-[10px] font-mono text-foreground-muted hover:text-gold transition-colors"
-                                >
-                                    <HelpCircle size={11} />
-                                    <span className="hidden sm:inline">How is this calculated?</span>
-                                </Link>
-                            </div>
-                            <h2
-                                id="academic-promotion-heading"
-                                className="mt-0.5 text-base sm:text-lg font-semibold tracking-tight text-foreground"
-                            >
-                                Promotion & Year-Back Assessment
-                            </h2>
-                        </div>
+        <section aria-labelledby="academic-promotion-heading" className="home-panel space-y-6 p-5 sm:p-6">
+            <PanelHeader
+                icon={GraduationCap}
+                iconClass="border-gold-border bg-gold-surface text-gold"
+                kicker="Academic Standing"
+                kickerClass="text-gold"
+                title="Promotion & Year-Back Assessment"
+                helpHref="/calculations#promotion"
+                helpTitle="How is promotion calculated?"
+                right={
+                    <Chip tone={hasDetentionRisk ? "bad" : "good"} className="self-start">
+                        {hasDetentionRisk ? (
+                            <AlertTriangle size={13} aria-hidden="true" />
+                        ) : (
+                            <ShieldCheck size={13} aria-hidden="true" />
+                        )}
+                        {hasDetentionRisk ? "Action required" : "Standing clear"}
+                    </Chip>
+                }
+            />
+
+            <div className="grid grid-cols-3 gap-px overflow-hidden rounded-lg border border-border bg-border">
+                {summaryCells.map((cell) => (
+                    <div key={cell.label} className="bg-surface p-3 sm:p-4">
+                        <p className="text-xs text-foreground-secondary">{cell.label}</p>
+                        <p className={`tnum mt-1.5 font-mono text-xl font-semibold sm:text-2xl ${cell.color}`}>
+                            {cell.value}
+                            {cell.suffix && (
+                                <span className="text-sm font-medium text-foreground-muted">{cell.suffix}</span>
+                            )}
+                        </p>
+                        <p className="mt-1 hidden text-xs leading-5 text-foreground-muted sm:block">{cell.note}</p>
                     </div>
-                    <p className="max-w-2xl text-xs sm:text-sm leading-5 text-foreground-secondary">
-                        Annual standing based on the 50% credit threshold, with current academic year and recovery deficit surfaced separately.
-                    </p>
-                </div>
-
-                <div
-                    className={`inline-flex w-fit items-center gap-2 rounded-md border px-2.5 py-1.5 text-[10px] sm:text-[11px] font-semibold ${hasDetentionRisk
-                            ? "border-grade-fail-border bg-grade-fail-surface text-grade-fail"
-                            : "border-grade-excellent-border bg-grade-excellent-surface text-grade-excellent"
-                        }`}
-                >
-                    {hasDetentionRisk ? (
-                        <AlertTriangle size={13} aria-hidden="true" />
-                    ) : (
-                        <ShieldCheck size={13} aria-hidden="true" />
-                    )}
-                    {hasDetentionRisk ? "Action required" : "Standing clear"}
-                </div>
-            </header>
-
-            <div className="grid gap-2.5 sm:grid-cols-3">
-                <div className="analytics-card p-3 sm:p-3.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
-                        Credit progress
-                    </p>
-                    <p className="mt-1 font-mono text-xl sm:text-2xl font-semibold text-foreground">
-                        {summary.earnedCredits}
-                        <span className="text-sm font-normal text-foreground-muted">
-                            /{summary.totalCredits}
-                        </span>
-                    </p>
-                    <p className="mt-0.5 text-[10px] sm:text-[11px] text-foreground-secondary">
-                        {summary.overallPercent}% credit completion
-                    </p>
-                </div>
-
-                <div className="analytics-card p-3 sm:p-3.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
-                        Promoted years
-                    </p>
-                    <p className="mt-1 font-mono text-xl sm:text-2xl font-semibold text-foreground">
-                        {summary.promotedYears}
-                        <span className="text-sm font-normal text-foreground-muted">
-                            /{summary.evaluatedYears || 0}
-                        </span>
-                    </p>
-                    <p className="mt-0.5 text-[10px] sm:text-[11px] text-foreground-secondary">
-                        Completed annual checkpoints
-                    </p>
-                </div>
-
-                <div
-                    className={`rounded-lg border p-3 sm:p-3.5 ${summary.deficit > 0
-                            ? "border-grade-fail-border bg-grade-fail-surface/25"
-                            : "border-accent-mint-border bg-accent-mint-surface"
-                        }`}
-                >
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
-                        Recovery deficit
-                    </p>
-                    <p
-                        className={`mt-1 font-mono text-xl sm:text-2xl font-semibold ${summary.deficit > 0 ? "text-grade-fail" : "text-accent-mint"
-                            }`}
-                    >
-                        {summary.deficit} cr
-                    </p>
-                    <p className="mt-0.5 text-[10px] sm:text-[11px] text-foreground-secondary">
-                        Credits needed to restore promotion safety
-                    </p>
-                </div>
+                ))}
             </div>
 
-            <div className="grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {years.map((year: AcademicYearStatus) => {
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {years.map((year: AcademicYearStatus, index) => {
                     const tone = statusTone[year.status];
                     const StatusIcon = tone.icon;
                     const isUpcoming = year.status === "UPCOMING";
                     const isActive = year.yearNumber === activeYear;
+                    const barPercent = Math.min(100, Math.max(0, year.percentage));
 
                     return (
-                        <article
+                        <motion.article
                             key={year.yearNumber}
                             aria-label={`${year.yearLabel} promotion status: ${tone.label}`}
-                            className={`flex min-h-fit flex-col justify-between rounded-lg border p-3.5 sm:p-4 transition-colors hover:border-border-strong ${tone.card}`}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, ease: "easeOut", delay: 0.1 + index * 0.06 }}
+                            className={`flex flex-col rounded-xl border p-4 ${
+                                isUpcoming
+                                    ? "border-border"
+                                    : year.status === "PROMOTED"
+                                      ? "border-grade-excellent-border/60 bg-grade-excellent-surface/20"
+                                      : year.status === "YEAR_BACK_RISK"
+                                        ? "border-grade-fail-border/70 bg-grade-fail-surface/20"
+                                        : "border-cat-blue-border/60 bg-cat-blue-surface/20"
+                            }`}
                         >
-                            <div className="space-y-3 sm:space-y-3.5">
-                                <div className="flex items-start justify-between gap-3">
-                                    <div>
-                                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
-                                            Year {year.yearNumber}
-                                        </p>
-                                        <h3 className="mt-0.5 text-sm sm:text-base font-semibold text-foreground">
-                                            {year.yearLabel}
-                                        </h3>
-                                        <p className="mt-0.5 font-mono text-[10px] sm:text-[11px] text-foreground-muted">
-                                            Sem {year.semesters[0]} / Sem {year.semesters[1]}
-                                        </p>
-                                    </div>
-
-                                    {isActive && (
-                                        <span className="rounded-md border border-gold-border bg-gold-surface px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.12em] text-gold">
-                                            Current
-                                        </span>
-                                    )}
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <p className="font-mono text-xs text-foreground-muted">Year {year.yearNumber}</p>
+                                    <h3 className="mt-0.5 text-base font-semibold text-foreground">{year.yearLabel}</h3>
+                                    <p className="mt-0.5 font-mono text-xs text-foreground-muted">
+                                        Sem {year.semesters[0]} / Sem {year.semesters[1]}
+                                    </p>
                                 </div>
-
-                                <span
-                                    className={`inline-flex w-fit items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-semibold ${tone.soft}`}
-                                >
-                                    <StatusIcon size={12} aria-hidden="true" />
-                                    {tone.label}
-                                </span>
-
-                                {isUpcoming ? (
-                                    <div className="rounded-md border border-dashed border-border-strong bg-surface/60 px-3 py-4 text-center">
-                                        <Clock size={15} className="mx-auto text-foreground-muted" aria-hidden="true" />
-                                        <p className="mt-1.5 text-[11px] text-foreground-muted">
-                                            Awaiting semester results
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2.5">
-                                        <div className="flex items-end justify-between gap-3">
-                                            <div>
-                                                <p className="text-[10px] uppercase tracking-[0.14em] text-foreground-muted">
-                                                    Earned
-                                                </p>
-                                                <p className="mt-0.5 font-mono text-xl sm:text-2xl font-semibold leading-none text-foreground">
-                                                    {year.earnedCredits}
-                                                    <span className="text-xs sm:text-sm font-normal text-foreground-muted">
-                                                        /{year.totalCredits}
-                                                    </span>
-                                                </p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className={`font-mono text-base sm:text-lg font-semibold ${tone.text}`}>
-                                                    {year.percentage}%
-                                                </p>
-                                                <p className="text-[10px] text-foreground-muted">
-                                                    min 50%
-                                                </p>
-                                            </div>
-                                        </div>
-
-                                        <div
-                                            className="relative h-2 overflow-hidden rounded-full bg-surface"
-                                            title={`Ordinance 11: Requires ≥50% annual credits (${year.requiredCredits} cr) to clear year-back detention`}
-                                        >
-                                            <div
-                                                role="progressbar"
-                                                aria-label={`${year.yearLabel} earned credit percentage`}
-                                                aria-valuemin={0}
-                                                aria-valuemax={100}
-                                                aria-valuenow={year.percentage}
-                                                aria-valuetext={`${year.percentage}% credits earned. Minimum 50% required (${year.requiredCredits} credits).`}
-                                                className={`h-full rounded-full transition-all duration-700 ${tone.bar}`}
-                                                style={{ width: `${Math.min(100, Math.max(0, year.percentage))}%` }}
-                                            />
-                                            <span className="absolute inset-y-0 left-1/2 w-px bg-foreground/70" aria-hidden="true" title="50% Annual Credit Threshold" />
-                                        </div>
-
-                                        <div className="grid grid-cols-2 gap-1.5 text-[10px]">
-                                            <div className="rounded-md border border-border bg-surface/70 px-2.5 py-1.5">
-                                                <p className="text-foreground-muted">Annual (50%)</p>
-                                                <p className="mt-0.5 font-mono font-semibold text-foreground">
-                                                    {year.requiredCredits} cr
-                                                </p>
-                                            </div>
-                                            <div className="rounded-md border border-border bg-surface/70 px-2.5 py-1.5">
-                                                <p className="text-foreground-muted">Annual Deficit</p>
-                                                <p className={`mt-0.5 font-mono font-semibold ${year.creditsDeficit > 0 ? "text-grade-fail" : "text-grade-excellent"}`}>
-                                                    {year.creditsDeficit} cr
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
+                                {isActive && <Chip tone="gold">Current</Chip>}
                             </div>
 
-                            {!isUpcoming && (
-                                <div className="mt-4 flex items-start gap-1.5 border-t border-border pt-2.5 text-[10px] sm:text-[11px] leading-4.5">
-                                    {year.status === "PROMOTED" ? (
-                                        <>
-                                            <CheckCircle2 size={12} className="mt-0.5 shrink-0 text-grade-excellent" aria-hidden="true" />
-                                            <span className="text-foreground-secondary">
-                                                Promotion threshold cleared for this academic year.
+                            <Chip tone={tone.chip} className="mt-3 self-start">
+                                <StatusIcon size={12} aria-hidden="true" />
+                                {tone.label}
+                            </Chip>
+
+                            {isUpcoming ? (
+                                <p className="mt-4 text-sm text-foreground-muted">Awaiting semester results</p>
+                            ) : (
+                                <>
+                                    <div className="mt-4 flex items-end justify-between gap-3">
+                                        <div>
+                                            <p className="text-xs text-foreground-muted">Earned</p>
+                                            <p className="tnum mt-0.5 font-mono text-2xl font-semibold leading-none text-foreground">
+                                                {year.earnedCredits}
+                                                <span className="text-sm font-medium text-foreground-muted">
+                                                    /{year.totalCredits}
+                                                </span>
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className={`tnum font-mono text-lg font-semibold ${tone.text}`}>
+                                                {year.percentage}%
+                                            </p>
+                                            <p className="text-xs text-foreground-muted">min 50%</p>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        className="relative mt-3 h-1.5 overflow-hidden rounded-full bg-border-strong"
+                                        title={`Ordinance 11: Requires ≥50% annual credits (${year.requiredCredits} cr) to clear year-back detention`}
+                                    >
+                                        <motion.div
+                                            role="progressbar"
+                                            aria-label={`${year.yearLabel} earned credit percentage`}
+                                            aria-valuemin={0}
+                                            aria-valuemax={100}
+                                            aria-valuenow={year.percentage}
+                                            aria-valuetext={`${year.percentage}% credits earned. Minimum 50% required (${year.requiredCredits} credits).`}
+                                            initial={{ width: 0 }}
+                                            whileInView={{ width: `${barPercent}%` }}
+                                            viewport={{ once: true }}
+                                            transition={{ duration: 0.9, ease: "easeOut" }}
+                                            className={`h-full rounded-full ${tone.bar}`}
+                                        />
+                                        <span
+                                            className="absolute inset-y-0 left-1/2 w-px bg-foreground/70"
+                                            aria-hidden="true"
+                                            title="50% Annual Credit Threshold"
+                                        />
+                                    </div>
+
+                                    <dl className="mt-4 grid grid-cols-2 divide-x divide-border border-t border-border pt-3 text-xs">
+                                        <div>
+                                            <dt className="text-foreground-muted">Annual (50%)</dt>
+                                            <dd className="tnum mt-0.5 font-mono text-sm font-semibold text-foreground">
+                                                {year.requiredCredits} cr
+                                            </dd>
+                                        </div>
+                                        <div className="pl-3">
+                                            <dt className="text-foreground-muted">Annual Deficit</dt>
+                                            <dd
+                                                className={`tnum mt-0.5 font-mono text-sm font-semibold ${
+                                                    year.creditsDeficit > 0 ? "text-grade-fail" : "text-grade-excellent"
+                                                }`}
+                                            >
+                                                {year.creditsDeficit} cr
+                                            </dd>
+                                        </div>
+                                    </dl>
+
+                                    {year.status === "YEAR_BACK_RISK" && (
+                                        <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-foreground-secondary">
+                                            <AlertTriangle size={13} className="mt-0.5 shrink-0 text-grade-fail" aria-hidden="true" />
+                                            <span>
+                                                Annual credit deficit: Clear{" "}
+                                                <strong className="font-mono text-grade-fail">{year.creditsDeficit} credits</strong>{" "}
+                                                through re-appear to meet the 50% promotion rule.
                                             </span>
-                                        </>
-                                    ) : year.status === "YEAR_BACK_RISK" ? (
-                                        <>
-                                            <AlertTriangle size={12} className="mt-0.5 shrink-0 text-grade-fail" aria-hidden="true" />
-                                            <span className="text-foreground-secondary">
-                                                Annual credit deficit: Clear <strong className="font-mono text-grade-fail">{year.creditsDeficit} credits</strong> through re-appear to meet the 50% promotion rule.
-                                            </span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <ArrowUpRight size={12} className="mt-0.5 shrink-0 text-cat-blue" aria-hidden="true" />
-                                            <span className="text-foreground-secondary">
-                                                Partial year evaluated. Final standing updates after Sem {year.semesters[1]}.
-                                            </span>
-                                        </>
+                                        </p>
                                     )}
-                                </div>
+                                    {year.status === "IN_PROGRESS" && (
+                                        <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-foreground-secondary">
+                                            <ArrowUpRight size={13} className="mt-0.5 shrink-0 text-cat-blue" aria-hidden="true" />
+                                            <span>Partial year evaluated. Final standing updates after Sem {year.semesters[1]}.</span>
+                                        </p>
+                                    )}
+                                </>
                             )}
-                        </article>
+                        </motion.article>
                     );
                 })}
             </div>
-        </motion.section>
+        </section>
     );
 }

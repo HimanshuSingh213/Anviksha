@@ -79,81 +79,70 @@ const getCards = (props: Props) => {
     ];
 };
 
+// Summary cards displaying key academic metrics: GPA, credits, raw marks, and percentage.
 export default function AnalyticsOverview(props: Props) {
     const metricCards = useMemo(() => getCards(props), [props]);
 
     return (
-        <div className="space-y-4">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <section className="home-panel overflow-hidden" aria-label="Overview">
+            <div className="grid grid-cols-2 gap-px bg-border lg:grid-cols-4">
                 {metricCards.map((card, i) => {
                     const Icon = card.icon;
                     return (
-                        <motion.div
-                            key={card.label}
-                            initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.05, duration: 0.25 }}
-                            className="p-3.5 sm:p-4 bg-surface border border-border-strong rounded-md space-y-2.5 sm:space-y-3 shadow-xs relative group"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className={`w-7 h-7 rounded-sm flex items-center justify-center border ${card.bg} ${card.border} ${card.accent}`}>
-                                    <Icon size={13} />
+                        <div key={card.label} className="bg-surface p-4 sm:p-5">
+                            <motion.div
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, ease: "easeOut", delay: 0.1 + i * 0.06 }}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div
+                                        className={`flex size-8 items-center justify-center rounded-lg border ${card.bg} ${card.border} ${card.accent}`}
+                                    >
+                                        <Icon size={15} aria-hidden="true" />
+                                    </div>
+                                    <Link
+                                        href={card.href}
+                                        title={`How is ${card.label} calculated?`}
+                                        aria-label={`How is ${card.label} calculated?`}
+                                        className="p-1 text-foreground-muted transition-colors hover:text-gold"
+                                    >
+                                        <HelpCircle size={14} aria-hidden="true" />
+                                    </Link>
                                 </div>
-                                <Link
-                                    href={card.href}
-                                    title={`How is ${card.label} calculated?`}
-                                    className="text-foreground-muted hover:text-gold transition-colors p-1"
-                                >
-                                    <HelpCircle size={12} />
-                                </Link>
-                            </div>
 
-                            <div className="min-w-0">
-                                <div className="text-xl sm:text-2xl font-bold font-mono tracking-tight text-foreground leading-none truncate">
+                                <p className="mt-4 text-xs text-foreground-secondary">{card.label}</p>
+                                <p className="tnum mt-1 truncate font-mono text-xl font-semibold tracking-tight text-foreground sm:text-3xl">
                                     {card.value}
-                                </div>
-                                <div className="text-[10px] sm:text-[11px] font-mono text-foreground-secondary mt-1 truncate">
-                                    {card.sub}
-                                </div>
-                            </div>
-
-                            <div className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-foreground-secondary border-t border-border pt-2 truncate flex items-center justify-between">
-                                <span>{card.label}</span>
-                            </div>
-                        </motion.div>
+                                </p>
+                                <p className="mt-1.5 text-xs leading-5 text-foreground-muted">{card.sub}</p>
+                            </motion.div>
+                        </div>
                     );
                 })}
             </div>
 
             {props.backlogsCount > 0 ? (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex items-center gap-3 p-3.5 rounded-md bg-surface-elevated border border-border-strong text-foreground shadow-xs"
-                >
-                    <div className="p-2 rounded-sm bg-grade-fail-surface border border-grade-fail-border text-grade-fail shrink-0">
-                        <AlertTriangle size={15} />
-                    </div>
-                    <div>
-                        <div className="text-xs font-mono font-bold text-foreground flex items-center gap-2">
-                            <span className="text-grade-fail font-extrabold">{props.backlogsCount} Backlog{props.backlogsCount > 1 ? "s" : ""} Active</span>
-                            <span className="text-[10px] font-normal text-foreground-muted">(Re-appear required)</span>
-                        </div>
-                        <div className="text-[11px] font-mono text-foreground-secondary mt-0.5">
+                <div className="flex items-start gap-3 border-t border-border px-4 py-3.5 sm:px-5">
+                    <AlertTriangle size={15} className="mt-1 shrink-0 text-grade-fail" aria-hidden="true" />
+                    <p className="text-sm leading-6 text-foreground-secondary">
+                        <span className="font-semibold text-grade-fail">
+                            {props.backlogsCount} Backlog{props.backlogsCount > 1 ? "s" : ""} Active
+                        </span>
+                        <span className="text-foreground-muted"> (Re-appear required)</span>
+                        <span className="block sm:ml-2 sm:inline">
                             Backlog subjects carry 0 grade points — clear them in re-appear exams to raise GPA.
-                        </div>
-                    </div>
-                </motion.div>
+                        </span>
+                    </p>
+                </div>
             ) : (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="flex items-center gap-2.5 p-3 rounded-md bg-surface border border-grade-excellent-border text-grade-excellent text-xs font-mono font-bold"
-                >
-                    <CheckCircle2 size={14} className="shrink-0 text-grade-excellent" />
-                    <span>Clean academic standing — 0 backlogs in this view!</span>
-                </motion.div>
+                <div className="flex items-center gap-3 border-t border-border px-4 py-3.5 sm:px-5">
+                    <CheckCircle2 size={15} className="shrink-0 text-grade-excellent" aria-hidden="true" />
+                    <p className="text-sm font-medium text-grade-excellent">
+                        Clean academic standing — 0 backlogs in this view!
+                    </p>
+                </div>
             )}
-        </div>
+        </section>
     );
 }

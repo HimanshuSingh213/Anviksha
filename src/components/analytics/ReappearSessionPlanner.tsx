@@ -1,18 +1,17 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     CalendarDays,
     Clock3,
     AlertTriangle,
     ShieldCheck,
-    Filter,
     ArrowRight,
     BookOpenCheck,
-    HelpCircle,
 } from "lucide-react";
+import Chip from "@/components/analytics/Chip";
+import PanelHeader from "@/components/analytics/PanelHeader";
 import type { ReappearSubject, ReappearSessionPlan } from "@/types/result";
 
 export type { ReappearSubject, ReappearSessionPlan };
@@ -23,6 +22,7 @@ const tabs = [
     ["EVEN", "Even"],
 ] as const;
 
+// Plans and categorizes backlog examinations into Odd and Even semester exam windows.
 export default function ReappearSessionPlanner({ plan }: { plan: ReappearSessionPlan }) {
     const [selectedTab, setSelectedTab] = useState<"ALL" | "ODD" | "EVEN">("ALL");
 
@@ -39,70 +39,52 @@ export default function ReappearSessionPlanner({ plan }: { plan: ReappearSession
     };
 
     return (
-        <motion.section
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-            className="analytics-panel space-y-4 sm:space-y-5 p-3.5 sm:p-5 lg:p-6"
-        >
-            <header className="flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-3xl space-y-2 sm:space-y-2.5">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-md border border-cat-blue-border bg-cat-blue-surface text-cat-blue shrink-0">
-                            <CalendarDays size={16} strokeWidth={1.8} />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cat-blue">
-                                    Examination Planning
-                                </div>
-                                <Link
-                                    href="/calculations#result-states"
-                                    title="How are backlog states determined?"
-                                    className="inline-flex items-center gap-1 text-[10px] font-mono text-foreground-muted hover:text-gold transition-colors"
-                                >
-                                    <HelpCircle size={11} />
-                                    <span className="hidden sm:inline">How is this calculated?</span>
-                                </Link>
-                            </div>
-                            <h2 className="mt-0.5 text-base sm:text-lg font-semibold tracking-tight text-foreground">
-                                Odd vs Even Re-appear Planner
-                            </h2>
-                        </div>
-                    </div>
-                    <p className="max-w-2xl text-xs leading-5 text-foreground-secondary">
-                        Backlog papers are grouped by the typical exam window they can be cleared in. Actual dates and registrations are notified officially by GGSIPU.
-                    </p>
-                </div>
+        <section className="home-panel space-y-6 p-5 sm:p-6">
+            <PanelHeader
+                icon={CalendarDays}
+                iconClass="border-cat-blue-border bg-cat-blue-surface text-cat-blue"
+                kicker="Examination Planning"
+                kickerClass="text-cat-blue"
+                title="Odd vs Even Re-appear Planner"
+                helpHref="/calculations#result-states"
+                helpTitle="How are backlog states determined?"
+                right={
+                    <Chip tone={plan.cleanRecord ? "good" : "bad"} className="self-start">
+                        {plan.cleanRecord ? (
+                            <ShieldCheck size={13} aria-hidden="true" />
+                        ) : (
+                            <AlertTriangle size={13} aria-hidden="true" />
+                        )}
+                        {plan.cleanRecord
+                            ? "No re-appear pending"
+                            : `${plan.totalBacklogs} backlog${plan.totalBacklogs !== 1 ? "s" : ""} / ${plan.totalCreditsAtRisk} credits`}
+                    </Chip>
+                }
+            />
 
-                <div
-                    className={`inline-flex w-fit items-center gap-2 rounded-md border px-2.5 py-1.5 text-[10px] sm:text-[11px] font-semibold ${plan.cleanRecord
-                        ? "border-grade-excellent-border bg-grade-excellent-surface text-grade-excellent"
-                        : "border-grade-fail-border bg-grade-fail-surface text-grade-fail"
-                        }`}
-                >
-                    {plan.cleanRecord ? <ShieldCheck size={13} /> : <AlertTriangle size={13} />}
-                    {plan.cleanRecord
-                        ? "No re-appear pending"
-                        : `${plan.totalBacklogs} backlog${plan.totalBacklogs !== 1 ? "s" : ""} / ${plan.totalCreditsAtRisk} credits`}
-                </div>
-            </header>
+            <p className="max-w-3xl text-sm leading-6 text-foreground-secondary">
+                Backlog papers are grouped by the typical exam window they can be cleared in. Actual dates and registrations are notified officially by GGSIPU.
+            </p>
 
             {plan.cleanRecord ? (
-                <div className="flex flex-col items-center justify-center rounded-lg border border-accent-mint-border bg-accent-mint-surface px-4 sm:px-6 py-6 sm:py-8 text-center">
-                    <div className="flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-md border border-accent-mint-border bg-surface text-accent-mint">
-                        <BookOpenCheck size={20} />
-                    </div>
-                    <h3 className="mt-3 sm:mt-4 text-sm sm:text-base font-semibold text-foreground">
-                        All academic semesters cleared
-                    </h3>
-                    <p className="mt-1.5 max-w-md text-xs sm:text-sm leading-5 text-foreground-secondary">
+                <div className="flex flex-col items-center justify-center rounded-xl border border-accent-mint-border bg-accent-mint-surface px-4 py-10 text-center">
+                    <motion.div
+                        initial={{ scale: 0.6, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}
+                        className="flex size-12 items-center justify-center rounded-xl border border-accent-mint-border bg-surface text-accent-mint"
+                    >
+                        <BookOpenCheck size={22} aria-hidden="true" />
+                    </motion.div>
+                    <h3 className="mt-4 text-base font-semibold text-foreground">All academic semesters cleared</h3>
+                    <p className="mt-1.5 max-w-md text-sm leading-6 text-foreground-secondary">
                         No active backlog subject is currently queued for Odd or Even term re-appearance registration.
                     </p>
                 </div>
             ) : (
                 <>
-                    <div className="grid grid-cols-1 gap-2.5 sm:gap-3 lg:grid-cols-2">
+                    {/* Odd and Even semester examination window queues */}
+                    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-border bg-border">
                         <SessionWindowCard
                             title="Odd term queue"
                             subtitle="Sem 1 / 3 / 5 / 7"
@@ -110,7 +92,6 @@ export default function ReappearSessionPlanner({ plan }: { plan: ReappearSession
                             count={plan.oddTermBacklogs.length}
                             credits={plan.oddTermCredits}
                             accentClass="text-gold"
-                            surfaceClass="border-gold-border bg-gold-surface/25"
                         />
                         <SessionWindowCard
                             title="Even term queue"
@@ -119,118 +100,110 @@ export default function ReappearSessionPlanner({ plan }: { plan: ReappearSession
                             count={plan.evenTermBacklogs.length}
                             credits={plan.evenTermCredits}
                             accentClass="text-cat-blue"
-                            surfaceClass="border-cat-blue-border bg-cat-blue-surface/25"
                         />
                     </div>
 
-                    <div className="flex flex-col gap-2.5 sm:gap-3 border-y border-border py-2.5 sm:py-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-center gap-2">
-                            <Filter size={13} className="text-foreground-muted" />
-                            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-foreground-muted">
-                                Re-appear queue / {activeList.length}
-                            </span>
-                        </div>
+                    <div>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <h3 className="text-sm font-semibold text-foreground">
+                                Re-appear queue <span className="tnum font-mono text-foreground-muted">/ {activeList.length}</span>
+                            </h3>
 
-                        <div className="flex sm:inline-flex w-full sm:w-auto rounded-md border border-border bg-surface-deep p-0.5">
-                            {tabs.map(([value, label]) => (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    onClick={() => {
-                                        setSelectedTab(value);
-                                    }}
-                                    className={`flex-1 sm:flex-initial text-center rounded px-2.5 py-1 text-[10px] font-semibold transition-colors cursor-pointer ${selectedTab === value
-                                        ? "bg-foreground text-background"
-                                        : "text-foreground-muted hover:bg-surface-hover hover:text-foreground"
+                            {/* Backlog window selector: All, Odd term, or Even term */}
+                            <div className="flex w-full rounded-lg border border-border bg-surface p-0.5 sm:inline-flex sm:w-auto">
+                                {tabs.map(([value, label]) => (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        onClick={() => setSelectedTab(value)}
+                                        className={`relative flex-1 cursor-pointer rounded-md px-3 py-1.5 text-center text-xs font-semibold transition-colors sm:flex-initial ${
+                                            selectedTab === value ? "text-background" : "text-foreground-muted hover:text-foreground"
                                         }`}
-                                >
-                                    {label} ({tabCounts[value]})
-                                </button>
-                            ))}
+                                    >
+                                        {selectedTab === value && (
+                                            <motion.span
+                                                layoutId="reappearFilter"
+                                                transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                                                className="absolute inset-0 rounded-md bg-foreground"
+                                            />
+                                        )}
+                                        <span className="relative">
+                                            {label} <span className="tnum font-mono">({tabCounts[value]})</span>
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 gap-2.5 sm:gap-3 md:grid-cols-2">
-                        <AnimatePresence mode="popLayout">
-                            {activeList.map((subject: ReappearSubject) => (
-                                <motion.article
-                                    key={`${subject.semester}-${subject.paperCode}`}
-                                    layout
-                                    initial={{ opacity: 0, scale: 0.98 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.98 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="analytics-card flex min-h-fit flex-col justify-between p-3.5 sm:p-4 transition-colors hover:border-border-strong"
-                                >
-                                    <div className="space-y-2 sm:space-y-2.5">
+                        {/* Backlog subject cards with examination priority */}
+                        <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                            <AnimatePresence mode="popLayout">
+                                {activeList.map((subject: ReappearSubject) => (
+                                    <motion.article
+                                        key={`${subject.semester}-${subject.paperCode}`}
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.97 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.97 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="flex flex-col rounded-xl border border-border p-4 transition-colors hover:border-border-strong"
+                                    >
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0">
-                                                <div className="flex flex-wrap items-center gap-1.5 font-mono text-[10px]">
+                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs text-foreground-muted">
                                                     <span className="font-semibold text-gold">
                                                         {subject.paperCode || "NO-CODE"}
                                                     </span>
-                                                    <span className="text-foreground-muted">/</span>
-                                                    <span className="text-foreground-muted">
-                                                        Sem {subject.semester}
-                                                    </span>
-                                                    <span className="text-foreground-muted">/</span>
-                                                    <span className="text-foreground-muted">
-                                                        {subject.credit} cr
-                                                    </span>
+                                                    <span>Sem {subject.semester}</span>
+                                                    <span>{subject.credit} cr</span>
                                                     {subject.resultState === "ABSENT" && (
-                                                        <span className="px-1.5 py-0.2 rounded bg-surface-deep text-foreground-muted font-bold">
+                                                        <span className="rounded bg-surface-elevated px-1.5 py-px font-semibold">
                                                             ABSENT
                                                         </span>
                                                     )}
                                                     {subject.resultState === "DETAINED" && (
-                                                        <span className="px-1.5 py-0.2 rounded bg-grade-fail-surface text-grade-fail font-bold border border-grade-fail-border">
+                                                        <span className="rounded bg-grade-fail-surface px-1.5 py-px font-semibold text-grade-fail">
                                                             DETAINED
                                                         </span>
                                                     )}
                                                 </div>
-                                                <h3 className="mt-1 text-xs sm:text-sm font-semibold leading-4.5 sm:leading-5 text-foreground">
+                                                <h4 className="mt-1.5 text-sm font-semibold leading-5 text-foreground">
                                                     {subject.subjectTitle}
-                                                </h3>
+                                                </h4>
                                             </div>
 
                                             <PriorityBadge priority={subject.priority} />
                                         </div>
 
-                                        <p className="text-[10px] sm:text-[11px] leading-4 sm:leading-4.5 text-foreground-secondary">
+                                        <p className="mt-2 text-xs leading-5 text-foreground-secondary">
                                             {subject.priorityReason}
                                         </p>
-                                    </div>
 
-                                    <div className="mt-3 grid gap-2 border-t border-border pt-2.5 text-[10px] sm:text-[11px] grid-cols-[1fr_auto] items-center">
-                                        <div className="min-w-0">
-                                            <p className="text-foreground-muted text-[10px]">Eligible examination window</p>
-                                            <p className="mt-0.5 font-medium text-foreground truncate">
-                                                {subject.sessionWindow}
-                                            </p>
+                                        <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-3 text-xs">
+                                            <div className="min-w-0">
+                                                <p className="text-foreground-muted">Eligible examination window</p>
+                                                <p className="mt-0.5 truncate font-medium text-foreground">
+                                                    {subject.sessionWindow}
+                                                </p>
+                                            </div>
+                                            <Chip tone="muted" className="font-mono">
+                                                {typeof subject.marks === "number" ? `${subject.marks}/${subject.maxMarks}` : subject.marks}
+                                                <ArrowRight size={11} aria-hidden="true" />
+                                            </Chip>
                                         </div>
-                                        <span className="inline-flex shrink-0 w-fit items-center gap-1 rounded-md border border-border-strong bg-surface px-2 py-0.5 font-mono text-[10px] text-foreground-secondary">
-                                            {typeof subject.marks === "number" ? `${subject.marks}/${subject.maxMarks}` : subject.marks}
-                                            <ArrowRight size={10} />
-                                        </span>
-                                    </div>
-                                </motion.article>
-                            ))}
-                        </AnimatePresence>
+                                    </motion.article>
+                                ))}
+                            </AnimatePresence>
+                        </div>
                     </div>
 
-                    <footer className="grid gap-2.5 rounded-lg border border-border bg-surface-deep/70 p-3 sm:p-3.5 text-[10px] sm:text-[11px] leading-4.5 text-foreground-secondary sm:grid-cols-2 sm:gap-4">
-                        <div>
-                            <span className="font-semibold text-foreground">Term heuristic:</span>{" "}
-                            Odd semester papers typically re-appear in Winter (Nov-Dec) windows, and even semester papers in Summer (May-June) windows.
-                        </div>
-                        <div>
-                            <span className="font-semibold text-foreground">Priority guideline:</span>{" "}
-                            First-year and high-credit backlogs impact promotion standing most directly and should be prioritized.
-                        </div>
-                    </footer>
+                    <p className="text-xs leading-5 text-foreground-muted">
+                        <span className="font-semibold text-foreground-secondary">Priority guideline:</span>{" "}
+                        First-year and high-credit backlogs impact promotion standing most directly and should be prioritized.
+                    </p>
                 </>
             )}
-        </motion.section>
+        </section>
     );
 }
 
@@ -241,7 +214,6 @@ function SessionWindowCard({
     count,
     credits,
     accentClass,
-    surfaceClass,
 }: {
     title: string;
     subtitle: string;
@@ -249,59 +221,32 @@ function SessionWindowCard({
     count: number;
     credits: number;
     accentClass: string;
-    surfaceClass: string;
 }) {
     return (
-        <div className={`rounded-lg border p-3.5 sm:p-4 ${surfaceClass}`}>
-            <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground-muted">
-                    <Clock3 size={13} className={accentClass} />
+        <div className="bg-surface p-4">
+            <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                <p className="flex items-center gap-2 text-xs font-medium text-foreground-secondary">
+                    <Clock3 size={14} className={accentClass} aria-hidden="true" />
                     {title}
-                </div>
-                <span className="rounded-md border border-border-strong bg-surface px-2 py-0.5 font-mono text-[9px] text-foreground-muted">
-                    {subtitle}
-                </span>
+                </p>
+                <span className="font-mono text-[11px] text-foreground-muted">{subtitle}</span>
             </div>
+
             <div className="mt-3 flex items-end justify-between gap-3">
                 <div>
-                    <p className="font-mono text-2xl sm:text-3xl font-semibold leading-none text-foreground">
-                        {count}
-                    </p>
-                    <p className="mt-1 text-[10px] sm:text-[11px] text-foreground-muted">
-                        subject{count !== 1 ? "s" : ""} queued
-                    </p>
+                    <p className="tnum font-mono text-3xl font-semibold leading-none text-foreground">{count}</p>
+                    <p className="mt-1.5 text-xs text-foreground-muted">subject{count !== 1 ? "s" : ""} queued</p>
                 </div>
-                <p className={`font-mono text-xs sm:text-sm font-semibold ${accentClass}`}>
-                    {credits} credits
-                </p>
+                <p className={`tnum shrink-0 whitespace-nowrap font-mono text-sm font-semibold ${accentClass}`}>{credits} credits</p>
             </div>
-            <p className="mt-2 text-[11px] sm:text-[12px] leading-4.5 sm:leading-5 text-foreground-secondary">
-                {window}
-            </p>
+
+            <p className="mt-3 text-xs leading-5 text-foreground-secondary">{window}</p>
         </div>
     );
 }
 
 function PriorityBadge({ priority }: { priority: ReappearSubject["priority"] }) {
-    if (priority === "HIGH") {
-        return (
-            <span className="shrink-0 rounded-md border border-grade-fail-border bg-grade-fail-surface px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-grade-fail">
-                High
-            </span>
-        );
-    }
-
-    if (priority === "MEDIUM") {
-        return (
-            <span className="shrink-0 rounded-md border border-gold-border bg-gold-surface px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-gold">
-                Upcoming
-            </span>
-        );
-    }
-
-    return (
-        <span className="shrink-0 rounded-md border border-border-strong bg-surface px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.12em] text-foreground-muted">
-            Standard
-        </span>
-    );
+    if (priority === "HIGH") return <Chip tone="bad">High</Chip>;
+    if (priority === "MEDIUM") return <Chip tone="gold">Upcoming</Chip>;
+    return <Chip tone="muted">Standard</Chip>;
 }
