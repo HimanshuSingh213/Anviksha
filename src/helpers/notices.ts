@@ -1,28 +1,10 @@
 import * as cheerio from "cheerio";
 import { GGSIPUNotice, NoticeCategory } from "@/types/notice";
 
-/**
- * Categorizes a university examination notice by inspecting keywords in its title.
- *
- * @param title - The raw notice title text
- * @returns NoticeCategory ("Datesheet", "Result", "Inspection", or "Notice")
- */
-function getNoticeCategory(title: string): NoticeCategory {
-  const text = title.toLowerCase();
+// Maximum notices to retain in memory.
+const MAX_NOTICES = 500;
 
-  if (text.includes("inspection") || text.includes("certified copy")) {
-    return "Inspection";
-  }
-  if (text.includes("result") || text.includes("rechecking")) {
-    return "Result";
-  }
-  if (text.includes("datesheet") || text.includes("date sheet") || text.includes("schedule")) {
-    return "Datesheet";
-  }
-  return "Notice";
-}
-
-// In-memory fallback cache to ensure zero blank-screen downtime if upstream GGSIPU server hangs
+// Fallback notices served during upstream university downtime.
 let lastKnownNotices: GGSIPUNotice[] = [
   {
     id: "notice-fallback-1",
@@ -54,106 +36,105 @@ let lastKnownNotices: GGSIPUNotice[] = [
   },
 ];
 
-const TARGET_URLS = [
-  "https://www.ipu.ac.in/exam_notices.php",
-  "https://ipu.ac.in/exam_notices.php",
-  "http://www.ipu.ac.in/exam_notices.php",
-];
+// Infers notice category from title keywords.
+function getCategory(title: string): NoticeCategory {
+  const text = title.toLowerCase();
+  if (text.includes("inspection") || text.includes("certified copy")) return "Inspection";
+  if (text.includes("result") || text.includes("rechecking")) return "Result";
+  if (text.includes("datesheet") || text.includes("schedule")) return "Datesheet";
+  return "Notice";
+}
 
-/**
- * Scrapes latest examination notices, date sheets, and result declarations from official GGSIPU portals.
- * Falls back gracefully to cached notices if upstream servers are unreachable.
- *
- * @returns Array of parsed GGSIPUNotice objects
- */
+// Fetches and parses a single paginated notices page from GGSIPU portal.
+async function getNoticesFromPage(page: number): Promise<GGSIPUNotice[]> {
+  try {
+    const response = await fetch(`https://www.ipu.ac.in/exam_notices.php?page=${page}&limit=100`, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+      signal: AbortSignal.timeout(6000), // 6-second upstream timeout
+      next: { revalidate: 900 }, // 15-minute ISR cache
+    });
+    if (!response.ok) return [];
+
+    const $ = cheerio.load(await response.text());
+    const notices: GGSIPUNotice[] = [];
+
+    // One <tr> row per notice.
+    const rows = $("table tr").toArray();
+    for (const row of rows) {
+      const columns = $(row).find("td");
+      if (columns.length < 2) continue; // not a notice row
+
+      const link = $(row).find("a");
+      const href = link.attr("href");
+      if (!href || href.startsWith("mailto:")) continue;
+
+      // Fallback to table cell text if anchor text is generic
+      const linkText = link.text().trim();
+      const uselessLinkTexts = ["click here", "download", "pdf", "view"];
+      const isUseless = linkText.length <= 5 || uselessLinkTexts.includes(linkText.toLowerCase());
+      const title = isUseless ? columns.first().text().trim() : linkText;
+      if (!title) continue;
+
+      // Notice date recorded in terminal column
+      const date = columns.last().text().trim() || "Recent";
+
+      // Resolve relative PDF path against official domain
+      const url = href.startsWith("http") ? href : `https://www.ipu.ac.in/${href.replace(/^\//, "")}`;
+
+      notices.push({
+        id: "", // filled in later
+        title: title.replace(/\s+/g, " "),
+        date: date.replace(/\s+/g, " "),
+        url,
+        category: getCategory(title),
+      });
+    }
+
+    return notices;
+  } catch {
+    return [];
+  }
+}
+
+// Fetches recent notices from GGSIPU examination portal across concurrent pages.
 export async function fetchGGSIPUNotices(): Promise<GGSIPUNotice[]> {
-  for (const targetUrl of TARGET_URLS) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+  // Concurrently fetch first 5 pages (100 notices per page)
+  const pages = await Promise.all([
+    getNoticesFromPage(1),
+    getNoticesFromPage(2),
+    getNoticesFromPage(3),
+    getNoticesFromPage(4),
+    getNoticesFromPage(5),
+  ]);
 
-      const response = await fetch(targetUrl, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-          "Accept":
-            "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-          "Accept-Language": "en-US,en;q=0.9",
-          "Cache-Control": "no-cache",
-        },
-        signal: controller.signal,
-        next: { revalidate: 900 },
-      });
+  // Deduplicate merged notices by document URL
+  const mergedNotices: GGSIPUNotice[] = [];
+  const usedUrls: string[] = [];
 
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        continue;
-      }
-
-      const html = await response.text();
-      if (!html || html.length < 200) {
-        continue;
-      }
-
-      const $ = cheerio.load(html);
-      const tableRows = $("table tr");
-
-      const noticesList: GGSIPUNotice[] = [];
-
-      tableRows.each((index, row) => {
-        const columns = $(row).find("td");
-        if (columns.length < 2) return;
-
-        const linkElement = $(row).find("a");
-        const rawHref = linkElement.attr("href");
-        if (!rawHref) return;
-        const href = rawHref.trim();
-        if (
-          !href ||
-          href.startsWith("mailto:") ||
-          href.startsWith("javascript:") ||
-          href.startsWith("data:")
-        ) {
-          return;
-        }
-
-        // Extract title and date
-        const linkText = linkElement.text().trim();
-        const firstColumnText = $(columns[0]).text().trim();
-        const title =
-          linkText.length > 5 &&
-          !["click here", "download", "pdf", "view"].includes(linkText.toLowerCase())
-            ? linkText
-            : firstColumnText || linkText;
-
-        const lastColumnText = $(columns[columns.length - 1]).text().trim();
-        const date = lastColumnText || firstColumnText || "Recent";
-
-        // Build full PDF url
-        const pdfUrl = href.startsWith("http://") || href.startsWith("https://")
-          ? href
-          : `https://www.ipu.ac.in/${href.replace(/^\//, "")}`;
-
-        noticesList.push({
-          id: `notice-${index}`,
-          title: title.replace(/\s+/g, " "),
-          date: date.replace(/\s+/g, " "),
-          url: pdfUrl,
-          category: getNoticeCategory(title),
-        });
-      });
-
-      if (noticesList.length > 0) {
-        lastKnownNotices = noticesList;
-        return noticesList;
-      }
-    } catch {
-      // Try next mirror URL
-      continue;
+  for (const pageNotices of pages) {
+    for (const notice of pageNotices) {
+      if (usedUrls.includes(notice.url)) continue;
+      usedUrls.push(notice.url);
+      mergedNotices.push(notice);
     }
   }
 
-  // Graceful fallback to last known notices during upstream GGSIPU downtime
-  return lastKnownNotices;
+  // Keep newest MAX_NOTICES
+  const recentNotices = mergedNotices.slice(0, MAX_NOTICES);
+
+  // Assign sequential identifiers
+  const notices: GGSIPUNotice[] = [];
+  for (let i = 0; i < recentNotices.length; i++) {
+    notices.push({ ...recentNotices[i], id: `notice-${i}` });
+  }
+
+  // Return cached fallback if upstream fetch yielded zero records
+  if (notices.length === 0) return lastKnownNotices;
+
+  lastKnownNotices = notices;
+  return notices;
 }

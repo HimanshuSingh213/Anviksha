@@ -6,14 +6,22 @@ interface Props {
   tabs: { label: string; value: string }[];
   active: string;
   onChange: (value: string) => void;
+  label?: string; // Screen reader accessible label
+  underlineId?: string; // Layout ID for shared layout animations
 }
 
-// Semester selector tabs with animated active indicator
-export default function SemesterTabs({ tabs, active, onChange }: Props) {
+// Tab bar navigation with animated active underline indicator.
+export default function SemesterTabs({
+  tabs,
+  active,
+  onChange,
+  label = "Semester",
+  underlineId = "semester-underline",
+}: Props) {
   return (
     <div
       role="tablist"
-      aria-label="Semester"
+      aria-label={label}
       className="flex overflow-x-auto border-b border-border [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
       {tabs.map((tab) => {
@@ -32,7 +40,7 @@ export default function SemesterTabs({ tabs, active, onChange }: Props) {
             {tab.label}
             {isActive && (
               <motion.span
-                layoutId="semester-underline"
+                layoutId={underlineId}
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 className="absolute inset-x-0 -bottom-px h-0.5 bg-gold"
               />

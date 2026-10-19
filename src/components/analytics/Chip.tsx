@@ -1,17 +1,18 @@
 import type { ReactNode } from "react";
 
+// Status badge indicator with semantic color tones.
 const TONES = {
     good: "bg-grade-excellent-surface text-grade-excellent ring-grade-excellent-border",
     bad: "bg-grade-fail-surface text-grade-fail ring-grade-fail-border",
     gold: "bg-gold-surface text-gold ring-gold-border",
     blue: "bg-cat-blue-surface text-cat-blue ring-cat-blue-border",
+    violet: "bg-cat-violet-surface text-cat-violet ring-cat-violet-border",
     copper: "bg-accent-copper-surface text-accent-copper ring-accent-copper-border",
     muted: "bg-surface-elevated text-foreground-muted ring-border-strong",
 };
 
 export type ChipTone = keyof typeof TONES;
 
-// Status badge indicator with semantic color tones.
 export default function Chip({
     tone = "muted",
     children,

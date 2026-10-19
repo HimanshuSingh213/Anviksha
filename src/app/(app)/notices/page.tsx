@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Bell, RefreshCw } from "lucide-react";
+import { ArrowLeft, Bell } from "lucide-react";
 import { fetchGGSIPUNotices } from "@/helpers/notices";
+import Chip from "@/components/analytics/Chip";
 import NoticesClientView from "@/components/notices/NoticesClientView";
 
 const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://anviksha-result.vercel.app";
@@ -80,32 +81,33 @@ export default async function NoticesPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      {/* Main Content */}
-      <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10 space-y-6">
-        <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-gold-surface border border-gold-border text-gold font-mono text-[11px]">
-            <Bell size={12} className="animate-pulse shrink-0" />
-            <span>Official University Feed</span>
-          </div>
+      <main id="main-content" className="mx-auto w-full max-w-5xl space-y-6 px-4 py-10 sm:px-6 lg:py-12">
 
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground font-mono">
+        {/* Title */}
+        <header>
+          <Chip tone="gold">
+            <Bell size={12} aria-hidden="true" />
+            Official University Feed
+          </Chip>
+
+          <h1 className="mt-4 text-2xl font-semibold tracking-[-0.02em] sm:text-3xl">
             Examination Circulars & Result Notices
           </h1>
 
-          <p className="text-xs sm:text-sm text-foreground-secondary max-w-2xl leading-relaxed">
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-foreground-secondary">
             Real-time feed of official GGSIPU examination circulars, declared result notices, end-term date-sheets, and answer sheet inspection schedules directly from the university portal.
           </p>
-        </div>
+        </header>
 
-        {/* Real-time sync & transparency card */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 sm:p-4 rounded-lg bg-surface border border-border-strong text-xs font-mono text-foreground-secondary shadow-xs">
-          <div className="flex items-center gap-2.5">
-            <RefreshCw size={14} className="text-gold shrink-0 animate-spin" style={{ animationDuration: "6s" }} />
+        {/* Real-time sync & transparency */}
+        <div className="home-panel flex flex-col gap-2 px-4 py-3.5 text-xs leading-5 text-foreground-secondary sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+          <p className="flex items-start gap-2.5">
+            <span className="mt-1.5 size-1.5 shrink-0 animate-pulse rounded-full bg-grade-excellent" aria-hidden="true" />
             <span>
-              <strong className="text-foreground">Live Synchronization: </strong>Fetched & updated directly from the university portal every <strong>15 minutes</strong> via server ISR caching.
+              <strong className="font-semibold text-foreground">Live Synchronization: </strong>Fetched & updated directly from the university portal every <strong className="font-semibold text-foreground">15 minutes</strong> via server ISR caching.
             </span>
-          </div>
-          <span className="text-[11px] text-foreground-muted shrink-0">
+          </p>
+          <span className="shrink-0 pl-4 font-mono text-foreground-muted sm:pl-0">
             Source: ipu.ac.in/exam_notices.php
           </span>
         </div>
@@ -114,20 +116,18 @@ export default async function NoticesPage() {
         <NoticesClientView initialNotices={notices} />
 
         {/* Bottom Navigation */}
-        <div className="pt-6 border-t border-border-strong flex flex-wrap items-center justify-between gap-3 text-xs font-mono text-foreground-muted">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6 font-mono text-xs text-foreground-muted">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 transition-colors hover:text-foreground"
           >
-            <ArrowLeft size={13} />
+            <ArrowLeft size={13} aria-hidden="true" />
             <span>Back to Home</span>
           </Link>
 
-          <div className="flex items-center gap-3">
-            <Link href="/calculations" className="hover:text-gold transition-colors">
-              How Calculations Work
-            </Link>
-          </div>
+          <Link href="/calculations" className="transition-colors hover:text-gold">
+            How Calculations Work
+          </Link>
         </div>
       </main>
     </div>
