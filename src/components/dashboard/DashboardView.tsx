@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { AlertTriangle, ArrowRight, BarChart2 } from "lucide-react";
+import { AlertTriangle, ArrowRight, BarChart2, ClipboardList } from "lucide-react";
 import ExplanationPanel from "@/components/analytics/ExplanationPanel";
 import CreditTipModal from "./CreditTipModal";
 import MetricsStrip from "./MetricsStrip";
@@ -64,16 +64,26 @@ export default function DashboardView({ engine }: { engine: EngineResult }) {
 
         <section className="flex flex-col items-start justify-between gap-5 border-t border-border pt-8 sm:flex-row sm:items-center">
           <p className="max-w-xl text-sm leading-6 text-foreground-secondary">
-            Promotion standing, placement eligibility, semester grade sheets and the master transcript are on the analytics page.
+            Promotion standing, placement eligibility, semester grade sheets and the master transcript are on the analytics page. Your appearing list (RC) lives on its own page.
           </p>
-          <Link
-            href="/dashboard/analytics"
-            className="group inline-flex shrink-0 items-center justify-center gap-3 rounded-md border border-white bg-white px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider text-black transition-colors duration-200 hover:bg-neutral-200"
-          >
-            <BarChart2 size={15} aria-hidden="true" />
-            View Full Analytics
-            <ArrowRight size={14} aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-1" />
-          </Link>
+          <div className="flex shrink-0 flex-wrap items-center gap-3">
+            <Link
+              href="/rc"
+              className="group inline-flex items-center justify-center gap-3 rounded-md border border-border-strong bg-surface px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider text-foreground-secondary transition-colors duration-200 hover:border-gold-border hover:text-gold"
+            >
+              <ClipboardList size={15} aria-hidden="true" />
+              View Appearing List
+              <ArrowRight size={14} aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-1" />
+            </Link>
+            <Link
+              href="/dashboard/analytics"
+              className="group inline-flex items-center justify-center gap-3 rounded-md border border-white bg-white px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider text-black transition-colors duration-200 hover:bg-neutral-200"
+            >
+              <BarChart2 size={15} aria-hidden="true" />
+              View Full Analytics
+              <ArrowRight size={14} aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-1" />
+            </Link>
+          </div>
         </section>
 
         <ExplanationPanel engine={engine} />

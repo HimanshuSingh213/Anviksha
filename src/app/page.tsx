@@ -7,6 +7,7 @@ import FeaturesSection from "@/components/home/FeaturesSection";
 import CoverageSection from "@/components/home/CoverageSection";
 import TrustSection from "@/components/home/TrustSection";
 import FaqCtaSection from "@/components/home/FaqCtaSection";
+import AnnouncementModal from "@/components/home/AnnouncementModal";
 import { FAQS } from "@/components/home/faq-data";
 import HomeFooter from "@/components/home/HomeFooter";
 
@@ -84,6 +85,7 @@ export default async function Home() {
         <TrustSection />
         <FaqCtaSection cta={cta} />
       </main>
+      <AnnouncementModal />
       <HomeFooter />
     </div>
   );

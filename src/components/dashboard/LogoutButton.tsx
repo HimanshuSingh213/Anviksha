@@ -5,10 +5,12 @@ import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import useResultStore from "@/store/result-store";
+import useRCStore from "@/store/rc-store";
 
 export function LogoutButton() {
     const router = useRouter();
     const clearResult = useResultStore((state) => state.clearResult);
+    const clearRC = useRCStore((state) => state.clearRC);
 
     const handleLogout = async () => {
         try {
@@ -20,6 +22,7 @@ export function LogoutButton() {
             router.push("/login");
             setTimeout(() => {
                 clearResult();
+                clearRC();
             }, 150);
         }
     };

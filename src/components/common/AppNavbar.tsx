@@ -29,6 +29,7 @@ const STANDALONE_LINKS = [
 const DASHBOARD_TABS = [
     { href: "/dashboard", label: "Dashboard" },
     { href: "/dashboard/analytics", label: "Analytics" },
+    { href: "/rc", label: "Appearing List" },
 ];
 
 export default function AppNavbar() {
@@ -42,7 +43,11 @@ export default function AppNavbar() {
     }, [pathname]);
 
     const loggedIn = isAuthenticated;
-    const isDashboard = pathname === "/dashboard" || pathname === "/dashboard/analytics";
+    
+    const isDashboard =
+        pathname === "/dashboard" ||
+        pathname.startsWith("/dashboard/") ||
+        pathname === "/rc";
     const isLoginPage = pathname === "/login";
     const isStandalonePage = pathname === "/notices" || pathname === "/report" || pathname === "/calculations";
 

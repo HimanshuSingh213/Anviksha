@@ -3,12 +3,12 @@ import { ApiErrorResponse } from "@/types/ApiResponse";
 
 export default function proxy(req: NextRequest) {
     const { pathname } = req.nextUrl;
-    
+
     const authSession = req.cookies.get("auth_session")?.value;
     const isAuthenticated = Boolean(authSession);
 
-    const isProtectedApi = pathname.startsWith("/api/result");
-    const isProtectedPage = pathname.startsWith("/dashboard");
+    const isProtectedApi = pathname.startsWith("/api/result") || pathname.startsWith("/api/rc");
+    const isProtectedPage = pathname.startsWith("/dashboard") || pathname.startsWith("/rc");
     const isAuthPage = pathname.startsWith("/login");
 
     // Intercept protected API routes
@@ -44,7 +44,9 @@ export default function proxy(req: NextRequest) {
 export const config = {
     matcher: [
         "/api/result/:path*",
+        "/api/rc/:path*",
         "/dashboard/:path*",
+        "/rc/:path*",
         "/login",
     ],
 };

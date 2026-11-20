@@ -7,7 +7,9 @@ import { toast } from "sonner";
 import DashboardView from "@/components/dashboard/DashboardView";
 import Skeleton from "@/components/dashboard/Skeleton";
 import useResultStore from "@/store/result-store";
+import useRCStore from "@/store/rc-store";
 import type { ResultData } from "@/types/result";
+import type { StdRC } from "@/types/appearingList";
 import type { ApiErrorResponse, ApiSuccessResponse } from "@/types/ApiResponse";
 
 // Result loader and dashboard container
@@ -20,19 +22,37 @@ export default function DashboardPage() {
   const engine = useResultStore((state) => state.engineResult);
   const setResult = useResultStore((state) => state.setResult);
   const clearResult = useResultStore((state) => state.clearResult);
+  const clearRC = useRCStore((state) => state.clearRC);
 
   const fetchResults = useCallback(async () => {
     setLoading(true);
     setFailed(false);
     try {
       const res = await axios.get<ApiSuccessResponse<ResultData>>("/api/result?euno=100");
-      if (res.data?.data) setResult(res.data.data);
+      if (res.data?.data) {
+        setResult(res.data.data);
+
+        // Silently fetch and cache Appearing List (RC) in background if not yet cached
+        if (!useRCStore.getState().papers) {
+          axios
+            .get<ApiSuccessResponse<StdRC[]>>("/api/rc")
+            .then((rcRes) => {
+              if (rcRes.data?.data) {
+                useRCStore.getState().setPapers(rcRes.data.data);
+              }
+            })
+            .catch(() => {
+              // fail silently in background
+            });
+        }
+      }
     } catch (err) {
       const apiErr = (err as AxiosError<ApiErrorResponse>).response?.data;
 
       if (apiErr && !apiErr.success) {
         if (apiErr.code === "SESSION_EXPIRED") {
           clearResult();
+          clearRC();
           router.push("/login?expired=true");
           return;
         }
@@ -50,7 +70,7 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, [clearResult, router, setResult]);
+  }, [clearRC, clearResult, router, setResult]);
 
   useEffect(() => {
     const hasAuthCookie = document.cookie.split("; ").some((c) => c.startsWith("auth_session="));
