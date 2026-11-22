@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, HelpCircle, Home, Menu, ShieldCheck, X } from "lucide-react";
 import { LogoutButton } from "@/components/dashboard/LogoutButton";
+import ThemeToggle from "@/components/common/ThemeToggle";
 
 // Section links for visitors. Anchors point at the homepage, so they work from any page.
 const PUBLIC_LINKS = [
@@ -70,8 +71,16 @@ export default function AppNavbar() {
                         alt="Anviksha"
                         width={160}
                         height={44}
-                        className="object-contain h-8 w-auto transition-opacity group-hover:opacity-85"
+                        className="logo-dark object-contain h-8 w-auto transition-opacity group-hover:opacity-85"
                         priority
+                    />
+                    {/* Dark-ink logo, only shown in light mode (see globals.css) */}
+                    <Image
+                        src="/navbar-logo-light.png"
+                        alt=""
+                        width={160}
+                        height={44}
+                        className="logo-light object-contain h-8 w-auto transition-opacity group-hover:opacity-85"
                     />
                 </Link>
 
@@ -122,6 +131,8 @@ export default function AppNavbar() {
                 </nav>
 
                 <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                    {/* On the dashboard the top bar is crowded on phones, so there the button lives in the menu instead */}
+                    <ThemeToggle className={isDashboard ? "max-sm:hidden" : ""} />
                     {isDashboard ? (
                         <div className="flex items-center gap-1 rounded-full border border-border-strong bg-surface p-1 shadow-xs">
                             <Link
@@ -208,6 +219,12 @@ export default function AppNavbar() {
                             aria-label="Mobile"
                             className="mx-auto flex max-w-7xl flex-col px-4 py-2 sm:px-6"
                         >
+                            {isDashboard && (
+                                <div className="flex items-center justify-between border-b border-border-subtle py-2 font-mono text-xs font-semibold text-foreground-secondary sm:hidden">
+                                    Theme
+                                    <ThemeToggle />
+                                </div>
+                            )}
                             {middleLinks.map((link) => (
                                 <Link
                                     key={link.label}

@@ -30,7 +30,7 @@ export default function NotFound() {
 
       <Link
         href="/"
-        className="mt-8 inline-flex items-center gap-2.5 rounded-md border border-white bg-white px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider text-black shadow-[0_0_20px_rgba(255,255,255,0.15)] transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:bg-neutral-200 active:scale-95"
+        className="mt-8 inline-flex items-center gap-2.5 rounded-md border border-foreground bg-foreground px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider text-background shadow-[0_0_20px_var(--btn-glow)] transition-transform duration-150 ease-out hover:-translate-y-0.5 hover:bg-foreground/85 active:scale-95"
       >
         Back to Home
         <ArrowRight size={14} />

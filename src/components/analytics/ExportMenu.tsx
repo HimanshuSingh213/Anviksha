@@ -244,7 +244,7 @@ export default function ExportMenu({ availableSemesters }: Props) {
                     whileTap={{ scale: 0.97 }}
                     disabled={isExporting}
                     onClick={handleDownloadPDF}
-                    className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg border border-white bg-white px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-black transition-colors duration-200 hover:bg-neutral-200 disabled:opacity-50"
+                    className="inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg border border-foreground bg-foreground px-4 py-2.5 text-xs font-bold uppercase tracking-wider text-background transition-colors duration-200 hover:bg-foreground/85 disabled:opacity-50"
                 >
                     <Download size={14} aria-hidden="true" />
                     <span>{isExporting ? "Exporting..." : "Download"}</span>

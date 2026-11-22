@@ -213,7 +213,7 @@ export default function NoticesClientView({ initialNotices }: Props) {
           <button
             type="button"
             onClick={resetFilters}
-            className="mt-6 inline-flex cursor-pointer items-center gap-2 rounded-md border border-white bg-white px-5 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-black transition-colors duration-200 hover:bg-neutral-200"
+            className="mt-6 inline-flex cursor-pointer items-center gap-2 rounded-md border border-foreground bg-foreground px-5 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-background transition-colors duration-200 hover:bg-foreground/85"
           >
             <RotateCcw size={13} aria-hidden="true" />
             Reset Filters

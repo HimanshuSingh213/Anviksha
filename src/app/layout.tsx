@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "sonner";
+import ThemedToaster from "@/components/common/ThemedToaster";
 import "./globals.css";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 import StructuredData from "@/components/common/StructuredData";
@@ -133,6 +133,9 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+// Runs before the page is drawn: if light mode was saved, apply it immediately to prevent dark flash
+const themeScript = `try{if(localStorage.getItem("anviksha-theme")==="light")document.documentElement.setAttribute("data-theme","light")}catch(e){}`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -141,10 +144,12 @@ export default function RootLayout({
   return (
     <html
       lang="en-IN"
+      data-theme="dark"
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <link rel="preconnect" href="https://examweb.ggsipu.ac.in" crossOrigin="" />
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
@@ -161,7 +166,7 @@ export default function RootLayout({
         <RouteScrollReset />
         <ErrorBoundary>{children}</ErrorBoundary>
         <FloatingReportButton />
-        <Toaster theme="dark" position="bottom-right" richColors />
+        <ThemedToaster />
         <Analytics />
       </body>
     </html>

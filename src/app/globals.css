@@ -84,6 +84,16 @@ html {
   --panel-highlight: rgba(255, 255, 255, 0.035);
   --panel-shadow: 0 22px 70px rgba(0, 0, 0, 0.28);
 
+  /* Theme-sensitive one-offs (see the light block below) */
+  --scrollbar-thumb-hover: #3f3f46;
+  --btn-glow: rgba(255, 255, 255, 0.15);
+  --paper-edge: rgba(255, 255, 255, 0.5);
+  --paper-ring: transparent;
+  --paper-shadow: 0 14px 30px -18px rgba(0, 0, 0, 0.9);
+  --paper-sheen: rgba(255, 255, 255, 0.5);
+
+  color-scheme: dark;
+
   /* Paper — the printed transcript on the homepage (warm stock, ink, stamp red) */
   --paper: #ece6d6;
   --paper-shade: #ddd5c0;
@@ -93,6 +103,8 @@ html {
 
   /* Chart palette tokens */
   --chart-cyan: #38bdf8;
+  --chart-cyan-surface: rgba(56, 189, 248, 0.12);
+  --chart-cyan-border: rgba(56, 189, 248, 0.35);
   --chart-purple: #c084fc;
   --chart-amber: #fb923c;
   --chart-emerald: #34d399;
@@ -102,6 +114,106 @@ html {
   --positive: var(--grade-excellent);
   --negative: var(--grade-fail);
   --info: var(--cat-blue);
+}
+
+/* ── Light theme ──
+   Same token names, warm paper instead of obsidian. Switched by data-theme on <html>
+   (see src/lib/theme.ts). Text-bearing colours are darkened so they keep 4.5:1 on the
+   light surfaces; the surfaces use the same alpha recipe as dark. */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --background: #f6f3ec;
+  --surface: #fbf9f4;
+  --surface-elevated: #ffffff;
+  --surface-deep: #efebe0;
+  --surface-soft: #f1ede3;
+  --surface-hover: #e9e4d8;
+
+  --border: #ddd7c8;
+  --border-strong: #cbc4b1;
+  --border-subtle: #e7e2d5;
+
+  --foreground: #1a1814;
+  --foreground-secondary: #3f3b34;
+  --foreground-muted: #5b574d;
+
+  --gold: #6b4f12;
+  --gold-bright: #745615;
+  --gold-dim: #b59a55;
+  --gold-surface: rgba(107, 79, 18, 0.09);
+  --gold-border: rgba(107, 79, 18, 0.4);
+  --gold-selection: rgba(201, 169, 97, 0.4);
+
+  --grade-excellent: #0c5e39;
+  --grade-excellent-surface: rgba(12, 94, 57, 0.1);
+  --grade-excellent-border: rgba(12, 94, 57, 0.35);
+
+  --grade-good: #375b0c;
+  --grade-good-surface: rgba(55, 91, 12, 0.1);
+  --grade-good-border: rgba(55, 91, 12, 0.35);
+
+  --grade-average: #734900;
+  --grade-average-surface: rgba(115, 73, 0, 0.1);
+  --grade-average-border: rgba(115, 73, 0, 0.35);
+
+  --grade-pass: #824013;
+  --grade-pass-surface: rgba(130, 64, 19, 0.1);
+  --grade-pass-border: rgba(130, 64, 19, 0.35);
+
+  --grade-fail: #982824;
+  --grade-fail-surface: rgba(152, 40, 36, 0.09);
+  --grade-fail-border: rgba(152, 40, 36, 0.35);
+
+  --cat-blue: #25538d;
+  --cat-blue-surface: rgba(37, 83, 141, 0.1);
+  --cat-blue-border: rgba(37, 83, 141, 0.35);
+
+  --cat-violet: #54469b;
+  --cat-violet-surface: rgba(84, 70, 155, 0.1);
+  --cat-violet-border: rgba(84, 70, 155, 0.35);
+
+  --cat-teal: #125b63;
+  --cat-teal-surface: rgba(18, 91, 99, 0.1);
+  --cat-teal-border: rgba(18, 91, 99, 0.35);
+
+  --cat-pink: #863460;
+  --cat-pink-surface: rgba(134, 52, 96, 0.1);
+  --cat-pink-border: rgba(134, 52, 96, 0.35);
+
+  --cat-slate: #4c535d;
+  --cat-slate-surface: rgba(76, 83, 93, 0.1);
+  --cat-slate-border: rgba(76, 83, 93, 0.35);
+
+  --accent-copper: #7a4521;
+  --accent-copper-surface: rgba(122, 69, 33, 0.1);
+  --accent-copper-border: rgba(122, 69, 33, 0.36);
+
+  --accent-mint: #115e3f;
+  --accent-mint-surface: rgba(17, 94, 63, 0.09);
+  --accent-mint-border: rgba(17, 94, 63, 0.32);
+
+  --panel-highlight: rgba(255, 255, 255, 0.85);
+  --panel-shadow: 0 18px 50px -14px rgba(70, 55, 20, 0.14);
+
+  --scrollbar-thumb-hover: #a89f88;
+  --btn-glow: rgba(26, 24, 20, 0.12);
+
+  /* The transcript sheet: brighter stock, edge and shadow carry it off the page */
+  --paper: #fffdf7;
+  --paper-shade: #f0ead9;
+  --paper-edge: rgba(255, 255, 255, 0.9);
+  --paper-ring: rgba(29, 27, 22, 0.1);
+  --paper-shadow: 0 18px 36px -22px rgba(60, 48, 20, 0.45);
+  --paper-sheen: rgba(255, 255, 255, 0.9);
+
+  --chart-cyan: #05597a;
+  --chart-cyan-surface: rgba(5, 89, 122, 0.1);
+  --chart-cyan-border: rgba(5, 89, 122, 0.35);
+  --chart-purple: #6b34a5;
+  --chart-amber: #834009;
+  --chart-emerald: #085e41;
+  --chart-rose: #952a2a;
 }
 
 @theme inline {
@@ -176,16 +288,16 @@ html {
   --color-accent-mint-border: var(--accent-mint-border);
 
   --color-chart-cyan: var(--chart-cyan);
-  --color-chart-cyan-surface: rgba(56, 189, 248, 0.12);
-  --color-chart-cyan-border: rgba(56, 189, 248, 0.35);
+  --color-chart-cyan-surface: var(--chart-cyan-surface);
+  --color-chart-cyan-border: var(--chart-cyan-border);
   --color-chart-purple: var(--chart-purple);
   --color-chart-amber: var(--chart-amber);
   --color-chart-emerald: var(--chart-emerald);
   --color-chart-rose: var(--chart-rose);
 
   --color-positive: var(--positive);
-  --color-positive-surface: rgba(52, 179, 122, 0.12);
-  --color-positive-border: rgba(52, 179, 122, 0.35);
+  --color-positive-surface: var(--grade-excellent-surface);
+  --color-positive-border: var(--grade-excellent-border);
   --color-negative: var(--negative);
   --color-info: var(--info);
 
@@ -264,7 +376,7 @@ textarea:focus-visible {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #3f3f46;
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* Custom horizontal scrollbar helper — no Y scrollbar */
@@ -298,12 +410,13 @@ input[type="number"] {
 .home-paper {
   border-radius: 0.25rem;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.5), transparent 30%),
+    linear-gradient(180deg, var(--paper-sheen), transparent 30%),
     var(--paper);
   color: var(--paper-ink);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.5) inset,
-    0 14px 30px -18px rgba(0, 0, 0, 0.9);
+    0 1px 0 var(--paper-edge) inset,
+    0 0 0 1px var(--paper-ring),
+    var(--paper-shadow);
 }
 
 /* Animated underline for links (new homepage footer) */
@@ -400,5 +513,16 @@ input[type="number"] {
   .ticker-track { animation: none; }
   .beam-card::before { animation: none; }
   html { scroll-behavior: auto; }
+}
+
+/* Navbar logo: the cream logo for dark mode, the dark-ink logo for light mode */
+.logo-light {
+  display: none;
+}
+[data-theme="light"] .logo-light {
+  display: block;
+}
+[data-theme="light"] .logo-dark {
+  display: none;
 }
 

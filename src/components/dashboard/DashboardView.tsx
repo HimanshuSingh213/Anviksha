@@ -66,10 +66,10 @@ export default function DashboardView({ engine }: { engine: EngineResult }) {
           <p className="max-w-xl text-sm leading-6 text-foreground-secondary">
             Promotion standing, placement eligibility, semester grade sheets and the master transcript are on the analytics page. Your appearing list (RC) lives on its own page.
           </p>
-          <div className="flex shrink-0 flex-wrap items-center gap-3">
+          <div className="flex w-full shrink-0 flex-col sm:flex-row sm:w-auto items-center justify-center gap-3">
             <Link
               href="/rc"
-              className="group inline-flex items-center justify-center gap-3 rounded-md border border-border-strong bg-surface px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider text-foreground-secondary transition-colors duration-200 hover:border-gold-border hover:text-gold"
+              className="group inline-flex w-full sm:w-auto items-center justify-center gap-3 rounded-md border border-border-strong bg-surface px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider text-foreground-secondary transition-colors duration-200 hover:border-gold-border hover:text-gold text-center"
             >
               <ClipboardList size={15} aria-hidden="true" />
               View Appearing List
@@ -77,7 +77,7 @@ export default function DashboardView({ engine }: { engine: EngineResult }) {
             </Link>
             <Link
               href="/dashboard/analytics"
-              className="group inline-flex items-center justify-center gap-3 rounded-md border border-white bg-white px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider text-black transition-colors duration-200 hover:bg-neutral-200"
+              className="group inline-flex w-full sm:w-auto items-center justify-center gap-3 rounded-md border border-foreground bg-foreground px-6 py-3 font-mono text-xs font-bold uppercase tracking-wider text-background transition-colors duration-200 hover:bg-foreground/85 text-center"
             >
               <BarChart2 size={15} aria-hidden="true" />
               View Full Analytics

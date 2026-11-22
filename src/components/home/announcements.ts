@@ -17,6 +17,13 @@ export const ANNOUNCEMENTS: Announcement[] = [
     cta: { label: "Open appearing list", href: "/rc" },
   },
   {
+    id: "theme-toggle-launch",
+    badge: "New",
+    title: "Light & Dark Themes are now available",
+    body: "Anviksha now supports both Light and Dark themes. Easily switch anytime using the theme button in the navigation bar for a comfortable view day or night.",
+    deadline: "2027-01-04",
+  },
+  {
     id: "live-circulars-feed",
     badge: "Live Feed",
     title: "Real-Time Examination Circulars & Date-Sheets",
