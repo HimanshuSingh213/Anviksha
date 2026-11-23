@@ -1,12 +1,12 @@
 # Anviksha | GGSIPU Result Wrapper & Academic Analytics
 
 [![Live App](https://img.shields.io/badge/Live_App-anviksha--result.vercel.app-000000?style=flat&logo=vercel&logoColor=white)](https://anviksha-result.vercel.app)
-[![Version](https://img.shields.io/badge/Version-v2.0.0-8A6D1F?style=flat)]()
+[![Version](https://img.shields.io/badge/Version-v3.1.0-8A6D1F?style=flat)]()
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-000000?style=flat&logo=nextdotjs&logoColor=white)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.2-23272F?style=flat&logo=react&logoColor=61DAFB)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4-0B1120?style=flat&logo=tailwindcss&logoColor=38BDF8)](https://tailwindcss.com/)
-[![Vitest](https://img.shields.io/badge/Vitest-97_Tests_Passing-1E293B?style=flat&logo=vitest&logoColor=FCC72B)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-123_Tests_Passing-1E293B?style=flat&logo=vitest&logoColor=FCC72B)](https://vitest.dev/)
 [![Security](https://img.shields.io/badge/Security-Zero--Storage_Proxy-064E3B?style=flat&logo=auth0&logoColor=34D399)]()
 
 ## Overview
@@ -62,7 +62,7 @@ Rather than showing only a raw table of marks, Anviksha interprets result data t
 - **Direct Server Proxy:** Credentials and results are relayed through Next.js Route Handlers straight to the official university endpoints (`/web/login`, `/web/Logout`, `/web/student/search`, `/web/captcha`).
 - **SHA-256 Password Hashing:** The password is hashed with the captcha salt (`sha256(password + captcha)`) before leaving — mirroring the portal's own behaviour, so no plaintext password travels.
 - **Ephemeral Sessions:** The upstream `JSESSIONID` is captured server-side and stored in `HttpOnly` cookies scoped to `/api`, expiring after one hour or on logout.
-- **Middleware Guard (`src/proxy.ts`):** Protects `/dashboard` and `/api/result`, redirecting expired sessions to `/login?expired=true` and preventing logged-in users from re-entering the login page.
+- **Middleware Guard (`src/proxy.ts`):** Protects `/dashboard`, `/rc`, and `/api/result`, redirecting expired sessions to `/login?expired=true` and preventing logged-in users from re-entering the login page.
 - **Full-Fetch Strategy (`euno=100`):** All semester results are fetched in a single upstream call at login.
 
 ### 2. Ordinance-Based Academic Engine (`src/lib/academic/`)
@@ -319,10 +319,10 @@ anviksha/
 
 ## Testing & Verification
 
-The project maintains a **108-test** automated suite (7 files) covering the academic engine, notices scraper, system status strip, validators, and API routes:
+The project maintains an **automated test suite** covering the academic engine, notices scraper, system status strip, validators, API routes, and dashboard components:
 
 ```bash
-npm test              # 108 tests, currently 100% green
+npm test              # full Vitest suite
 npx tsc --noEmit      # clean
 npm run lint          # 0 errors
 npm run build         # production bundle
