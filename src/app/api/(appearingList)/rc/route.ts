@@ -6,6 +6,10 @@ import { StdRC } from "@/types/appearingList";
 
 const REQUEST_TIMEOUT = 10000;
 
+// GGSIPU sends these messages when nothing is registered for the student yet.
+const NO_RECORD_PATTERN = /no record found|result not found|record not found/i;
+const isNoRecordMessage = (message: unknown) => NO_RECORD_PATTERN.test(String(message ?? ""));
+
 export const GET = async (req: NextRequest) => {
   // Anti-abuse: block direct browser navigation and cross-origin requests
   const fetchSite = req.headers.get("sec-fetch-site");
@@ -81,6 +85,10 @@ export const GET = async (req: NextRequest) => {
     // Handle GGSIPU envelope { status: "OK", message: "..." } if present
     if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
       if (parsed.status === "ERROR") {
+        if (isNoRecordMessage(parsed.message)) {
+          const empty: ApiSuccessResponse<StdRC[]> = { success: true, data: [] };
+          return NextResponse.json(empty);
+        }
         throw new Error(parsed.message || "Failed to fetch appearing list");
       }
       if (parsed.status === "OK" && parsed.message) {

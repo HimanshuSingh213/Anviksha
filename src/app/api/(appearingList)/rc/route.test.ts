@@ -86,6 +86,21 @@ describe("API Route: /api/rc", () => {
     expect(data.data).toEqual(mockRC);
   });
 
+  it("returns 200 with empty list when GGSIPU reports no record found", async () => {
+    mockAxios.get.mockResolvedValue({
+      status: 200,
+      data: JSON.stringify({ status: "ERROR", message: "No Record Found" }),
+    });
+
+    const req = createRequest({ JSESSIONID: "valid-session" });
+    const response = await rcHandler(req);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.data).toEqual([]);
+  });
+
   it("returns 401 when upstream returns HTML login redirect", async () => {
     mockAxios.get.mockResolvedValue({
       status: 200,

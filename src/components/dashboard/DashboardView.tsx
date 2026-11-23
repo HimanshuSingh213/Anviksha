@@ -20,10 +20,11 @@ export default function DashboardView({ engine }: { engine: EngineResult }) {
   const tabs = getSemesterTabs(engine.subjectResults);
   const metrics = getDashboardMetrics(engine, activeSem);
   const hasCreditColumn = !metrics.isPercentageFramework;
+  const hasSubjects = engine.subjectResults.length > 0;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {hasCreditColumn && <CreditTipModal />}
+      {hasSubjects && hasCreditColumn && <CreditTipModal />}
 
       <main id="main-content" className="mx-auto max-w-7xl space-y-8 px-4 py-10 sm:px-6 lg:py-12">
         {engine.warnings.length > 0 && (
@@ -39,28 +40,59 @@ export default function DashboardView({ engine }: { engine: EngineResult }) {
 
         {engine.profile && <StudentHeader profile={engine.profile} />}
 
-        <section>
-          <SemesterTabs tabs={tabs} active={activeSem} onChange={setActiveSem} />
-          <div className="mt-6">
-            <MetricsStrip metrics={metrics} />
-          </div>
-        </section>
+        {hasSubjects ? (
+          <>
+            <section>
+              <SemesterTabs tabs={tabs} active={activeSem} onChange={setActiveSem} />
+              <div className="mt-6">
+                <MetricsStrip metrics={metrics} />
+              </div>
+            </section>
 
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: "easeOut", delay: 0.16 }}
-          className="home-panel overflow-hidden"
-        >
-          <ResultsTable
-            key={activeSem}
-            scope={metrics.scope}
-            subjects={metrics.subjects}
-            hasCreditColumn={hasCreditColumn}
-            noGradeReason={engine.analytics.grade.reason}
-          />
-          {metrics.subjects.length > 0 && <ResultsSummary metrics={metrics} />}
-        </motion.section>
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut", delay: 0.16 }}
+              className="home-panel overflow-hidden"
+            >
+              <ResultsTable
+                key={activeSem}
+                scope={metrics.scope}
+                subjects={metrics.subjects}
+                hasCreditColumn={hasCreditColumn}
+                noGradeReason={engine.analytics.grade.reason}
+              />
+              {metrics.subjects.length > 0 && <ResultsSummary metrics={metrics} />}
+            </motion.section>
+          </>
+        ) : (
+          <motion.section
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="home-panel p-6 sm:p-8"
+          >
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-gold-border bg-gold-surface text-gold">
+                <ClipboardList size={16} aria-hidden="true" />
+              </span>
+              <h2 className="text-lg font-bold tracking-tight text-foreground">
+                No results declared yet
+              </h2>
+            </div>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-foreground-secondary">
+              GGSIPU has not published any semester result for this enrollment yet. If you are in your
+              first semester or waiting for a recent declaration, your grades are still with the university.
+            </p>
+            <Link
+              href="/rc"
+              className="group mt-5 inline-flex items-center justify-center gap-2 rounded-md border border-foreground bg-foreground px-5 py-2.5 font-mono text-xs font-bold uppercase tracking-wider text-background transition-opacity hover:opacity-90"
+            >
+              View Appearing List
+              <ArrowRight size={14} aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-1" />
+            </Link>
+          </motion.section>
+        )}
 
         <section className="flex flex-col items-start justify-between gap-5 border-t border-border pt-8 sm:flex-row sm:items-center">
           <p className="max-w-xl text-sm leading-6 text-foreground-secondary">
@@ -86,7 +118,7 @@ export default function DashboardView({ engine }: { engine: EngineResult }) {
           </div>
         </section>
 
-        <ExplanationPanel engine={engine} />
+        {hasSubjects && <ExplanationPanel engine={engine} />}
       </main>
     </div>
   );

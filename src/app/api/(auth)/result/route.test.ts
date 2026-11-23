@@ -76,6 +76,55 @@ describe("API Route: /api/result", () => {
     expect(data.data.stresult).toHaveLength(2);
   });
 
+  it("returns 200 with empty stresult when results are not declared yet", async () => {
+    mockAxios.get.mockResolvedValue({
+      status: 200,
+      data: JSON.stringify({
+        stprofile: { nrollno: "12716403226", stname: "SAKET JHA", prgcode: "027" },
+        stresult: null,
+      }),
+    });
+
+    const req = createRequest({ euno: "100" }, { JSESSIONID: "valid-session" });
+    const response = await resultHandler(req);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.data.stresult).toEqual([]);
+    expect(data.data.stprofile.stname).toBe("SAKET JHA");
+  });
+
+  it("returns 200 with empty data when GGSIPU reports no record found", async () => {
+    mockAxios.get.mockResolvedValue({
+      status: 200,
+      data: JSON.stringify({ status: "ERROR", message: "No Record Found" }),
+    });
+
+    const req = createRequest({ euno: "100" }, { JSESSIONID: "valid-session" });
+    const response = await resultHandler(req);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.data.stresult).toEqual([]);
+  });
+
+  it("does not clear cookies on upstream errors", async () => {
+    mockAxios.get.mockResolvedValue({
+      status: 200,
+      data: '<html><body><div class="message-box"><div class="message">Upstream failure</div></div></body></html>',
+    });
+
+    const req = createRequest({ euno: "100" }, { JSESSIONID: "valid-session" });
+    const response = await resultHandler(req);
+
+    expect(response.status).toBe(502);
+    const setCookies = response.headers.getSetCookie().join("; ");
+    expect(setCookies).not.toContain("auth_session");
+    expect(setCookies).not.toContain("JSESSIONID");
+  });
+
   it("returns 401 for expired session (HTML response)", async () => {
     mockAxios.get.mockResolvedValue({
       status: 200,

@@ -30,32 +30,45 @@ vi.mock("sonner", () => ({
 }));
 
 // Mock framer-motion
-vi.mock("framer-motion", () => ({
-  motion: {
-    div: ({ children, ...props }: any) => <div {...props}>{children}</div>,
-    span: ({ children, ...props }: any) => <span {...props}>{children}</span>,
-    button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
-  },
-  AnimatePresence: ({ children }: any) => <>{children}</>,
-  useReducedMotion: () => false,
-}));
-
-// Mock lucide-react icons
-vi.mock("lucide-react", () => {
-  const icons = [
-    "Hash", "KeyRound", "Eye", "EyeOff", "Fingerprint", "RefreshCcw",
-    "MoveRight", "Loader2", "AlertTriangle", "CheckCircle2", "Percent",
-    "BarChart2", "BookOpen", "Pencil", "ArrowRight", "FileDown",
-    "Award", "TrendingUp", "Calculator", "ShieldCheck", "Timer",
-    "PieChart", "FileText", "ChevronDown", "Info", "ArrowLeft",
-    "Home", "LogOut", "SlidersHorizontal", "Download", "CompassIcon",
-    "BarChart3"
+vi.mock("framer-motion", () => {
+  // Renders motion.<tag> as the real tag so layout-heavy components can be tested
+  const motionProps = [
+    "initial", "animate", "exit", "transition", "variants",
+    "whileHover", "whileTap", "whileFocus", "whileInView", "layout", "layoutId",
   ];
-  const mocked: Record<string, any> = {};
-  icons.forEach((name) => {
-    mocked[name] = ({ ...props }: any) => <svg data-testid={`icon-${name.toLowerCase()}`} {...props} />;
+  const motion = new Proxy(
+    {},
+    {
+      get: (_target, tag: string) => {
+        const Component = ({ children, ...props }: any) => {
+          const domProps = { ...props };
+          motionProps.forEach((key) => delete domProps[key]);
+          return React.createElement(tag, domProps, children);
+        };
+        return Component;
+      },
+    },
+  );
+
+  const motionValue = (value: number) => ({
+    get: () => value,
+    set: vi.fn(),
+    on: vi.fn(),
+    destroy: vi.fn(),
   });
-  return mocked;
+
+  return {
+    motion,
+    AnimatePresence: ({ children }: any) => <>{children}</>,
+    useReducedMotion: () => false,
+    useMotionValue: (value: number = 0) => motionValue(value),
+    useSpring: (value: any) =>
+      typeof value === "number" ? motionValue(value) : (value ?? motionValue(0)),
+    useTransform: () => 0,
+    useMotionTemplate: () => "",
+    useScroll: () => ({ scrollYProgress: motionValue(0) }),
+    useInView: () => true,
+  };
 });
 
 // Mock Zustand store

@@ -8,6 +8,10 @@ import * as cheerio from "cheerio";
 const REQUEST_TIMEOUT = 15000;
 const DEFAULT_FALLBACK_MESSAGE = "Unexpected response from GGSIPU. Please retry.";
 
+// GGSIPU sends these messages when nothing is declared for the student yet.
+const NO_RECORD_PATTERN = /no record found|result not found|record not found/i;
+const isNoRecordMessage = (message: unknown) => NO_RECORD_PATTERN.test(String(message ?? ""));
+
 /**
  * Extracts error message, remaining attempts, and account locked status from GGSIPU HTML response.
  *
@@ -92,6 +96,13 @@ export const GET = async (req: NextRequest) => {
       // Handle new GGSIPU envelope { status: "OK", message: "..." }
       if (parsed && typeof parsed === "object") {
         if (parsed.status === "ERROR") {
+          if (isNoRecordMessage(parsed.message)) {
+            const empty: ApiSuccessResponse<ResultData> = {
+              success: true,
+              data: { stprofile: {}, stresult: [] },
+            };
+            return NextResponse.json(empty);
+          }
           throw new Error(parsed.message || "Session expired");
         }
         if (parsed.status === "OK" && parsed.message) {
@@ -99,11 +110,15 @@ export const GET = async (req: NextRequest) => {
         }
       }
 
-      const data: ResultData = parsed;
-
-      if (!data.stprofile || !Array.isArray(data.stresult)) {
+      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
         throw new Error("Invalid data structure");
       }
+
+      // Results are null until the university declares them (e.g. 1st semester)
+      const data: ResultData = {
+        ...parsed,
+        stresult: Array.isArray(parsed.stresult) ? parsed.stresult : [],
+      };
 
       const successPayload: ApiSuccessResponse<ResultData> = {
         success: true,
@@ -151,8 +166,6 @@ export const GET = async (req: NextRequest) => {
       };
 
       const response = NextResponse.json(errPayload, { status: errorInfo.locked ? 403 : 502 });
-      response.cookies.set("JSESSIONID", "", { maxAge: 0, path: "/api" });
-      response.cookies.set("auth_session", "", { maxAge: 0, path: "/" });
       return response;
     }
   } catch (err) {

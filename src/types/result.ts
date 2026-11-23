@@ -24,7 +24,7 @@ export interface ExamWebResult {
   report?: string;
   stprofile?: ExamWebProfile;
   header?: string[];
-  stresult?: unknown[][];
+  stresult?: unknown[][] | null;
 }
 
 /**
